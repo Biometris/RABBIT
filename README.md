@@ -15,8 +15,7 @@ The software is licensed under [PolyForm Strict License 1.0.0](https://polyformp
 
 ## Document
 
-
-See [RABBITManual](https://github.com/Biometris/RABBITManual) for the detailed online document.  
+See [RABBITManual](https://biometris.github.io/RABBITManual/) for the detailed online document.  
 
 ## Install 
 
