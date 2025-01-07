@@ -11,7 +11,7 @@
 
 ## License
 
-The software is licensed under [PolyForm Strict License 1.0.0](https://polyformproject.org/licenses/strict/1.0.0). For commercial usage, a (paid) license agreement needs to be set up. To obtain the license agreement, contact <rabbit-support@wur.nl>.
+The software is licensed under [PolyForm Strict License 1.0.0](https://polyformproject.org/licenses/strict/1.0.0). For commercial use, a (paid) license agreement needs to be set up. To obtain the license agreement, contact <rabbit-support@wur.nl>.
 
 ## Document
 
