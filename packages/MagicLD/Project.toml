@@ -1,0 +1,19 @@
+name = "MagicLD"
+uuid = "0c97556f-f1e7-4237-8a80-7e7d9b59bb26"
+authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+version = "1.0.0"
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
+MagicBase = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
+Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"

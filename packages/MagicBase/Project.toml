@@ -1,0 +1,37 @@
+name = "MagicBase"
+uuid = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
+authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+version = "1.0.0"
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
+InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

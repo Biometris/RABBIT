@@ -1,0 +1,23 @@
+name = "MagicCall"
+uuid = "668373cf-b572-4d35-9009-0602b8ed7892"
+authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+version = "1.0.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
+HMM = "c4d39e30-e0dc-11e8-017e-e988672db4fe"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MagicBase = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
+MagicPrior = "368bb602-e3a8-4e4e-878d-f4f466b68000"
+MagicReconstruct = "55d4db80-e0d1-11e8-3790-159c8f731041"
+Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

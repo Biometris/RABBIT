@@ -1,0 +1,16 @@
+RABBIT,designinfo,
+member,founders,designcode
+BC,P1||P2,bc3-self2
+DH,NA,P2/P3=>DH
+RIL, NA, P2/3/P3/P4//P5/P6=>3
+Fixed,P5||P6, 2ril-self10
+RABBIT,offspringinfo,
+individual,member,ishomozygous,isfglexch
+BC_1,BC,false,false
+BC_2,BC,false,false
+DH_1,DH,true,false
+DH_2,DH,true,false
+RIL_1,RIL,false,false
+RIL_2,RIL,false,false
+FIXED_1,Fixed,false,true
+FIXED_2,Fixed,false,true

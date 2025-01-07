@@ -1,0 +1,4 @@
+member,mother,father,gender,generation
+P1,0,0,notapplicable,0
+P2,0,0,notapplicable,0
+C,P1,P2,notapplicable,1

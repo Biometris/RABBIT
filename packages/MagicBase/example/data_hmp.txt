@@ -1,0 +1,4 @@
+rs#    alleles    chrom    pos    strand    assembly#    center    protLSID    assayLSID    panelLSID    QCcode    Parental_1    Parental_2    ID_1    ID_2
+44509    A/G    02     5565755     +    NA    NA    NA    NA    NA    NA    AG    AA    AA    AA
+38019    G/A    02     43878360     +    NA    NA    NA    NA    NA    NA    GG    GA    GG    GG
+89440    T/C    04     25220824     +    NA    NA    NA    NA    NA    NA    TC    TT    NN    TT

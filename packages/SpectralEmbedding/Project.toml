@@ -1,0 +1,17 @@
+name = "SpectralEmbedding"
+uuid = "4ed86307-b912-446d-ae0d-8d6d312d7524"
+authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+version = "1.0.0"
+
+[deps]
+Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
+Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
