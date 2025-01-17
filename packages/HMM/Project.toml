@@ -1,6 +1,6 @@
 name = "HMM"
 uuid = "c4d39e30-e0dc-11e8-017e-e988672db4fe"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]

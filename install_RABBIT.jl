@@ -1,8 +1,35 @@
+function tryusing(pkgname::AbstractString)
+    try        
+        @eval using $(Symbol(pkgname))
+    catch        
+        @eval Pkg.add($pkgname)
+        @eval using $(Symbol(pkgname))
+    end
+end
 
-try     
+using Pkg
+
+tryusing("ArgParse")
+
+function parse_commandline()
+    s = ArgParseSettings()
+    @add_arg_table s begin
+        "--isdev"
+        help = "if true, pakcages will be developped instead of being added"
+        arg_type = Bool
+        default = false                
+    end
+    return parse_args(s)
+end
+
+function main()
+    println(PROGRAM_FILE)        
+    parsed_args = parse_commandline()    
+    isdev = parsed_args["isdev"]
+    installstr = isdev ? "develop" : "add"
+    @info string("Start to ", installstr, "RABBIT packages...")    
     filedir = abspath(dirname(@__FILE__),"packages")    
-    println("Install RABBIT from ",filedir)
-    using Pkg
+    println("Install RABBIT from ",filedir)    
     pkgls = [
         "HMM",
         "Pedigrees",
@@ -21,12 +48,17 @@ try
         "RABBITCLI"        
     ]
     Pkg.activate()
-    @time for pkg in pkgls
-        println("Install ", pkg)  
-        Pkg.develop(PackageSpec(path=joinpath(filedir,pkg)))                        
+    rabbit_url = "https://github.com/Biometris/RABBIT"
+    @time for pkg in pkgls            
+        @info string(installstr, " ", pkg)
+        if isdev            
+            Pkg.develop(PackageSpec(path=joinpath(filedir,pkg)))                        
+        else
+            Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",pkg)))      
+        end
     end
-    0
-catch err
-    @error err
-    -1
+    return 0
 end
+
+main()
+

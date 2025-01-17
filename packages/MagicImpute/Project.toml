@@ -1,6 +1,6 @@
 name = "MagicImpute"
 uuid = "d6bde97e-f571-11e8-0752-dd2c38cea685"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]
@@ -22,6 +22,13 @@ Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[compat]
+HMM = "1.0.0"
+MagicBase = "1.0.0"
+MagicPrior = "1.0.0"
+MagicReconstruct = "1.0.0"
+Pedigrees = "1.0.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -1,6 +1,6 @@
 name = "Pedigrees"
 uuid = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]

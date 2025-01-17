@@ -1,6 +1,6 @@
 name = "MagicCall"
 uuid = "668373cf-b572-4d35-9009-0602b8ed7892"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]
@@ -15,6 +15,13 @@ MagicPrior = "368bb602-e3a8-4e4e-878d-f4f466b68000"
 MagicReconstruct = "55d4db80-e0d1-11e8-3790-159c8f731041"
 Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[compat]
+HMM = "1.0.0"
+MagicBase = "1.0.0"
+MagicPrior = "1.0.0"
+MagicReconstruct = "1.0.0"
+Pedigrees = "1.0.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

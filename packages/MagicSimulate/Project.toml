@@ -1,6 +1,6 @@
 name = "MagicSimulate"
 uuid = "16a984e6-4d50-47b3-b771-be4a5687f9fe"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]
@@ -17,6 +17,10 @@ Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[compat]
+MagicBase = "1.0.0"
+Pedigrees = "1.0.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

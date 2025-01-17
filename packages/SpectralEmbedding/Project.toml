@@ -1,6 +1,6 @@
 name = "SpectralEmbedding"
 uuid = "4ed86307-b912-446d-ae0d-8d6d312d7524"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]

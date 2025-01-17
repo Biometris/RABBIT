@@ -115,13 +115,13 @@ function hist_mosaic(contfgl::MagicGeno;
     gseglen2 = hist_seglen(contfgl; ishomologpair=true)    
     gden1,recomden1 = hist_recomden(contfgl;ishomologpair=false)
     gden2,recomden2 = hist_recomden(contfgl;ishomologpair=true)
-    gnone = plot(axis=nothing, showaxis=false)
-    ghist = plot(gnrecom,ginbreed,gnone,gnone,
-        gden1, gseglen1, gnone,gnone,gden2, gseglen2,
-        layout=(5,2),
+    # gnone = plot(axis=nothing, showaxis=false)
+    ghist = plot(gnrecom,ginbreed,
+        gden1, gseglen1, gden2, gseglen2,        
+        layout = (3,2),
         size=(900,900),
-        left_margin=2Plots.mm,         
-        bottom_margin=2Plots.mm,
+        left_margin=10Plots.mm,                 
+        bottom_margin=10Plots.mm,
     )    
     outfile = outstem*"_recom.png"
     savefig(ghist, getabsfile(workdir,outfile))

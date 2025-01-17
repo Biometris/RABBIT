@@ -1,6 +1,6 @@
 name = "MagicMap"
 uuid = "aab06a51-3dc8-4d1d-93cc-eabc3e3e4624"
-authors = ["Zheng, Chaozhi <chaozhi.zheng@wur.nl>"]
+authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
 version = "1.0.0"
 
 [deps]
@@ -29,6 +29,17 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpectralEmbedding = "4ed86307-b912-446d-ae0d-8d6d312d7524"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
+
+[compat]
+HMM = "1.0.0"
+MagicBase = "1.0.0"
+MagicImpute = "1.0.0"
+MagicLD = "1.0.0"
+MagicLinkage = "1.0.0"
+MagicPrior = "1.0.0"
+MagicReconstruct = "1.0.0"
+Pedigrees = "1.0.0"
+SpectralEmbedding = "1.0.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

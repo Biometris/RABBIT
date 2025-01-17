@@ -5,6 +5,8 @@ using Distributions
 cd(@__DIR__)
 pwd()
 
+
+
 @time simfhaplo(nsnp=1000,nparent=20, 
     isfounderinbred = false,
     outfile="sim_fhaplo.vcf"
