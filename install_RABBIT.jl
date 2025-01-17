@@ -16,8 +16,7 @@ function parse_commandline()
     @add_arg_table s begin
         "--isdev"
         help = "if true, pakcages will be developped instead of being added"
-        arg_type = Bool
-        # default = true                
+        arg_type = Bool        
         default = false                
     end
     return parse_args(s)
