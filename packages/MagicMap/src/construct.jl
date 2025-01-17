@@ -12,7 +12,7 @@ function construct(linkagefile::AbstractString;
     maxrf::Union{Nothing,Real} = nothing,
     binrf::Union{Nothing,Real}=nothing, 
     alwayskeep::Real=0.99,        
-    maxminlodcluster::Real=10,     
+    maxminlodcluster::Union{Nothing,Real} = nothing,     
     maxminlodorder::Union{Nothing,Real} = nothing,
     minlodcluster::Union{Nothing,Real} = nothing,
     minlodorder::Union{Nothing,Real} = nothing,
@@ -116,17 +116,26 @@ function construct(linkagefile::AbstractString;
         end
         markers == markers2 || @error "inconsistent markers"
     end    
-    # return (markers, physposbpls, nmissingls, recomnonfrac, recomlod, ldlod, dupebindict)
-    if isnothing(binrf)
-        if isnothing(ncluster)
-            if isnothing(minncluster) || isnothing(maxncluster)
-                binrf = length(markers)> 1000 ? 1e-3 : -1.0
-            else
-                binrf = length(markers)> (maxncluster+minncluster)*50 ? 1e-3 : -1.0
-            end
+    # return (markers, physposbpls, nmissingls, recomnonfrac, recomlod, ldlod, dupebindict)    
+    if isnothing(maxminlodcluster)
+        nmarker = length(markers)
+        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
+            maxminlodcluster = 5
         else
-            binrf = length(markers)> ncluster*100 ? 1e-3 : -1.0
+            maxminlodcluster = 10
+        end         
+        msg = string("reset maxminlodcluster = ", maxminlodcluster)
+        printconsole(logio, verbose,msg)    
+    end   
+    if isnothing(binrf)
+        nmarker = length(markers)
+        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
+            binrf = -1.0
+        else
+            binrf = 1e-3
         end
+        msg = string("reset binrf = ", binrf)
+        printconsole(logio, verbose,msg)    
     end
     if binrf < 0
         is_cosgregate_binning = false

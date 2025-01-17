@@ -1,4 +1,4 @@
-
+pwd()
 try    
     using Pkg
     pnls = [

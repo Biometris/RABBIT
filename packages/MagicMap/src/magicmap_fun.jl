@@ -74,7 +74,7 @@ genetic map construction from genofile and pedinfo.
 
 `minlodorder::Union{Nothing,Real} = nothing`: min LOD score for ordering. If it is nothing, it is internally set. 
 
-`maxminlodcluster::Union{Nothing,Real} = 10,`: if minlodcluster = nothing, minlodcluster is internally estimated with upbound maxminlodcluster. 
+`maxminlodcluster::Union{Nothing,Real} = nothing,`: if minlodcluster = nothing, minlodcluster is internally estimated with upbound maxminlodcluster. 
 
 `maxminlodorder::Union{Nothing,Real} = nothing`: if minlodorder = nothing, minlodorder is internally estimated with upbound maxminlodorder. 
 
@@ -130,7 +130,7 @@ function magicmap(genofile::AbstractString,
     maxrf::Union{Nothing,Real} = nothing,
     binrf::Union{Nothing,Real}=nothing, 
     alwayskeep::Real=0.99,            
-    maxminlodcluster::Union{Nothing,Real} = 10,
+    maxminlodcluster::Union{Nothing,Real} = nothing,
     maxminlodorder::Union{Nothing,Real} = nothing,
     minlodcluster::Union{Nothing,Real} = nothing,
     minlodorder::Union{Nothing,Real} = nothing,
@@ -244,9 +244,14 @@ function magicmap(genofile::AbstractString,
     end
     # step4 construct
     if isnothing(maxminlodcluster)
-        magicped = formmagicped(genofile,pedinfo; commentstring, workdir)    
-        subpop_weight = get_subpop_weight(magicped)
-        maxminlodcluster = round(Int, 10 + 2*log(2,max(1.0,subpop_weight/100)))
+        nmarker = MagicBase.vcf_count_markers(getabsfile(workdir, genofile))
+        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
+            maxminlodcluster = 5
+        else
+            magicped = formmagicped(genofile,pedinfo; commentstring, workdir)    
+            subpop_weight = get_subpop_weight(magicped)
+            maxminlodcluster = round(Int, 10 + 2*log(2,max(1.0,subpop_weight/100)))
+        end
         msg = string("reset maxminlodcluster = ", maxminlodcluster)
         printconsole(io, verbose,msg)    
     end    
