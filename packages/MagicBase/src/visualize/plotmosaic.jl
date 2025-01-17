@@ -118,11 +118,10 @@ function hist_mosaic(contfgl::MagicGeno;
     gnone = plot(axis=nothing, showaxis=false)
     ghist = plot(gnrecom,ginbreed,gnone,gnone,
         gden1, gseglen1, gnone,gnone,gden2, gseglen2,
-        layout=grid(5,2,
-        heights=(0.33,0,0.33,0,0.33)),
+        layout=(5,2),
         size=(900,900),
-        left_margin=10Plots.mm,         
-        bottom_margin=10Plots.mm,
+        left_margin=2Plots.mm,         
+        bottom_margin=2Plots.mm,
     )    
     outfile = outstem*"_recom.png"
     savefig(ghist, getabsfile(workdir,outfile))

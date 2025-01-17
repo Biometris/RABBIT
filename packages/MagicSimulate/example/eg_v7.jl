@@ -22,8 +22,6 @@ pedinfo = "4star-self1"
 @time magicsimulate("sim_fhaplo.vcf",pedinfo;
     popsize=200,    
     isfounderinbred = false,
-    seqfrac = 0.5,
-    isplot=true,
     outstem="sim"
 )
 

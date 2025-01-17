@@ -252,8 +252,9 @@ function magicsimulate(fhaplofile::AbstractString,
                 workdir,offspring=offls, 
                 outstem=outstem*"_truecontfgl",io,verbose)             
             push!(outfiles,mosaicfiles...)
-        catch
+        catch err
             @warn string("Could not plot mosaic")
+            @error err
         end    
         if ispheno
             fgl_qtl,geno_qtl,gadd_qtl,map_qtl,pheno_df = phenores
