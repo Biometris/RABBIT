@@ -27,7 +27,7 @@ See [RABBITManual](https://biometris.github.io/RABBITManual/) for the detailed o
 path/to/bin/julia.exe path/to/install_RABBIT.jl
 ```
 
-Alternatively, from the Julia (>v1.9, 64-bit) REPL model, run
+Alternatively, from the Julia (>=v1.9.7, 64-bit) REPL, run
 
  ```
  julia>include("path/to/install_RABBIT.jl")
