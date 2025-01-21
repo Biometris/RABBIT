@@ -156,14 +156,10 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         msg = string("save delmarker_genofile: ", delmarkerfile)
         printconsole(logio,verbose,msg)       
         if !israwcall
-            for (i,mapfile) in enumerate([outfile2])
+            for (i,mapfile) in enumerate([outfile2])                
                 try 
                     figerr = plotmarkererror(mapfile;tukeyfence=3.0, workdir)
-                    if isnothing(figerr)
-                        msg = string("Could not plot markererror for mapfile= ",mapfile)
-                        @warn msg
-                        printconsole(logio, verbose, "Warning: "*msg)
-                    else
+                    if !isnothing(figerr)                        
                         markererrfile = string(outstem, i==1 ? "" : "_delmarker", "_inferred_error.png")
                         try 
                             MagicBase.savefig(figerr,getabsfile(workdir,markererrfile))
@@ -1034,6 +1030,7 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
     if model == "depmodel"
         setdiff!(liketargetls,["allelebalancemean","allelebalancedisperse","alleledropout"])
     end
+    isinfererror2 = isinfererror && !isempty(liketargetls) 
     findexlist = calfindexlist(byfounder,fhaploset, popmakeup)    
     oldfhaplo = deepcopy(fhaplo)    
     olderror = [epsf,epso, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]    
@@ -1042,6 +1039,7 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
     maxit = 25
     dataprobls = MagicReconstruct.init_dataprobls_singlephase(popmakeup)
     for it in 1:maxit
+        !isinferfhaplo  && !isinfererror2 && break 
         if isinferfhaplo                    
             logl = inferfhaplo_singlesite!(dataprobls,fhaplo, fhaploset, fhaploweight, findexlist, offgeno; 
                 popmakeup, epsf,epso, seqerror,allelebalancemean, allelebalancedisperse, 
@@ -1052,7 +1050,7 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
             oldfhaplo .= fhaplo
             oldlogl = logl
         end        
-        if isinfererror            
+        if isinfererror2
             for target in liketargetls
                 est,logl = infererr_singlesite!(dataprobls,target, offgeno; fhaplo, popmakeup, epsf,epso, seqerror,
                     allelebalancemean, allelebalancedisperse, alleledropout, offspringformat, 
@@ -1077,7 +1075,7 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
             newerror = [epsf, epso, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]
             diff = abs.(olderror .- newerror)            
             if (max(diff[1:3]...)<1e-3 && max(diff[4:6]...) < 1e-2) || (logl-oldlogl <= 0.1)
-                isinfererror=false
+                isinfererror2=false
             end
             olderror .= newerror
             oldlogl = logl
@@ -1087,8 +1085,7 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
         if it == maxit 
            msg = string("reach maxit=", it, " errors=",round.(olderror,digits=5),",fhaplo=",join(fhaplo), ",logl=",oldlogl)            
            @warn msg
-        end
-        !isinferfhaplo  && !isinfererror && break 
+        end        
     end
     esterrors = (epsf,epso, seqerror,allelebalancemean, allelebalancedisperse, alleledropout)
     fhaplo, esterrors

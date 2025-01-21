@@ -1,8 +1,8 @@
 
-using Distributed
-nprocs() < 7 && addprocs(7-nprocs())
-@info string("nworkers=", nworkers())
-@everywhere  using MagicCall
+# using Distributed
+# nprocs() < 7 && addprocs(7-nprocs())
+# @info string("nworkers=", nworkers())
+# @everywhere  using MagicCall
 
 
 using Revise
@@ -18,8 +18,10 @@ pedinfo = string(dataid, "_ped.csv")
 
 @time magiccall(genofile,pedinfo;     
     isfounderinbred,
+    likeparameters = LikeParameters(0.005, 0.04, 0.0, nothing, nothing, nothing, 0.0),
     model = "depmodel", 
 )
+
 
 calledgenofile = "outstem_magiccall_geno.vcf.gz"
 magicgeno = formmagicgeno(calledgenofile,pedinfo;
