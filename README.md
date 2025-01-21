@@ -86,7 +86,7 @@ To get help for a function such as `magicimpute`, run
 
 ## Run RABBIT in a command line. 
 
-The RABBIT CLI is a collection of main function files that are located in the download RABBIT repository folder `RABBIT/RABBITCLI`; each file is a wrapper of the corresponding julia function. 
+The RABBIT CLI is a collection of main function files that are located in the download RABBIT repository folder `RABBITCLI`; each file is a wrapper of the corresponding julia function. 
 
 ### Run main function file
 
