@@ -30,6 +30,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 
+[sources]
+Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
+
 [compat]
 Pedigrees = "1.0.0"
 

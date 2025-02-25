@@ -33,16 +33,9 @@ try
     rabbit_url = "https://github.com/Biometris/RABBIT"
     filedir = abspath(dirname(@__FILE__),"packages")    
     @time for (pkg,deps) in pkgdeps
-        println("Update dependencies of ",pkg)
+        println("######update dependencies of ",pkg, "#######")
         repopath = joinpath(filedir,pkg)
-        Pkg.activate(repopath)                
-        for i in deps
-            try 
-                Pkg.rm(i)
-            catch err
-                @warn err
-            end
-        end        
+        Pkg.activate(repopath)        
         for i in deps
             Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",i)))
         end

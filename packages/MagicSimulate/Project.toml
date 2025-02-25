@@ -18,6 +18,10 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
+[sources]
+MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
+Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
+
 [compat]
 MagicBase = "1.0.0"
 Pedigrees = "1.0.0"

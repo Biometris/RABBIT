@@ -68,6 +68,7 @@ function markerskeleton_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix
     deltt = trues(length(pri1.markerincl))
     deltt[skeleton] .= false
     MagicReconstruct.setpriorprocess!(skeletonprior,deltt)
+    
     pri1=first(values(skeletonprior))
     exclsnps = snporder[.!pri1.markerincl]
     skeleton_epsfls[exclsnps] .= NaN

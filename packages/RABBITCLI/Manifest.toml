@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.2"
+julia_version = "1.11.3"
 manifest_format = "2.0"
 project_hash = "2bcacdfc314bd93c000612413116023e34a9d06f"
 
@@ -722,7 +722,7 @@ version = "1.0.2"
 
 [[deps.HMM]]
 deps = ["Distributions"]
-git-tree-sha1 = "74166567df2f0a0788d22ebc3afc8fd7a8a590e2"
+git-tree-sha1 = "6b07009e4c01f174a2141ecbe2b8f755acb36d36"
 repo-rev = "main"
 repo-subdir = "packages/HMM"
 repo-url = "https://github.com/Biometris/RABBIT"
@@ -1248,7 +1248,7 @@ version = "0.5.15"
 
 [[deps.MagicBase]]
 deps = ["CSV", "CodecZlib", "Combinatorics", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributions", "GZip", "Graphs", "Images", "InlineStrings", "Interpolations", "JLD2", "LinearAlgebra", "Pedigrees", "Pkg", "Plots", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Tar", "ThreadsX"]
-git-tree-sha1 = "3e7bd23da4981232b6b3860d0a8b4caf3165bb22"
+git-tree-sha1 = "266368ac6833b792404e0d3616ae286478ce610b"
 repo-rev = "main"
 repo-subdir = "packages/MagicBase"
 repo-url = "https://github.com/Biometris/RABBIT"
@@ -1590,7 +1590,7 @@ version = "2.8.1"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "455ce94445b22d063f98821f68f8cf67d9bf7b98"
+git-tree-sha1 = "a9c52b8fdc0f1bbdbd9575643cb58f5450657f55"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "https://github.com/Biometris/RABBIT"

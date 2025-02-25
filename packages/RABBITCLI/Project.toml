@@ -24,6 +24,22 @@ Pedigrees = "dee1165e-fbf6-11e8-0f95-8d2c8a112ef1"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 SpectralEmbedding = "4ed86307-b912-446d-ae0d-8d6d312d7524"
 
+[sources]
+HMM = {rev = "main", subdir = "packages/HMM", url = "https://github.com/Biometris/RABBIT"}
+MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
+MagicCall = {subdir = "packages/MagicCall", url = "https://github.com/Biometris/RABBIT"}
+MagicFilter = {subdir = "packages/MagicFilter", url = "https://github.com/Biometris/RABBIT"}
+MagicImpute = {subdir = "packages/MagicImpute", url = "https://github.com/Biometris/RABBIT"}
+MagicLD = {subdir = "packages/MagicLD", url = "https://github.com/Biometris/RABBIT"}
+MagicLinkage = {subdir = "packages/MagicLinkage", url = "https://github.com/Biometris/RABBIT"}
+MagicMap = {subdir = "packages/MagicMap", url = "https://github.com/Biometris/RABBIT"}
+MagicPrior = {subdir = "packages/MagicPrior", url = "https://github.com/Biometris/RABBIT"}
+MagicReconstruct = {subdir = "packages/MagicReconstruct", url = "https://github.com/Biometris/RABBIT"}
+MagicScan = {subdir = "packages/MagicScan", url = "https://github.com/Biometris/RABBIT"}
+MagicSimulate = {subdir = "packages/MagicSimulate", url = "https://github.com/Biometris/RABBIT"}
+Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
+SpectralEmbedding = {subdir = "packages/SpectralEmbedding", url = "https://github.com/Biometris/RABBIT"}
+
 [compat]
 HMM = "1.0.0"
 MagicBase = "1.0.0"

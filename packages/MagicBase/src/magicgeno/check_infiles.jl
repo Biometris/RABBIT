@@ -11,7 +11,7 @@ function check_infiles(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
         msg = string("check genofile extension = ",fileext, ": OK")            
         printconsole(io,verbose,msg)        
     elseif in(fileext,[".csv",".csv.gz"]) 
-        msg = string("check genofile extension = ",fileext, ": CSV-format genofile is not recommented")
+        msg = string("check genofile extension = ",fileext, ": CSV-format genofile is not recommended")
         printconsole(io,false,"Warning: "*msg)
         @warn msg        
     else

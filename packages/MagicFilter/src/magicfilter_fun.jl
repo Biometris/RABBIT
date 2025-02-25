@@ -152,7 +152,7 @@ It must be "depmodel", "indepmodel", or "jointmodel".
 `snp_monosubpop::Integer = 20`: a subpopulation is tested for monomorphic at a marker only if the number of observed genotypes >= snp\\_mono\\_subpop.
 
 `snp_mono2miss::Union{Nothing,Bool} = true`: if true, all offspring genotypes in a monomorphic subpopulation are set to missing, 
-and otherwise only inconsistent offspring genotypes are corrected. And if nothing, offspring genotypes are not changed.
+and otherwise only inconsistent offspring genotypes are set to missing. And if nothing, offspring genotypes are not changed.
 
 `del_inconsistent::Bool = false`: if true, delete markers with inconsistent changes of founder genotypes. 
 

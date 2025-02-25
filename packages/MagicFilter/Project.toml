@@ -24,6 +24,13 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 
+[sources]
+HMM = {rev = "main", subdir = "packages/HMM", url = "https://github.com/Biometris/RABBIT"}
+MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
+MagicPrior = {rev = "main", subdir = "packages/MagicPrior", url = "https://github.com/Biometris/RABBIT"}
+MagicReconstruct = {rev = "main", subdir = "packages/MagicReconstruct", url = "https://github.com/Biometris/RABBIT"}
+Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
+
 [compat]
 HMM = "1.0.0"
 MagicBase = "1.0.0"
