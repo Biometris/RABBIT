@@ -11,7 +11,7 @@ function memoryuse()
         s = replace(s, "\"" => "")
         # @info s          
         m = join(strip.(split(s, ","))[5:end])
-        m = replace(m, "K" => "1000", "M" => "1000000", "G" => "1000000000")
+        m = replace(m, "."=>"",","=>"", "K" => "1000", "M" => "1000000", "G" => "1000000000")        
         try 
             tryparse.(Float64, split(m)) |> prod |> Int
         catch err
