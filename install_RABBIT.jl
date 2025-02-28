@@ -17,7 +17,7 @@ function parse_commandline()
         "--isdev"
         help = "if true, pakcages will be developped instead of being added"
         arg_type = Bool        
-        default = false                
+        default = true                
     end
     return parse_args(s)
 end

@@ -31,7 +31,7 @@ genetic map construction from genofile and pedinfo.
 
 `ispermmarker::Bool=true`: if true, permute input marker ordering
 
-`isdupebinning::Union{Nothing,Bool}=false`: if ture, bin duplicate marker. 
+`isdupebinning::Union{Nothing,Bool}=nothing`: if ture, bin duplicate marker. 
 
 `binshare::Real=0.5`: min fraction of shared genotypes between represent marker and each of the rest in a bin. 
 
@@ -114,7 +114,7 @@ function magicmap(genofile::AbstractString,
     isfounderinbred::Bool = true,        
     snpthin::Integer=1,
     ispermmarker::Bool=true,
-    isdupebinning::Union{Nothing,Bool}=false,
+    isdupebinning::Union{Nothing,Bool}=nothing,
     binshare::Real=0.5,    
     byfounder::Integer=0,    
     minlodsave::Union{Nothing, Real}=nothing,
@@ -161,9 +161,9 @@ function magicmap(genofile::AbstractString,
     isnothing(outstem) || (outstem *= "_magicmap")
     # step1 binning
     if isnothing(isdupebinning)
-        nmarkers = MagicBase.vcf_count_markers(genofile;commentstring)        
-        isdupebinning = nmarkers > 2e4
-        printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, " (#markers=",nmarkers, ")"))
+        nmarkers = MagicBase.vcf_count_markers(genofile;commentstring)                
+        isdupebinning = nmarkers > 2e4 
+        printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, " (#markers=",nmarkers,")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning
