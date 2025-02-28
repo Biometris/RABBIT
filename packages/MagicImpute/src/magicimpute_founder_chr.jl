@@ -656,8 +656,8 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	founder2progeny = index_founder2progeny(magicped)	
 	# maxwinsize = div(nsnp,min(20,5+round(Int, nsnp/500)))
 	if isnothing(slidewin_neighbor) 
-		if nsnp < 500
-			maxwinsize = min(50,max(2,div(nsnp,2)))
+		if nsnp < 500			
+			maxwinsize = max(10,min(50,div(nsnp,2)))
 		elseif nsnp < 2000
 			maxwinsize = div(nsnp, 10)
 		else
@@ -665,7 +665,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		end
 	else
 		maxwinsize = slidewin_neighbor  # default 200
-		maxwinsize = min(nsnp,max(50, maxwinsize))
+		maxwinsize = max(10,min(div(nsnp,2),maxwinsize))
 	end		
 	nbrmaxwin = [maxwinsize for _ in 1:3]
 	if isnothing(slidewin)
@@ -792,10 +792,10 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 			end
 		end		
 		if it >=2				
-			if temperature<=0.01
-				temperature = 0.0								
+			if temperature<=1e-5
+				temperature = 0.0						
 			elseif temperature<=0.1
-				temperature = 0.01
+				temperature *= 0.1			
 			else
 				temperature *= temperature <= 0.5 ? max(0.5,coolrate^3) : coolrate					
 			end
