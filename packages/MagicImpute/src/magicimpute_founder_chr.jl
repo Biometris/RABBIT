@@ -27,7 +27,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
     logio::Union{Nothing,AbstractString,IO},    		
@@ -429,7 +429,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
     logio::Union{Nothing,AbstractString,IO},
@@ -615,7 +615,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	trimcm::Real=20,
 	trimfraction::Real=0.05, 
     inittemperature::Real=0.0,
-	coolrate::Real=0.7,
+	coolrate::Real=0.85,
 	skeletonsize::Union{Nothing,Integer},		
 	slidewin::Union{Nothing,Integer} = nothing,  
 	slidewin_neighbor::Union{Nothing,Integer} = 200,      
@@ -667,7 +667,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		maxwinsize = slidewin_neighbor  # default 200
 		maxwinsize = max(10,min(div(nsnp,2),maxwinsize))
 	end		
-	nbrmaxwin = [maxwinsize for _ in 1:3]
+	nbrmaxwin = [maxwinsize for _ in 1:4]
 	if isnothing(slidewin)
 		if isnothing(chrneighbor)				
 			initwinsize = max(10,round(Int, sqrt(nsnp)))
@@ -792,7 +792,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 			end
 		end		
 		if it >=2				
-			if temperature<=1e-5
+			if temperature<=1e-4
 				temperature = 0.0						
 			elseif temperature<=0.1
 				temperature *= 0.1			

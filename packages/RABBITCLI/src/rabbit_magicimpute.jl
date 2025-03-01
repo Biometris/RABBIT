@@ -176,7 +176,7 @@ function parse_commandline()
         "--coolrate"
         help = "temperature is mutiplied by coolrate after each iteration of annealing agrogrithm"        
         arg_type = Float64
-        default = 0.7
+        default = 0.85
         # "--minaccept"
         # help = "minimum accept rate for controlling the window size of ordering update"
         # arg_type = Float64

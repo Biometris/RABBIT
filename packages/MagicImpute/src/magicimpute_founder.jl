@@ -30,7 +30,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   	
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	
@@ -542,7 +542,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   	
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	
@@ -700,7 +700,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   	
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	

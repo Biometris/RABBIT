@@ -72,7 +72,7 @@ function magicimpute(genofile::AbstractString,
     orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]        
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
     spacebyviterbi::Bool=false,     
     isparallel::Bool=true,    
@@ -292,7 +292,7 @@ genotype imputation from magicgeno.
 
 `inittemperature::Real= isordermarker ? 2.0 : 0.0`: initial temperature of annealing algorithm for marker ordering.
 
-`coolrate::Real=0.7`: temperature is mutiplied by coolrate after each iteration of annealing agrogrithm.
+`coolrate::Real=0.85`: temperature is mutiplied by coolrate after each iteration of annealing agrogrithm.
 
 `minaccept::Real=0.15`: minimum accept rate for controlling the window size of ordering update.
 
@@ -354,7 +354,7 @@ function magicimpute!(magicgeno::MagicGeno;
     orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
     orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.7,
+    coolrate::Real=0.85,
     minaccept::Real=0.15,
     spacebyviterbi::Bool=false,     
     isparallel::Bool=true,
