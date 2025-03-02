@@ -129,7 +129,7 @@ function construct(linkagefile::AbstractString;
     end   
     if isnothing(binrf)
         nmarker = length(markers)
-        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
+        if nmarker < 20000 || (!isnothing(ncluster) && nmarker < ncluster*2000) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*1000)  
             binrf = -1.0
         else
             binrf = 1e-3
