@@ -63,10 +63,8 @@ genetic map construction from genofile and pedinfo.
 
 `maxrf::Union{Nothing,Real} = nothing`: keep pairwise linakge analyses only if recombation fraction <= maxrf. 
 
-`binrf::Union{Nothing,Real}=nothing`: if binrf >= 0, perform linkage-based marker binning such that the recombation fraction 
-  for two markers in a bin is always <= binrf, and otherwise not perform linkage-based binning. 
-  If it is nothing, binrf is set to 0.001 if #markers > ncluster*2000 and otherwise -1 if ncluster is not nothing, 
-  and binrf is set to 0.001 if #markers > maxncluster*2000 and otherwise -1 if ncluster is nothing. 
+`isrfbinning::Union{Nothing,Bool}=nothing`: if true, perform linkage-based marker binning such that the recombation fraction 
+  for two markers in a bin is close to zero. If it is nothing, it is set to true if the population is nonsubdivided and #markers > 10000. 
 
 `alwayskeep::Real=0.99`: neighbors are always kept if its recombation fraction >= alwayskeep, regardless of knncluster or knnorder. 
 
@@ -128,7 +126,7 @@ function magicmap(genofile::AbstractString,
     ncomponent::Union{Nothing,Integer} = nothing,
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
-    binrf::Union{Nothing,Real}=nothing, 
+    isrfbinning::Union{Nothing,Bool}=nothing, 
     alwayskeep::Real=0.99,            
     maxminlodcluster::Union{Nothing,Real} = nothing,
     maxminlodorder::Union{Nothing,Real} = nothing,
@@ -161,9 +159,17 @@ function magicmap(genofile::AbstractString,
     isnothing(outstem) || (outstem *= "_magicmap")
     # step1 binning
     if isnothing(isdupebinning)
-        nmarkers = MagicBase.vcf_count_markers(genofile;commentstring)                
-        isdupebinning = nmarkers > 2e4 
-        printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, " (#markers=",nmarkers,")"))
+        nmarkers = MagicBase.vcf_count_markers(genofile;commentstring)           
+        if isa(pedinfo, AbstractString) && last(splitext(pedinfo))==".csv"
+            # pedfile
+            magicped = readmagicped(pedinfo; commentstring, workdir)
+            nsub = length(unique(magicped.offspringinfo[!,:member]))
+        else
+            nsub = 1
+        end    
+        isdupebinning = nmarkers > 1e4 && nsub == 1
+        printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
+            " (#markers=",nmarkers, ", #subpops=", nsub, ")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning
@@ -195,20 +201,6 @@ function magicmap(genofile::AbstractString,
         printconsole(io, false, "Warning: "*msg)        
     else        
         startld = time()
-        if isa(pedinfo, AbstractString)
-            if last(splitext(pedinfo))==".csv"
-                # pedfile
-                magicped = readmagicped(pedinfo; commentstring, workdir)
-                skipind = size(magicped.founderinfo,1)
-            else
-                # designcode
-                designinfo = MagicBase.parsedesign(pedinfo)
-                skipind = MagicBase.getnfounder(designinfo)
-            end
-        else
-            # juncdist
-            skipind = pedinfo.nfounder
-        end
         ldfile = magicld(genofile,pedinfo;
             binfile, 
             formatpriority, threshcall,
@@ -243,22 +235,10 @@ function magicmap(genofile::AbstractString,
         printconsole(io, verbose,msg)    
     end
     # step4 construct
-    if isnothing(maxminlodcluster)
-        nmarker = MagicBase.vcf_count_markers(getabsfile(workdir, genofile))
-        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
-            maxminlodcluster = 5
-        else
-            magicped = formmagicped(genofile,pedinfo; commentstring, workdir)    
-            subpop_weight = get_subpop_weight(magicped)
-            maxminlodcluster = round(Int, 10 + 2*log(2,max(1.0,subpop_weight/100)))
-        end
-        msg = string("reset maxminlodcluster = ", maxminlodcluster)
-        printconsole(io, verbose,msg)    
-    end    
     mapfile = construct(linkagefile;
         ldfile,ispermmarker,
         ncluster, minncluster, maxncluster, ncomponent, eigselect, minsilhouette, 
-        mincomponentsize, maxrf,binrf, alwayskeep, 
+        mincomponentsize, maxrf,isrfbinning, alwayskeep, 
         maxminlodcluster, maxminlodorder, minlodcluster, minlodorder,
         knncluster, knnorder, knnsave,
         isparallel,clusteralg,

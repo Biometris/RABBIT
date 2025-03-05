@@ -135,6 +135,8 @@ function magicscan(ancestryfile::AbstractString,phenofile::AbstractString;
         error(msg)
     end
     magicancestry = readmagicancestry(ancestryfile;workdir)
+    nmarker_bef = sum(size.(magicancestry.markermap,1))    
+    MagicBase.thinmagicancestry!(magicancestry; thincm);
     # check consistency of offspring and get haploprob
     phenooffspring = phenodf[!,1]
     genooffspring = magicancestry.magicped.offspringinfo[!,:individual]
@@ -173,9 +175,7 @@ function magicscan(ancestryfile::AbstractString,phenofile::AbstractString;
         end
         dict = Dict(genooffspring .=> 1:length(genooffspring))
         offls = [dict[i] for i in commonoffspring]
-    end
-    nmarker_bef = sum(size.(magicancestry.markermap,1))    
-    MagicBase.thinmagicancestry!(magicancestry; thincm) 
+    end    
     nmarker_aft = sum(size.(magicancestry.markermap,1))   
     msg = string("#offspring=",size(phenodf,1),
         ", #marker_bef=",nmarker_bef,

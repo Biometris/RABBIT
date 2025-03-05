@@ -201,8 +201,13 @@ function clustering_silhouettes(eigvals::AbstractVector, eigvecs::AbstractMatrix
                 kclustalg, maxrepeat = 5000,                
                 minclustersize,io, verbose)    
         elseif clusteralg == "hclust"                        
-            # dists = pairwise(Euclidean(), data2; dims=2)
-            dists = pairwise(CosineDist(), data2; dims=2)
+            # https://myscale.com/blog/power-cosine-similarity-vs-euclidean-distance-explained/
+            # Opt for Cosine Similarity in high-dimensional data or text analysis 
+            # where vector magnitude is not critical; select Euclidean Similarity 
+            # for lower-dimensional spaces where vector magnitude plays a vital role.
+            # Tests for real maize data show that Cosine sometimes results in wrong unbalanced group sizes. 
+            dists = pairwise(Euclidean(), data2; dims=2)
+            # dists = pairwise(CosineDist(), data2; dims=2)
             # critical option: linkage = :single, see below
             # https://stats.stackexchange.com/questions/195446/choosing-the-right-linkage-method-for-hierarchical-clustering
             assignments, counts = robust_hclust(dists, nc; 

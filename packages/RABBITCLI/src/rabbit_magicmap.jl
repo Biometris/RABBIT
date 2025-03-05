@@ -91,9 +91,13 @@ function parse_commandline()
         arg_type = Bool
         default = true
         "--isdupebinning"
-        help = "if ture, bin duplicate marker"
+        help = "if true, bin duplicate markers"
         arg_type = AbstractString
-        default = "false"        
+        default = "nothing"        
+        "--isrfbinning"
+        help = "if true, bin cosegrating markers"
+        arg_type = AbstractString
+        default = "nothing"        
         "--mincomponentsize"
         help = "connectecd components of size < mincomponentsize are removed. If it is nothing, it is internally set. "
         arg_type = AbstractString
@@ -188,6 +192,7 @@ function main(args::Vector{String})
     push!(parsed_args, :logfile => logfile)
     reset_priority!(parsed_args)            
     reset_kwarg_nothing!(parsed_args,:isdupebinning,Bool)
+    reset_kwarg_nothing!(parsed_args,:isrfbinning,Bool)
     reset_kwarg_nothing!(parsed_args,:mincomponentsize,Int)    
     reset_kwarg_nothing!(parsed_args,:minlodcluster,Float64)    
     reset_kwarg_nothing!(parsed_args,:minlodorder,Float64)    

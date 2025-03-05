@@ -25,7 +25,6 @@ julia "%RABBITDIR%rabbit_magicfilter.jl" -g %OUTSTEM%_magicsimulate_geno.vcf.gz 
   --snp_maxomiss 0.7 --snp_minmaf 0.05 --snp_mono2miss true ^
   -o %OUTSTEM%
 
-
 julia "%RABBITDIR%rabbit_magiccall.jl" -g %OUTSTEM%_magicfilter_geno.vcf.gz -p %OUTSTEM%_magicfilter_ped.csv ^
   --nworker 2 -o %OUTSTEM%
 

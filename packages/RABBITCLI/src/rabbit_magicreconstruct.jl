@@ -116,6 +116,10 @@ function parse_commandline()
         help = "plots for up to nplot_subpop offspring in each subpopulation"
         arg_type = Int
         default = 10
+        "--thincm"
+        help = "thin ancestry results so that inter-marker distances > thincm"
+        arg_type = Float64
+        default = 0.0
         "--verbose", "-v"
         help = "if true, print messages on console"
         arg_type = Bool

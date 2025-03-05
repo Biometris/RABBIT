@@ -101,6 +101,7 @@ pedfile = outstem*"_magicfilter_ped.csv"
 magicancestry = magicreconstruct(genofile,pedfile;         
     nplot_subpop = 1, 
     # formatpriority = ["GT"],    
+    # thincm = 0, 
     outstem     
 );
 
@@ -131,3 +132,4 @@ println("trueqtl: ", truepheno["map_qtl"])
 
 # cd(@__DIR__)
 # rm.(filter(x->occursin("sim_", x),readdir()))
+

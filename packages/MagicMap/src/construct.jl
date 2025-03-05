@@ -10,7 +10,7 @@ function construct(linkagefile::AbstractString;
     minsilhouette::Real=0.0,    
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
-    binrf::Union{Nothing,Real}=nothing, 
+    isrfbinning::Union{Nothing,Bool}=nothing, 
     alwayskeep::Real=0.99,        
     maxminlodcluster::Union{Nothing,Real} = nothing,     
     maxminlodorder::Union{Nothing,Real} = nothing,
@@ -39,7 +39,7 @@ function construct(linkagefile::AbstractString;
         "minsilhouette = ", minsilhouette, "\n",
         "mincomponentsize = ", mincomponentsize, "\n",
         "maxrf(scaled from 0 to 1)= ", maxrf, "\n",
-        "binrf = ", binrf, "\n",
+        "isrfbinning = ", isrfbinning, "\n",
         "alwayskeep = ", alwayskeep, "\n",           
         "maxminlodcluster = ", maxminlodcluster, "\n",     
         "maxminlodorder = ", maxminlodorder, "\n",     
@@ -83,7 +83,7 @@ function construct(linkagefile::AbstractString;
     end
     if isnothing(ldfile)
         ldlod = nothing      
-        dupebindict = nothing        
+        dupebindict = nothing                
     else
         tused = @elapsed inds2, markers2, dupebindict, _, ldlod = MagicBase.read_ld(ldfile; workdir)             
         mem = round(Int, memoryuse()/10^6);
@@ -116,62 +116,58 @@ function construct(linkagefile::AbstractString;
         end
         markers == markers2 || @error "inconsistent markers"
     end    
-    # return (markers, physposbpls, nmissingls, recomnonfrac, recomlod, ldlod, dupebindict)    
+    if isnothing(isrfbinning)
+        nmarker = length(markers)
+        isrfbinning = nmarker > 1e4
+        msg = string("reset isrfbinning = ", isrfbinning)
+        printconsole(logio, verbose,msg)    
+    end
+    if isrfbinning
+        if isnothing(dupebindict)
+            # physmapdict = Dict(markers .=> tuple.(physchromls,physposbpls))
+            dupebindict = Dict([i => (i,physmapdict[i]...) for i in convert.(String,markers)])
+            isdupebinning = false
+        else
+            isdupebinning = true
+        end
+        nmarkerbef = length(markers)        
+        ncomponent_bin = isnothing(ncluster) ? div(minncluster+maxncluster,2) : ncluster        
+        minlod_bin = first(findminlod(recomnonfrac,recomlod,ldlod;
+            ncomponent = ncomponent_bin, maxrf=0.7, minminlod = 5.0, maxminlod = 20,
+            mincomponentsize=min(20,5+round(Int, length(markers)/5000)), alwayskeep = 1.0))
+        # dupebindict is updated to include cosegregation binning
+        tused = @elapsed  markers, nmissingls, recomnonfrac,recomlod,ldlod = binning_cosegrate!(markers,nmissingls,recomnonfrac, recomlod, 
+            ldlod, dupebindict; binrf = 1e-5,minlod_bin);        
+        if isdupebinning        
+            totmarker = sum(length(split(first(v),"||")) for (k,v) in dupebindict)
+            msg = string("#cosegrate_bins = ", length(markers), " for #markers=", totmarker, ", #ld_bins=", nmarkerbef)
+        else
+            msg = string("#cosegrate_bins = ", length(markers), " for #markers=", nmarkerbef)
+        end
+        msg *= string(", minlod_bin=",minlod_bin)
+        msg *= string("; tused=",round(tused,digits=1),"s")
+        printconsole(logio,verbose,msg)
+    end    
     if isnothing(maxminlodcluster)
         nmarker = length(markers)
-        if nmarker < 2000 || (!isnothing(ncluster) && nmarker < ncluster*200) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*100)  
+        if nmarker < 2000 
             maxminlodcluster = 5
+        elseif nmarker < 1e4 
+            maxminlodcluster = 5 + round(Int,(nmarker - 2000)*5/8000)            
         else
             maxminlodcluster = 10
         end         
         msg = string("reset maxminlodcluster = ", maxminlodcluster)
         printconsole(logio, verbose,msg)    
     end   
-    if isnothing(binrf)
-        nmarker = length(markers)
-        if nmarker < 20000 || (!isnothing(ncluster) && nmarker < ncluster*2000) || (isnothing(ncluster) && nmarker < (minncluster+maxncluster)*1000)  
-            binrf = -1.0
-        else
-            binrf = 1e-3
-        end
-        msg = string("reset binrf = ", binrf)
-        printconsole(logio, verbose,msg)    
-    end
-    if binrf < 0
-        is_cosgregate_binning = false
-    else
-        is_cosgregate_binning = true
-        if isnothing(dupebindict)
-            # physmapdict = Dict(markers .=> tuple.(physchromls,physposbpls))
-            dupebindict = Dict([i => (i,physmapdict[i]...) for i in convert.(String,markers)])
-            isdupebin = false
-        else
-            isdupebin = true
-        end
-        nmarkerbef = length(markers)        
-        minlod_bin = first(findminlod(recomnonfrac,recomlod,ldlod;
-            ncomponent = 1, maxrf=0.7, minminlod = 5.0, maxminlod = 2*maxminlodcluster,
-            mincomponentsize=min(20,5+round(Int, length(markers)/5000)), alwayskeep = 1.0))
-        # dupebindict is updated to include cosegregation binning
-        tused = @elapsed  markers, nmissingls, recomnonfrac,recomlod,ldlod = binning_cosegrate!(markers,nmissingls,recomnonfrac, recomlod, 
-            ldlod, dupebindict; binrf,minlod_bin);        
-        if isdupebin        
-            totmarker = sum(length(split(first(v),"||")) for (k,v) in dupebindict)
-            msg = string("#cosegrate_bins = ", length(markers), " for #markers=", totmarker, ", #ld_bins=", nmarkerbef)
-        else
-            msg = string("#cosegrate_bins = ", length(markers), " for #markers=", nmarkerbef)
-        end
-        msg *= string(", binrf=",binrf,", minlod_bin=",minlod_bin)
-        msg *= string("; tused=",round(tused,digits=1),"s")
-        printconsole(logio,verbose,msg)
-    end    
+
     # setup parameters including minlod
     nzlod =  nonzeros(recomlod)
     minlodsave = round(min(unique(nzlod)...),digits=3)    
     msg = string("minlodsave=",minlodsave)
     printconsole(logio,verbose,msg)
     inputmincomponentsize = mincomponentsize
-    minminlodcluster = round(Int,minlodsave)
+    minminlodcluster = round(Int,minlodsave)    
     if isnothing(mincomponentsize)        
         mincomponentsize = min(20,5+round(Int, length(markers)/5000)) 
         minlod = length(markers) < 1e4 ? minminlodcluster : max(5,minminlodcluster)        
@@ -197,8 +193,9 @@ function construct(linkagefile::AbstractString;
         printconsole(logio, verbose, msg)
     end  
     if isnothing(minlodcluster)     
+        minminlod = length(markers) < 2e3 ? minminlodcluster : max(3,minminlodcluster)        
         minlodcluster,nungroup0, _, lodhis = findminlod(recomnonfrac,recomlod,ldlod;
-            ncomponent, maxrf, minminlod = minminlodcluster, 
+            ncomponent, maxrf, minminlod, 
             maxminlod = maxminlodcluster,
             mincomponentsize,alwayskeep)
         msg = string("set minlodcluster = ",minlodcluster)
@@ -305,7 +302,7 @@ function construct(linkagefile::AbstractString;
     linkagegroups = [resgrouping.connectedsnps[i] for i in resgrouping.clusters]    
     # marker ordering and spacing             
     snpmapls = ordering_spacing(recomnonfrac,recomlod,ldlod, linkagegroups;
-        knnorder, knnsave, maxrf, alwayskeep, is_cosgregate_binning, 
+        knnorder, knnsave, maxrf, alwayskeep, isrfbinning, 
         minlodorder, minminlodorder=minlodsave, maxminlod=maxminlodorder,
         isparallel, io = logio, verbose)
     # mapdf cols: "marker","linkagegroup","poscm","physposbp", "binno","represent", "neighbor","neighbornonfrac","neighborrecomlod",...
@@ -359,7 +356,7 @@ function construct(linkagefile::AbstractString;
 end
 
 function binning_cosegrate!(markers, nmissingls, recomnonfrac, recomlod, ldlod, dupebindict;
-    binrf::Union{Nothing,Real}=nothing, # scaled from 0.0 to 1.0        
+    binrf::Union{Nothing,Real}= 1e-5, # scaled from 0.0 to 1.0        
     minlod_bin::Real=5.0,        
     )
     nmarker= size(recomlod,1)
@@ -410,7 +407,7 @@ function ordering_spacing(recomnonfrac::AbstractMatrix,
     knnsave::Union{Nothing,Function},    
     maxrf::Real,
     alwayskeep::Real,
-    is_cosgregate_binning::Bool,
+    isrfbinning::Bool,
     minlodorder::Union{Nothing,Real},
     minminlodorder::Real,
     maxminlod::Real,
@@ -428,12 +425,12 @@ function ordering_spacing(recomnonfrac::AbstractMatrix,
     tused = @elapsed if isparallel && nworkers()>1
         # snpmapls[i]: msg, orderedsnps, snppos, binnols, representls, nbrsnp, nbrnonfrac, nbrrecomlod,nbrldlod
         snpmapls = pmap((x,y,z,c,chrid)->ordering_spacing_lg(x,y,z,c; 
-            chrid, knnorder, knnsave, maxrf, alwayskeep, is_cosgregate_binning,
+            chrid, knnorder, knnsave, maxrf, alwayskeep, isrfbinning,
             minlodorder,minminlodorder, maxminlod,verbose),
             nonfracls,recomlodls, ldlodls,linkagegroups,chridls)        
     else
         snpmapls = map((x,y,z,c,chrid)->ordering_spacing_lg(x,y,z,c; 
-            chrid,knnorder, knnsave, maxrf, alwayskeep, is_cosgregate_binning,
+            chrid,knnorder, knnsave, maxrf, alwayskeep, isrfbinning,
             minlodorder,minminlodorder,maxminlod,verbose),
             nonfracls,recomlodls, ldlodls,linkagegroups,chridls)        
     end
@@ -459,7 +456,7 @@ function ordering_spacing_lg(lgnonfrac::AbstractMatrix,
     knnsave::Union{Nothing,Function},    
     maxrf::Real,
     alwayskeep::Real,
-    is_cosgregate_binning::Bool,
+    isrfbinning::Bool,
     minlodorder::Union{Nothing,Real},    
     minminlodorder::Real,
     maxminlod::Real,
@@ -478,7 +475,7 @@ function ordering_spacing_lg(lgnonfrac::AbstractMatrix,
     end
     if isnothing(knnorder)     
         kknnorder =  findknn(lgnonfrac,lgrecomlod,lgldlod; 
-            maxrf, minlod = minlodorder, is_cosgregate_binning, mincomponentsize,alwayskeep)
+            maxrf, minlod = minlodorder, isrfbinning, mincomponentsize,alwayskeep)
     else
         kknnorder = round(Int,knnorder(nsnp))
         kknnorder = min(max(2, kknnorder),nsnp)
@@ -643,22 +640,23 @@ function findknn(recomnonfrac::AbstractMatrix, recomlod::AbstractMatrix,
     ldlod::Union{Nothing,AbstractMatrix};
     maxrf::Real,
     knnmin::Union{Nothing, Integer}=nothing, 
-    is_cosgregate_binning::Bool, 
+    isrfbinning::Bool, 
     minlod::Real,
     mincomponentsize::Integer,
     alwayskeep::Real)
     similarity = getsimilarity(recomnonfrac,recomlod,ldlod,maxrf,minlod,alwayskeep)    
     nsnp = size(recomnonfrac,1)    
-    if isnothing(knnmin) 
-        if nsnp <= 128
-            knnpower = 0.5        
-        else
-            if is_cosgregate_binning
-                knnpower =  nsnp >= 512 ? 9/14 : log2(nsnp)/14            
-            else
-                knnpower =  nsnp >= 1024 ? 10/14 : log2(nsnp)/14            
-            end
-        end
+    if isnothing(knnmin)         
+        # if nsnp <= 128
+        #     knnpower = 0.5        
+        # else
+        #     if isrfbinning
+        #         knnpower =  nsnp >= 512 ? 9/14 : log2(nsnp)/14            
+        #     else
+        #         knnpower =  nsnp >= 1024 ? 10/14 : log2(nsnp)/14            
+        #     end
+        # end
+        knnpower = isrfbinning ? 9/14 : 10/14
         knnmin = round(Int, nsnp^knnpower)
     end    
     knnmin = min(max(10, knnmin),nsnp)        

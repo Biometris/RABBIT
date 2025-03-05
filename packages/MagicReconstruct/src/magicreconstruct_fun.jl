@@ -41,6 +41,7 @@ function magicreconstruct(genofile::AbstractString,
     isMMA::Bool=false,
     nplot_subpop::Integer = 10,
     posteriordigits::Integer = 4, 
+    thincm::Real = 0, 
     isparallel::Bool=true,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
@@ -79,7 +80,7 @@ function magicreconstruct(genofile::AbstractString,
         isfounderinbred,  
         chrsubset, snpsubset,
         isparallel,hmmalg, posteriordigits, isignorephase, isMMA, tempdirectory,
-        nplot_subpop,workdir,outstem,outext,logfile=io, verbose)
+        nplot_subpop, thincm, workdir,outstem,outext,logfile=io, verbose)
     tused = round(time()-starttime,digits=1)
     MagicBase.set_logfile_end(logfile, io, tused,"magicreconstruct"; verbose,delim="=")
     magicancestry
@@ -117,6 +118,8 @@ haplotype reconstruction from magicgeno.
 
 `nplot_subpop::Integer=10`: plots for up to nplot_subpop offspring in each subpopulation. 
 
+`thincm::Real = 0`: thin ancestry results so that inter-marker distances > thincm. 
+
 `isparallel::Bool=true`: if true, multicore computing over chromosomes.
 
 `workdir::AbstractString=pwd()`: working directory for input and output files.
@@ -150,6 +153,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
     isMMA::Bool=false,
     nplot_subpop::Integer=10,
     posteriordigits::Integer = 4, 
+    thincm::Real = 0, 
     isparallel::Bool=true,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
@@ -180,6 +184,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
         "hmmalg = ", hmmalg,"\n",
         "isignorephase = ", isignorephase,"\n",        
         "nplot_subpop = ", nplot_subpop, "\n",
+        "thincm = ", thincm, "\n",
         "posteriordigits = ", posteriordigits,"\n",
         "isparallel = ", isparallel, isparallel ? string("(nworker=",nworkers(),")") : "", "\n",
         "workdir = ",workdir,"\n",
@@ -263,10 +268,15 @@ function magicreconstruct!(magicgeno::MagicGeno;
                 outputfile = outtarfile
             else
                 outputfile =string(outstem,"_ancestry",outext)        
-                savemagicancestry(outputfile,magicancestry; workdir)
+                savemagicancestry(outputfile,magicancestry; workdir)                                
             end
             msg = string("save in ",outputfile, ", tused=", round(tused,digits=1),"s")
-            MagicBase.printconsole(io,verbose,msg)         
+            MagicBase.printconsole(io,verbose,msg)              
+            MagicBase.thinmagicancestry(outputfile; thincm,workdir, 
+                verbose, outext,io, isdeloutlier = false, 
+                outstem = outstem*"_ancestry"
+            )            
+
             # TODO: too large pedidgree results in error in plotting
             if size(magicancestry.magicped.founderinfo,1) <= 50            
                 try 

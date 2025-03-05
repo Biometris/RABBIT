@@ -1,7 +1,7 @@
 name = "MagicScan"
 uuid = "4e8dc5fd-9267-460e-a06c-23887d729c5e"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

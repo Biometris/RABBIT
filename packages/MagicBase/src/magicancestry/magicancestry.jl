@@ -942,21 +942,18 @@ function thinmagicancestry(ancestryfile::AbstractString;
     workdir::AbstractString=pwd(),
     outext::Union{Nothing,AbstractString}=".csv.gz",
     outstem::AbstractString=first(MagicBase.split_allext(basename(ancestryfile))),
+    io::Union{IO, Nothing} = nothing, 
     verbose::Bool=true)
     magicancestry = readmagicancestry(ancestryfile;workdir)   
-    if verbose
-        nsnps = sum(size.(magicancestry.markermap,1))
-        @info string("#snps = ",nsnps, " for inputfile =",ancestryfile)
-    end
+    nsnps_bef = sum(size.(magicancestry.markermap,1))    
     MagicBase.thinmagicancestry!(magicancestry; thincm,isdeloutlier)
     if isnothing(outext)
         outext = last(split_allext(ancestryfile))
     end
     outfile = string(outstem,"_thincm",string(thincm),outext)
     outfile2 = getabsfile(workdir,outfile)
-    if verbose
-        nsnps = sum(size.(magicancestry.markermap,1))
-        @info string("#snps = ",nsnps, " for outputfile =",outfile)
-    end
+    nsnps_aft = sum(size.(magicancestry.markermap,1))
+    msg =string("save in thinned-ancestryfile=", outfile, "; #markers_retain = ", nsnps_aft, " out of ",  nsnps_bef)
+    printconsole(io, verbose, msg)
     savemagicancestry(outfile2,magicancestry)
 end
