@@ -3,7 +3,6 @@ using MagicImpute
 using Test
 cd(@__DIR__)
 
-
 # genotype impute
 designcode = "4ril-self3"
 dataid = designcode*"_array"
@@ -12,7 +11,7 @@ magicgeno = magicimpute(genofile,designcode;
     isdelmarker = true,     
     iscorrectfounder = true, 
     isinfererror = false,
-    isordermarker = true,     
+    isordermarker = true,         
     outstem=nothing,
     verbose=false,
 );
@@ -24,7 +23,6 @@ acc = magicaccuracy!(truegeno, magicgeno)
 @test acc["founder"].genoerr < 0.05
 @test acc["offspring"].genoerr  < 0.05
 
-#  clean upNedzq!26
-
+# clean
 # rm.(filter(x->occursin(oustem*"_magicimpute",x), readdir()))
 

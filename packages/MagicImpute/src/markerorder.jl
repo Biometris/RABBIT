@@ -31,8 +31,7 @@ function updateorder!(snporder::AbstractVector,
         maxwinsize = nsnp < 100 ? div(nsnp,2) : max(20,div(nsnp,10))
     end    
     startt=time()
-    # orderactions = ["inverse","inverse00", "inverse01","inverse10"]
-    # orderactions = ["inverse", "inverse01"]
+    # actionset = ["permute", "inverse11","inverse00", "inverse01","inverse10"]    
     for proptype in orderactions
         loglhis, accepthis, winsizehis =segementorder!(snporder, proptype,
             chrfhaplo,chroffgeno, popmakeup,priorprocess;
@@ -83,7 +82,7 @@ function updateorder_neighbor!(snporder::AbstractVector,
             MagicReconstruct.reverseprior!(val)
         end
     end        
-    # orderactions = ["inverse","inverse01"]
+    # orderactions = ["inverse11","inverse01"]
     for p in eachindex(orderactions)
         proptype = orderactions[p]        
         startt = time()
@@ -182,13 +181,10 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
                 kk += 1
                 continue
             end 
-            if in(proptype,["inverse"])
+            if in(proptype,["inverse11","inverse", "permute"])
                 kkmid = nothing
             elseif in(proptype,["inverse00", "inverse01","inverse10"])                                
-                if kkmax - kkmin > 1
-                    # dls = first(values(priorprocess)).markerdeltd[tseq[kkmin:kkmax-1]]    
-                    # pos = findfirst(x->x > 10^(-4), dls)
-                    # kkmid = isnothing(pos) ? rand(kkmin:kkmax-1) : kkmin + pos-1                    
+                if kkmax - kkmin > 1                                     
                     kkmid = rand(kkmin:kkmax-1)
                 else
                     kk += 1
@@ -198,14 +194,15 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
                 @error string("unknown proptype=",proptype)
             end
             if fwkk < kkmin-1
-                fwseg= calsegforward!(dataprobls, "original",fwkk+1,kkmin-1,tseq, fwls,
+                segtseq, segttranls = getsegprop("original", fwkk+1,kkmin-1, tseq)
+                fwseg= calsegforward!(dataprobls, segtseq, segttranls,fwkk+1,tseq, fwls,
                     chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
                     epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
                     allelebalancedispersels,alleledropoutls, israndallele, issnpGT)
                 fwls[tseq[(fwkk+1):(kkmin-1)]] .= fwseg
                 fwkk = kkmin-1
             end
-            if bwkk > kkmax
+            if bwkk > kkmax                
                 bw_t = tseq[bwkk]
                 isnothing(bwls[bw_t]) && (bwls[bw_t] = bwfile[string("t", bw_t)])
                 updatebwls!(dataprobls, bwls, kkmax, bwkk, tseq, chrfhaplo, chroffgeno,
@@ -216,17 +213,21 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
             end
             bw_tmax = bwls[tseq[kkmax]]
             logbwprob = isnothing(bw_tmax) ? bwfile[string("t", tseq[kkmax])] : bw_tmax
-            if rand() < 0.01
-                fwsegcheck = calsegforward!(dataprobls, "original",kkmin,kkmax,tseq,fwls,
+            if rand() < 1.01                
+                segtseq, segttranls = getsegprop("original", kkmin, kkmax, tseq)
+                fwsegcheck = calsegforward!(dataprobls, segtseq, segttranls,kkmin,tseq,fwls,
                     chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
                     epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
                     allelebalancedispersels,alleledropoutls, israndallele, issnpGT)
                 logl2 = sum(calindlogl(last(fwsegcheck),logbwprob, popmakeup;offspringexcl))
-                isapprox(logl2,logl;atol=1e-3) || @warn string("inconsistent logl=",logl,",logl2=",logl2)
+                msg = string("inconsisent logl=",logl,",logl2=",logl2, "; action=",proptype, "; [kkmin,kkmax]=",[kkmin,kkmax])                 
+                isapprox(logl2,logl;atol=1e-3) || @warn msg maxlog=20                
             end
-            fwsegprop = calsegforward!(dataprobls, proptype,kkmin,kkmax,tseq,fwls,
+            # if proptype == "original", segttranls[i] == segtseq[i]
+            segtseq, segttranls = getsegprop(proptype, kkmin, kkmax, tseq; kkmid)
+            fwsegprop = calsegforward!(dataprobls, segtseq, segttranls,kkmin,tseq,fwls,
                 chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
-                kkmid, epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
+                epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
                 allelebalancedispersels,alleledropoutls,israndallele, issnpGT)
             proplogl = sum(calindlogl(last(fwsegprop),logbwprob, popmakeup;offspringexcl))
             if temperature <= 0.0
@@ -236,7 +237,7 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
             end
             if isaccept
                 logl = proplogl
-                set_order_prior!(snporder, priorprocess, tseq, proptype, kkmin, kkmax; kkmid)
+                set_order_prior!(snporder, priorprocess, tseq, kkmin, kkmax, segtseq, segttranls)
                 fwls[tseq[kkmin:kkmax]] .= fwsegprop
                 if fwkk>kkmax
                     fwls[tseq[(kkmax+1):fwkk]] .= nothing
@@ -261,13 +262,18 @@ function getsegprop(proptype::AbstractString, kkmin::Integer, kkmax::Integer,
     if proptype == "original"
         segtls = tseq[kkmin:kkmax-1]
         segtseq = tseq[kkmin:kkmax]
-    elseif proptype == "inverse"  # "inverse11"
+    elseif in(proptype, ["inverse11","inverse"])  # "inverse" === "inverse11"
         segtls = tseq[kkmin:kkmax-1]
         segtseq = tseq[kkmin:kkmax]
         reverse!(segtls)
         reverse!(segtseq)
-    elseif proptype == "inverse00" 
-        # snporders[tseq[kkmin:kkmid]] is a marker bin, with interdistance close to 0
+    elseif proptype == "permute"          
+        segtseq = tseq[kkmin:kkmax]
+        segtseq .= sample(segtseq, length(segtseq); replace=false)        
+        segtls = copy(segtseq)
+        setdiff!(segtls, tseq[[kkmax]])
+        # segtls = tseq[kkmin:kkmax-1] # keep the original interdistances        
+    elseif proptype == "inverse00"         
         segtseq = vcat(tseq[(kkmid+1):kkmax], tseq[kkmin:kkmid])
         segtls = vcat(tseq[(kkmid+1):(kkmax-1)], tseq[kkmin:kkmid])
     elseif proptype == "inverse01"        
@@ -281,19 +287,18 @@ function getsegprop(proptype::AbstractString, kkmin::Integer, kkmax::Integer,
 end
 
 function set_order_prior!(snporder::AbstractVector, priorprocess::AbstractDict,
-    tseq::AbstractVector,proptype::AbstractString,
-    kkmin::Integer, kkmax::Integer;
-    kkmid::Union{Nothing,Integer}=nothing)
-    segtseq, segtls = getsegprop(proptype, kkmin, kkmax, tseq; kkmid)
+    tseq::AbstractVector,kkmin::Integer, kkmax::Integer, 
+    segtseq::AbstractVector, segttranls::AbstractVector)    
     snporder[tseq[kkmin:kkmax]] .= snporder[segtseq]
     for (strkey, pri) in priorprocess
         oldtls = tseq[kkmin:kkmax-1]
-        pri.markerdeltd[oldtls] .= pri.markerdeltd[segtls]
-        pri.tranprobseq[oldtls] .= pri.tranprobseq[segtls]
+        pri.markerdeltd[oldtls] .= pri.markerdeltd[segttranls]
+        pri.tranprobseq[oldtls] .= pri.tranprobseq[segttranls]
         pri.markerid[tseq[kkmin:kkmax]] .= pri.markerid[segtseq]
     end
     snporder, priorprocess
 end
+
 
 function get_kkseg(kk::Integer, tseq::AbstractVector;
     slidewinsize::Union{Nothing, Integer,Distribution} = nothing,
@@ -332,14 +337,14 @@ function get_kkseg(kk::Integer, tseq::AbstractVector;
     end
 end
 
-
-function calsegforward!(dataprobls, proptype::AbstractString,
-    kkmin::Integer, kkmax::Integer,
+function calsegforward!(dataprobls, 
+    segtseq::AbstractVector, 
+    segttranls::AbstractVector, 
+    kkmin::Integer, 
     tseq::AbstractVector,    
     fwls::AbstractVector,
     chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
-    snporder::AbstractVector, popmakeup::AbstractDict,priorprocess::AbstractDict;
-    kkmid::Union{Nothing, Integer}=nothing,
+    snporder::AbstractVector, popmakeup::AbstractDict,priorprocess::AbstractDict;    
     epsfls::AbstractVector,
     epsols::AbstractVector,
     epso_perind::Union{Nothing,AbstractVector}, 
@@ -349,9 +354,7 @@ function calsegforward!(dataprobls, proptype::AbstractString,
     alleledropoutls::AbstractVector,
     israndallele::Bool, 
     issnpGT::AbstractVector)
-    fwseg = Vector{eltype(fwls)}()
-    # if proptype == "original", segttranls[i] == segtseq[i]
-    segtseq, segttranls = getsegprop(proptype, kkmin, kkmax, tseq; kkmid)
+    fwseg = Vector{eltype(fwls)}()    
     # cal first fw    
     snp = snporder[segtseq[1]]
     MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:],chroffgeno[snp,:],popmakeup;

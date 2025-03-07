@@ -118,7 +118,8 @@ function construct(linkagefile::AbstractString;
     end    
     if isnothing(isrfbinning)
         nmarker = length(markers)
-        isrfbinning = nmarker > 1e4
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster
+        isrfbinning = nmarker_perchr > 1e3
         msg = string("reset isrfbinning = ", isrfbinning)
         printconsole(logio, verbose,msg)    
     end
@@ -150,12 +151,13 @@ function construct(linkagefile::AbstractString;
     end    
     if isnothing(maxminlodcluster)
         nmarker = length(markers)
-        if nmarker < 2000 
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster
+        if nmarker_perchr < 200
             maxminlodcluster = 5
-        elseif nmarker < 1e4 
-            maxminlodcluster = 5 + round(Int,(nmarker - 2000)*5/8000)            
+        elseif nmarker_perchr < 1e3 
+            maxminlodcluster = 5 + round(Int,(nmarker_perchr - 200)*5/800)            
         else
-            maxminlodcluster = 10
+            maxminlodcluster = 10 + round(Int,5*log2(nmarker_perchr/1e3))
         end         
         msg = string("reset maxminlodcluster = ", maxminlodcluster)
         printconsole(logio, verbose,msg)    
@@ -193,7 +195,9 @@ function construct(linkagefile::AbstractString;
         printconsole(logio, verbose, msg)
     end  
     if isnothing(minlodcluster)     
-        minminlod = length(markers) < 2e3 ? minminlodcluster : max(3,minminlodcluster)        
+        nmarker = length(markers)
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster
+        minminlod = nmarker_perchr < 500 ? minminlodcluster : max(3,minminlodcluster)        
         minlodcluster,nungroup0, _, lodhis = findminlod(recomnonfrac,recomlod,ldlod;
             ncomponent, maxrf, minminlod, 
             maxminlod = maxminlodcluster,
@@ -212,8 +216,10 @@ function construct(linkagefile::AbstractString;
             end       
         end
     end
-    if isnothing(maxminlodorder)
-        if minlodcluster <= 10
+    if isnothing(maxminlodorder)        
+        if minlodcluster <= 5
+            maxminlodorder = 3  
+        elseif minlodcluster <= 10
             maxminlodorder = 5
         else
             maxminlodorder = round(Int, minlodcluster/2)            
@@ -656,7 +662,7 @@ function findknn(recomnonfrac::AbstractMatrix, recomlod::AbstractMatrix,
         #         knnpower =  nsnp >= 1024 ? 10/14 : log2(nsnp)/14            
         #     end
         # end
-        knnpower = isrfbinning ? 9/14 : 10/14
+        knnpower = 9/14
         knnmin = round(Int, nsnp^knnpower)
     end    
     knnmin = min(max(10, knnmin),nsnp)        

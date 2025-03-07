@@ -159,7 +159,8 @@ function magicmap(genofile::AbstractString,
     isnothing(outstem) || (outstem *= "_magicmap")
     # step1 binning
     if isnothing(isdupebinning)
-        nmarkers = MagicBase.vcf_count_markers(genofile;commentstring)           
+        nmarker = MagicBase.vcf_count_markers(genofile;commentstring)         
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster  
         if isa(pedinfo, AbstractString) && last(splitext(pedinfo))==".csv"
             # pedfile
             magicped = readmagicped(pedinfo; commentstring, workdir)
@@ -167,9 +168,9 @@ function magicmap(genofile::AbstractString,
         else
             nsub = 1
         end    
-        isdupebinning = nmarkers > 1e4 && nsub == 1
+        isdupebinning = nmarker_perchr > 1e3 && nsub == 1
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
-            " (#markers=",nmarkers, ", #subpops=", nsub, ")"))
+            " (#markers=",nmarker, ", #subpops=", nsub, ")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning

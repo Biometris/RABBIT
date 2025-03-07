@@ -69,8 +69,8 @@ function magicimpute(genofile::AbstractString,
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	            
     binriffle::Union{Nothing,Integer} = (!isnothing(mapfile) && isfounderinbred) ? -1 : nothing,  
-    orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
-    orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]        
+    orderactions::AbstractVector = ["inverse","permute"],  
+    orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.85,
     minaccept::Real=0.15,
@@ -284,11 +284,10 @@ genotype imputation from magicgeno.
   Keep magicimpute_founder for binned markers if binriffle >=2, and if isordermarker = true set random order refinement with slidewin = binriffle and ignore neighbor-based order refinement. 
     
 
-`orderactions::AbstractVector = ["inverse","inverse00"]`: update actions for random marker order refinement. 
-  It must be a subset of ["inverse","inverse00", "inverse01","inverse10"]. 
+`orderactions::AbstractVector = ["inverse","permute"]`: update actions for random marker order refinement. 
+  It must be a subset of ["permute","inverse","inverse00", "inverse01","inverse10"]. 
 
-`orderactions_neighbor::AbstractVector = ["inverse","inverse01"]`: update actions for neighbor-based marker order refinement. 
-  It must be a subset of ["inverse","inverse00", "inverse01","inverse10"]. 
+`orderactions_neighbor::AbstractVector = ["inverse11","inverse01"]`: update actions for neighbor-based marker order refinement. 
 
 `inittemperature::Real= isordermarker ? 2.0 : 0.0`: initial temperature of annealing algorithm for marker ordering.
 
@@ -351,8 +350,8 @@ function magicimpute!(magicgeno::MagicGeno;
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	        
     binriffle::Union{Nothing,Integer} = (!isnothing(inputneighbor) && isfounderinbred) ? -1 : nothing,  
-    orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
-    orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
+    orderactions::AbstractVector = ["inverse","permute"],  
+    orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.85,
     minaccept::Real=0.15,

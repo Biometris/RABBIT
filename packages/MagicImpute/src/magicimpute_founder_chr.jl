@@ -24,8 +24,8 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
 	slidewin::Union{Nothing,Integer} = nothing,  
 	slidewin_neighbor::Union{Nothing,Integer} = 200,      
-	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
-    orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
+	orderactions::AbstractVector = ["inverse","permute"],  
+    orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.85,
     minaccept::Real=0.15,
@@ -426,8 +426,8 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
 	slidewin::Union{Nothing,Integer} = nothing,  
 	slidewin_neighbor::Union{Nothing,Integer} = 200,      
-	orderactions::AbstractVector = ["inverse","inverse00"],  # ["inverse","inverse00", "inverse01","inverse10"]  
-    orderactions_neighbor::AbstractVector = ["inverse","inverse01"],  # ["inverse","inverse00", "inverse01","inverse10"]   
+	orderactions::AbstractVector = ["inverse","permute"],  
+    orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.85,
     minaccept::Real=0.15,
@@ -670,10 +670,10 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	nbrmaxwin = [maxwinsize for _ in 1:4]
 	if isnothing(slidewin)
 		if isnothing(chrneighbor)				
-			initwinsize = max(10,round(Int, sqrt(nsnp)))
+			initwinsize = max(5,round(Int, sqrt(nsnp)))
 		else
 			chrnneighbor = mean(length.(values(chrneighbor)))
-			initwinsize = max(10,round(Int,min(sqrt(nsnp),chrnneighbor/3)))				
+			initwinsize = max(5,round(Int,min(sqrt(nsnp),chrnneighbor/3)))				
 		end
 	else
 		initwinsize = slidewin
