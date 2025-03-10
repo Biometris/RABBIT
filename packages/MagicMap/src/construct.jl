@@ -119,7 +119,7 @@ function construct(linkagefile::AbstractString;
     if isnothing(isrfbinning)
         nmarker = length(markers)
         nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster
-        isrfbinning = nmarker_perchr > 1e3
+        isrfbinning = nmarker_perchr > 500
         msg = string("reset isrfbinning = ", isrfbinning)
         printconsole(logio, verbose,msg)    
     end
@@ -165,6 +165,10 @@ function construct(linkagefile::AbstractString;
 
     # setup parameters including minlod
     nzlod =  nonzeros(recomlod)
+    if length(nzlod) == size(recomlod,1)
+        msg = string("no significant recombination fraction resulting from pairwise linkage analyses!")
+        error(msg)
+    end    
     minlodsave = round(min(unique(nzlod)...),digits=3)    
     msg = string("minlodsave=",minlodsave)
     printconsole(logio,verbose,msg)
@@ -217,9 +221,7 @@ function construct(linkagefile::AbstractString;
         end
     end
     if isnothing(maxminlodorder)        
-        if minlodcluster <= 5
-            maxminlodorder = 3  
-        elseif minlodcluster <= 10
+        if minlodcluster <= 10
             maxminlodorder = 5
         else
             maxminlodorder = round(Int, minlodcluster/2)            

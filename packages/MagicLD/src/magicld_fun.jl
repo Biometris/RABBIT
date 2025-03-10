@@ -157,9 +157,14 @@ function magicld!(magicgeno::MagicGeno;
     MagicBase.rawgenoprob!(magicgeno; targets = ["founders","offspring"],
         seqerror, isfounderinbred=false, isoffspringinbred = isdepmodel)        
     MagicBase.rawgenocall!(magicgeno; callthreshold = threshcall, isfounderinbred=false,ishalfcall=true)
-    if issubset(offformat, ["GP", "AD"])
+    if !isempty(intersect(offformat, ["GP", "AD"]))
         msg = string("offspringformat=",join(offformat,","), "; transformed to GT with threshcall=",threshcall)
         printconsole(io,verbose,msg)
+    end
+    if in("GT_phased", offformat)
+        msg = string("ignore phasing information; offspringformat=",join(offformat,","))
+        verbose && @warn msg
+        printconsole(io,false,"WARN: "*msg)
     end
     _, offspringformat = MagicBase.setunphasedgeno!(magicgeno)
     if in("GT_haplo",offspringformat)

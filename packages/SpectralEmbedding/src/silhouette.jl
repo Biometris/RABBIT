@@ -15,7 +15,7 @@ function cal_silhouettes(data::AbstractMatrix, clusters::AbstractVector;
             if length(cluster) > 1                
                 pairwise!(Euclidean(), di, view(data,:, i:i),data; dims=2)
                 ai = (sum(di[1,cluster])-di[1,i])/(length(cluster)-1)
-                bi = minimum([mean(di[1,clusters[c2]]) for c2 in c_rest])
+                bi = minimum([isempty(clusters[c2]) ? 0 : mean(di[1,clusters[c2]]) for c2 in c_rest])
                 sils[i] = (bi-ai)/max(ai,bi)
             end
         end

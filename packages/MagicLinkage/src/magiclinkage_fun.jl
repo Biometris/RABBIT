@@ -99,13 +99,25 @@ function magiclinkage!(magicgeno::MagicGeno;
     MagicBase.reset_juncdist!(magicgeno.magicped,model; io=logio,verbose,isfounderinbred)    
     isdepmodel = model == "depmodel"    
     seqerror = MagicBase.get_seqerror(likeparameters)
-    offformat = unique(reduce(vcat,[unique(i[!,:offspringformat]) for i=magicgeno.markermap]))
-    setdiff!(offformat,["GT"])
+    offformat = unique(reduce(vcat,[unique(i[!,:offspringformat]) for i=magicgeno.markermap]))    
     MagicBase.rawgenoprob!(magicgeno; seqerror,isfounderinbred,isoffspringinbred= isdepmodel)    
     MagicBase.rawgenocall!(magicgeno; callthreshold = threshcall, isfounderinbred, ishalfcall=true)
-    if issubset(offformat, ["GP", "AD"])
+    if !isempty(intersect(offformat, ["GP", "AD"]))
         msg = string("offspringformat=",join(offformat,","), "; transformed to GT with threshcall=",threshcall)
         printconsole(logio,verbose,msg)
+    end
+    if  in("GT_phased",offformat)
+        MagicReconstruct.reset_ignorephase!(magicgeno; isfounderphase = false)
+        msg = string("ignore phasing information; offspringformat=",join(offformat,","))
+        verbose && @warn msg
+        printconsole(logio,false,"WARN: "*msg)
+    end
+    founderformat = unique(reduce(vcat,[unique(i[!,:founderformat]) for i=magicgeno.markermap]))
+    if in("GT_phased", founderformat) 
+        MagicReconstruct.reset_ignorephase!(magicgeno; isfounderphase = true)
+        msg = string("ignore phasing information; founderformat=",join(founderformat,","))
+        verbose && @warn msg
+        printconsole(logio,false,"WARN: "*msg)
     end
     nsnp = size(only(magicgeno.markermap),1)    
     if isnothing(minlodsave)
@@ -275,10 +287,8 @@ function sublinkage(subpairls::AbstractVector,offcode::AbstractMatrix,
             rf,lod = link2loci(snp1,snp2, offcode, condlike, fhaploset, popmakeup,recomprior;
                 missingcode,byfounder,isfounderinbred)
             rf = round(rf,digits=5)
-            lod = round(lod,digits=2)
-            # if snp1 == 1
-            #     println("snp1=",snp1,",snp2=",snp2,",rf=",rf, ",lod=",lod)
-            # end
+            lod = round(lod,digits=2)                        
+            println("snp1=",snp1,",snp2=",snp2,",rf=",rf, ",lod=",lod)
             if lod ≥ minlodsave && rf ≤ maxrfsave
                 msg = string(join([snp1,snp2],","), ",", join([rf,lod],","))
                 write(io, msg, "\n")

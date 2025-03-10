@@ -356,20 +356,29 @@ function magicreconstruct!(magicgeno::MagicGeno;
     magicancestry
 end
 
-function reset_ignorephase!(magicgeno::MagicGeno)
+function reset_ignorephase!(magicgeno::MagicGeno; isfounderphase=false)
+    formatcol = isfounderphase ? "founderformat" : "offspringformat"
     for chr in 1:length(magicgeno.markermap)
-        offformat = magicgeno.markermap[chr][!,:offspringformat]
-        b = offformat .== "GT_phased"
+        formatls = magicgeno.markermap[chr][!,formatcol]
+        b = formatls .== "GT_phased"
         if any(b)
-            subgeno = view(magicgeno.offspringgeno[chr], b,:)
+            if isfounderphase
+                subgeno = view(magicgeno.foundergeno[chr], b,:)
+            else
+                subgeno = view(magicgeno.offspringgeno[chr], b,:)
+            end
             for i in eachindex(subgeno)                
                 subgeno[i] = join(subgeno[i])                                
             end
-            magicgeno.markermap[chr][b,:offspringformat] .= "GT_unphased"
+            magicgeno.markermap[chr][b,formatcol] .= "GT_unphased"
         end
-        b = offformat .== "GP"
+        b = formatls .== "GP"
         if any(b)
-            subgeno = view(magicgeno.offspringgeno[chr], b,:)
+            if isfounderphase
+                subgeno = view(magicgeno.foundergeno[chr], b,:)
+            else
+                subgeno = view(magicgeno.offspringgeno[chr], b,:)
+            end            
             for i in eachindex(subgeno)
                 ls = subgeno[i]
                 if length(ls) == 4                    

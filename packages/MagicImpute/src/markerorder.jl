@@ -184,7 +184,14 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
             if in(proptype,["inverse11","inverse", "permute"])
                 kkmid = nothing
             elseif in(proptype,["inverse00", "inverse01","inverse10"])                                
-                if kkmax - kkmin > 1                                     
+                if kkmax - kkmin > 1           
+                    # dls = first(values(priorprocess)).markerdeltd[tseq[kkmin:kkmax-1]]    
+                    # pos = findfirst(x->x > 10^(-4), dls)
+                    # if isnothing(pos) 
+                    #     kkmid = rand(kkmin:kkmax-1)
+                    # else
+                    #     kkmid = kkmin + pos-1     
+                    # end                     
                     kkmid = rand(kkmin:kkmax-1)
                 else
                     kk += 1

@@ -53,25 +53,42 @@ function get_dosegeno(genomtx::AbstractMatrix, formatvec::AbstractVector;
     res = zeros(Float64,size(genomtx)...)
     for format = formatset
         if format in  ["GT_haplo", "GT_unphased","GT_phased"]
+            isphased = format == "GT_phased"      
             jj = formatvec .== format
             subgeno = view(genomtx,jj,:)
             subres = view(res,jj,:)
             if !isempty(jj)
                 gset = unique(subgeno)
-                if isdepmodel
-                    # rule = Dict("NN"=>missing,"11"=>0.0,"12"=>missing,"21"=>missing, "22"=>1.0,
-                    #     "1N"=>0.0,"N1"=>0.0,"2N"=>1.0,"N2"=>1.0)                    
-                    rule = Dict("11"=>1.0,"1N"=>1.0,"N1"=>1.0,"22"=>2.0,"2N"=>2.0,"N2"=>2.0)             
-                    setdiff!(gset,["NN","12","21"])
-                else
-                    # rule = Dict("NN"=>missing,"11"=>0.0,"12"=>1.0,"21"=>1.0, "22"=>2.0,
-                    #     "1N"=>0.5,"N1"=>0.5,"2N"=>1.5,"N2"=>1.5)
+                if isdepmodel                    
+                    rule = Dict("11"=>1.0,"1N"=>1.0,"N1"=>1.0,"22"=>2.0,"2N"=>2.0,"N2"=>2.0)       
+                    # default 0 of res denotes missing
+                    if isphased      
+                        setdiff!(gset,[["N","N"],["1","2"],["2","1"]])
+                    else
+                        setdiff!(gset,["NN","12","21"])
+                    end
+                else                    
                     # 1+ count of allele2; 0 denotes missing
-                    rule = Dict("11"=>1.0,"1N"=>1.5,"N1"=>1.5,"12"=>2.0,"21"=>2.0, "22"=>3.0,"2N"=>2.5,"N2"=>2.5)                
-                    setdiff!(gset,["NN"])
-                end                
-                for g in gset
-                    subres[subgeno .== g] .= rule[g]
+                    rule = Dict("11"=>1.0,"1N"=>1.5,"N1"=>1.5,"12"=>2.0,"21"=>2.0, "22"=>3.0,"2N"=>2.5,"N2"=>2.5)                                    
+                    if isphased
+                        setdiff!(gset,[["N","N"]])
+                    else
+                        setdiff!(gset,["NN"])
+                    end
+                end          
+                if isphased
+                    for g in gset                                        
+                        dose = rule[join(g)]
+                        for i in eachindex(subres, subgeno)    
+                            if subgeno[i] == g
+                                subres[i] = dose
+                            end
+                        end                        
+                    end
+                else
+                    for g in gset                                        
+                        subres[subgeno .== g] .= rule[g]
+                    end
                 end
             end
         elseif format == "GP"
