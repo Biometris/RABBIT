@@ -162,7 +162,7 @@ function magicld!(magicgeno::MagicGeno;
         printconsole(io,verbose,msg)
     end
     if in("GT_phased", offformat)
-        msg = string("ignore phasing information; offspringformat=",join(offformat,","))
+        msg = string("ignore phase information; offspringformat=",join(offformat,","))
         verbose && @warn msg
         printconsole(io,false,"WARN: "*msg)
     end

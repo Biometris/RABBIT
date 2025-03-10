@@ -108,14 +108,14 @@ function magiclinkage!(magicgeno::MagicGeno;
     end
     if  in("GT_phased",offformat)
         MagicReconstruct.reset_ignorephase!(magicgeno; isfounderphase = false)
-        msg = string("ignore phasing information; offspringformat=",join(offformat,","))
+        msg = string("ignore phase information; offspringformat=",join(offformat,","))
         verbose && @warn msg
         printconsole(logio,false,"WARN: "*msg)
     end
     founderformat = unique(reduce(vcat,[unique(i[!,:founderformat]) for i=magicgeno.markermap]))
     if in("GT_phased", founderformat) 
         MagicReconstruct.reset_ignorephase!(magicgeno; isfounderphase = true)
-        msg = string("ignore phasing information; founderformat=",join(founderformat,","))
+        msg = string("ignore phase information; founderformat=",join(founderformat,","))
         verbose && @warn msg
         printconsole(logio,false,"WARN: "*msg)
     end
@@ -288,7 +288,7 @@ function sublinkage(subpairls::AbstractVector,offcode::AbstractMatrix,
                 missingcode,byfounder,isfounderinbred)
             rf = round(rf,digits=5)
             lod = round(lod,digits=2)                        
-            println("snp1=",snp1,",snp2=",snp2,",rf=",rf, ",lod=",lod)
+            # println("snp1=",snp1,",snp2=",snp2,",rf=",rf, ",lod=",lod)
             if lod ≥ minlodsave && rf ≤ maxrfsave
                 msg = string(join([snp1,snp2],","), ",", join([rf,lod],","))
                 write(io, msg, "\n")
