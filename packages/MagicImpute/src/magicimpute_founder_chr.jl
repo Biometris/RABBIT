@@ -657,7 +657,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	# maxwinsize = div(nsnp,min(20,5+round(Int, nsnp/500)))
 	if isnothing(slidewin_neighbor) 
 		if nsnp < 500			
-			maxwinsize = max(10,min(50,div(nsnp,2)))
+			maxwinsize = max(10,min(50,div(nsnp,5)))
 		elseif nsnp < 2000
 			maxwinsize = div(nsnp, 10)
 		else
@@ -665,15 +665,15 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		end
 	else
 		maxwinsize = slidewin_neighbor  # default 200
-		maxwinsize = max(10,min(div(nsnp,2),maxwinsize))
+		maxwinsize = max(10,min(div(nsnp,5),maxwinsize))
 	end		
 	nbrmaxwin = [maxwinsize for _ in 1:4]
 	if isnothing(slidewin)
 		if isnothing(chrneighbor)				
-			initwinsize = max(5,round(Int, sqrt(nsnp)))
+			initwinsize = max(10,round(Int, sqrt(nsnp)))
 		else
 			chrnneighbor = mean(length.(values(chrneighbor)))
-			initwinsize = max(5,round(Int,min(sqrt(nsnp),chrnneighbor/3)))				
+			initwinsize = max(10,round(Int,min(sqrt(nsnp),chrnneighbor/3)))				
 		end
 	else
 		initwinsize = slidewin

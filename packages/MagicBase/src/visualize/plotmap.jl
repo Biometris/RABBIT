@@ -199,12 +199,13 @@ function plotmarkermap(mapx::DataFrame,mapy::DataFrame;
         snpii2 = snpii[b]
         xls = Float32.(df[b,poscolls[1]])        
         yls = Float32.(mapy[snpii2,poscolls[2]]) 
+        tau = round(corkendall(snpii2,collect(1:length(snpii2))),digits=cordigits) # keep consistent wih mapcorkendall
         # calculate rank correlation only for LGs with >20% markers
-        chridls = mapy[snpii2,chrcolls[2]]
-        isdict = Dict([i=>sum(chridls .== i)/length(chridls) > 0.2 for i in unique(chridls)])
-        b2 = [isdict[i] for i in chridls]
-        snpii3 = any(b2) ? snpii2[b2] : snpii2
-        tau = round(corkendall(snpii3,collect(1:length(snpii3))),digits=cordigits)
+        # chridls = mapy[snpii2,chrcolls[2]]
+        # isdict = Dict([i=>sum(chridls .== i)/length(chridls) > 0.2 for i in unique(chridls)])
+        # b2 = [isdict[i] for i in chridls]
+        # snpii3 = any(b2) ? snpii2[b2] : snpii2
+        # tau = round(corkendall(snpii3,collect(1:length(snpii3))),digits=cordigits)
 
         b = [in(i, mapy_miss[!,:marker]) for i in df[!,:marker]]
         xls_ungroup = Vector{Float32}(df[b, poscolls[1]])       

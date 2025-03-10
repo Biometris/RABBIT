@@ -65,10 +65,15 @@ function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVe
     2a/(2a + b + c)
 end
 
-function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})
-    mapylg = MagicBase.findtruelg(mapy,mapx)    
-    mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
-    map(MagicBase.calcorkendall, mapx, mapy2)
+# function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})
+#     mapylg = MagicBase.findtruelg(mapy,mapx)    
+#     mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
+#     map(MagicBase.calcorkendall, mapx, mapy2)
+# end
+
+function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})    
+    allmapy = reduce(vcat,mapy)
+    [calcorkendall(df, allmapy) for df in mapx]    
 end
 
 function calcorkendall(chrmapx::DataFrame, chrmapy::DataFrame)
