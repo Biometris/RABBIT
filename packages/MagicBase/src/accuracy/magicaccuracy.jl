@@ -487,18 +487,23 @@ function alignchromosome!(truegeno::MagicGeno, magicest::Union{MagicGeno,MagicAn
     truegeno
 end
 
-function findtruelg(truemarkermap::Vector{DataFrame}, estmarkermap::Vector{DataFrame};verbose=true)
+
+function findtruelg(truemarkermap, estmarkermap; minfreq=0.2, isphysmap = [false, false], verbose=true)
     # true chromosome IDs for each stimated linakge group
     snpinter = [length(intersect(i[!,:marker],j[!,:marker]))
-        for i in truemarkermap, j in estmarkermap]        
-    rowmax = maximum(snpinter,dims=2)[:,1]
+        for i in truemarkermap, j in estmarkermap]                
+    # @info "" snpinter
     truelg = [begin
         pos = findall(snpinter[:,chr] .> 1)
-        pos2 = pos[snpinter[pos,chr] .>= rowmax[pos]]
-        pos2 = union(pos2,argmax(snpinter[:,chr]))
+        ninterls = snpinter[pos,chr]
+        nsum = sum(ninterls)
+        pos2 = pos[[n/nsum >= minfreq && n > 5 for n in ninterls]]                
+        pos2 = union(pos2,argmax(snpinter[:,chr]))        
+        pos2
     end for chr in 1:size(snpinter,2)]        
-    truechridls = convert.(String,[string(i[1,:linkagegroup]) for i in truemarkermap])
-    estchridls = convert.(String,[string(i[1,:linkagegroup]) for i in estmarkermap])
+    chrcol = [i ? "physchrom" : "linkagegroup" for i in isphysmap]
+    truechridls = convert.(String,[string(i[1,chrcol[1]]) for i in truemarkermap])
+    estchridls = convert.(String,[string(i[1,chrcol[2]]) for i in estmarkermap])
     pos = findall(length.(truelg) .> 1)
     if !isempty(pos)        
         truels = [truechridls[i] for i in truelg[pos]]
@@ -522,6 +527,7 @@ function findtruelg(truemarkermap::Vector{DataFrame}, estmarkermap::Vector{DataF
     end
     truelg
 end
+
 
 
 function alignmarker!(truegeno::MagicGeno, magicest::Union{MagicGeno,MagicAncestry})

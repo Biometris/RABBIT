@@ -14,9 +14,10 @@ function mapaccuracy(mapxfile::AbstractString,mapyfile::AbstractString;
     mapaccuracy(mapx,mapy; isgroupacc,isphysmap)
 end
 
-function mapaccuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame}; isgroupacc=true,isphysmap::AbstractVector=[false,false])    
+function mapaccuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame}; 
+    isgroupacc=true,isphysmap::AbstractVector=[false,false])    
     groupres = grouping_accuracy(mapx,mapy; isgroupacc)
-    orderacc = mapcorkendall(mapx,mapy)
+    orderacc = mapcorkendall(mapx,mapy; isphysmap)
     map1len = maplength(mapx; isphysmap=isphysmap[1])
     map2len = maplength(mapy; isphysmap=isphysmap[2])
     map1nsnp = sum(size.(mapx,1))
@@ -65,18 +66,18 @@ function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVe
     2a/(2a + b + c)
 end
 
-# function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})
-#     mapylg = MagicBase.findtruelg(mapy,mapx)    
-#     mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
-#     map(MagicBase.calcorkendall, mapx, mapy2)
-# end
-
-function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})    
-    allmapy = reduce(vcat,mapy)
-    [calcorkendall(df, allmapy) for df in mapx]    
+function mapcorkendall(mapx, mapy; isphysmap = [false,false], minfreq = 0.2)
+    mapylg = MagicBase.findtruelg(mapy,mapx; minfreq, isphysmap = reverse(isphysmap))    
+    mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
+    map(MagicBase.calcorkendall, mapx, mapy2)
 end
 
-function calcorkendall(chrmapx::DataFrame, chrmapy::DataFrame)
+# function mapcorkendall(mapx::Vector{DataFrame}, mapy::Vector{DataFrame})    
+#     allmapy = reduce(vcat,mapy)
+#     [calcorkendall(df, allmapy) for df in mapx]    
+# end
+
+function calcorkendall(chrmapx::AbstractDataFrame, chrmapy::AbstractDataFrame)
     (isempty(chrmapx) || isempty(chrmapy)) && return 0.0
     commonsnps = intersect(chrmapx[!,:marker],chrmapy[!,:marker])
     df=filter(x->in(x[1],commonsnps),chrmapx)

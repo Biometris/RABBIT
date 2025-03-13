@@ -188,24 +188,21 @@ function plotmarkermap(mapx::DataFrame,mapy::DataFrame;
     mapy = reduce(vcat,gmapy[ii])    
     # reset poscol
     reset_poscol!(mapx,poscolls[1])
-    reset_poscol!(mapy,poscolls[2])    
+    reset_poscol!(mapy,poscolls[2])        
     gmapy = groupby(mapy,chrcolls[2]; sort=false)
-    # calculate tau for each LG of mapx
     snprule = Dict(mapy[!,:marker] .=> 1:size(mapy,1))
     gmapx = groupby(mapx,chrcolls[1]; sort=false)
+    orderacc = round.(mapcorkendall(gmapx, gmapy; isphysmap), digits = cordigits)
+    msg = string("tau=",join(abs.(orderacc),"|"))
+    printconsole(io,verbose,msg)
     res=[begin    
+        tau = orderacc[lg]
+        df = gmapx[lg]
         snpii = [get(snprule,i,nothing) for i in df[!,:marker]]        
         b = .!isnothing.(snpii)
         snpii2 = snpii[b]
         xls = Float32.(df[b,poscolls[1]])        
-        yls = Float32.(mapy[snpii2,poscolls[2]]) 
-        tau = round(corkendall(snpii2,collect(1:length(snpii2))),digits=cordigits) # keep consistent wih mapcorkendall
-        # calculate rank correlation only for LGs with >20% markers
-        # chridls = mapy[snpii2,chrcolls[2]]
-        # isdict = Dict([i=>sum(chridls .== i)/length(chridls) > 0.2 for i in unique(chridls)])
-        # b2 = [isdict[i] for i in chridls]
-        # snpii3 = any(b2) ? snpii2[b2] : snpii2
-        # tau = round(corkendall(snpii3,collect(1:length(snpii3))),digits=cordigits)
+        yls = Float32.(mapy[snpii2,poscolls[2]])         
 
         b = [in(i, mapy_miss[!,:marker]) for i in df[!,:marker]]
         xls_ungroup = Vector{Float32}(df[b, poscolls[1]])       
@@ -218,9 +215,7 @@ function plotmarkermap(mapx::DataFrame,mapy::DataFrame;
             xls_ungroup .= (xbegin + xend) .- reverse(xls_ungroup)
         end         
         [xls,yls,tau,xls_ungroup]
-    end for df in gmapx]
-    msg = string("tau=",join([i[3] for i in res],"|"))
-    printconsole(io,verbose,msg)
+    end for lg in eachindex(orderacc)]    
     # plot chr boundaries
     xmax = mapx[end,poscolls[1]]
     ymax = mapy[end,poscolls[2]]
