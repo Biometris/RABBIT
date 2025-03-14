@@ -7,7 +7,7 @@ function construct(linkagefile::AbstractString;
     maxncluster::Integer = isnothing(ncluster) ? 30 : ncluster,        
     eigselect::AbstractString="eigratio", 
     ncomponent::Union{Nothing,Integer} = nothing,    
-    minsilhouette::Real=0.0,    
+    minsilhouette::Real=0.5,    
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
     isrfbinning::Union{Nothing,Bool}=nothing, 

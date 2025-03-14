@@ -36,7 +36,7 @@ end
 function marker_grouping(similarity::AbstractMatrix,        
     nclusters::AbstractVector;
     mincomponentsize::Integer=1,
-    minsilhouette::Real=0.0,
+    minsilhouette::Real=0.5,
     clusteralg::Union{AbstractString,AbstractVector}="kmeans",
     eigselect::AbstractString="eigratio", 
     eigweightfrac::Real=0.01, 
@@ -75,8 +75,8 @@ function marker_grouping(similarity::AbstractMatrix,
     else
         msg = string(length(clusters2), " group sizes: ", join(length.(clusters2),","))
         msg *= string(" after removing ", nbadii, " markers with silhouette < ", minsilhouette)
-        badfrac = nbadii/size(similarity,1)
-        if badfrac > 1/(2*median(nclusters))
+        badfrac = nbadii/size(similarity,1)        
+        if badfrac > max(0.05,1/(2*median(nclusters)))
             msg2 = string("minsilhouette might be too large!")
             if minsilhouette > 0
                 msg2 *= string(" Suggest to set minsilhouette = 0")

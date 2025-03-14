@@ -52,7 +52,7 @@ genetic map construction from genofile and pedinfo.
 
 `clusteralg::Union{Nothing,AbstractString}=nothing`: clustering algorithm after spectral embedding. 
 
-`minsilhouette::Real=0.0`: delete markers withg silhouette scores < minsilhouette. 
+`minsilhouette::Real=0.5`: delete markers withg silhouette scores < minsilhouette. 
 
 `minlodcluster::Union{Nothing, Real} = nothing`: minimum linkage LOD threshold.
   If it is nothing, estimated internally as the minimum lod keeping the resulting
@@ -122,7 +122,7 @@ function magicmap(genofile::AbstractString,
     maxncluster::Integer = isnothing(ncluster) ? 30 : ncluster,        
     eigselect::AbstractString="eigratio", 
     clusteralg::Union{Nothing,AbstractString}=nothing, 
-    minsilhouette::Real=0.0,        
+    minsilhouette::Real=0.5,        
     ncomponent::Union{Nothing,Integer} = nothing,
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
@@ -163,14 +163,15 @@ function magicmap(genofile::AbstractString,
         nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster  
         if isa(pedinfo, AbstractString) && last(splitext(pedinfo))==".csv"
             # pedfile
-            magicped = readmagicped(pedinfo; commentstring, workdir)
+            magicped = readmagicped(pedinfo; commentstring, workdir)            
             nsub = length(unique(magicped.offspringinfo[!,:member]))
+            npopsize = size(magicped.offspringinfo,1)
         else
             nsub = 1
         end    
-        isdupebinning = nmarker_perchr > 1e3 && nsub == 1
+        isdupebinning = nmarker_perchr > 1e3 && nsub == 1 && npopsize > 100
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
-            " (#markers=",nmarker, ", #subpops=", nsub, ")"))
+            " (#markers=",nmarker, ", #subpops=", nsub, ", popsize=", npopsize, ")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning

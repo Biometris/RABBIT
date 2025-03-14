@@ -65,7 +65,7 @@ function parse_commandline()
         "--minsilhouette"
         help = "delete markers withg silhouette scores < minsilhouette"
         arg_type = Float64
-        default = 0.0
+        default = 0.5
         "--formatpriority"
         help = "priorities of genotype formats in a decreasing order"
         arg_type = AbstractString
