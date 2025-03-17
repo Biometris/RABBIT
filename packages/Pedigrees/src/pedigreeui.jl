@@ -285,6 +285,7 @@ function splitvec(A::AbstractVector)
 end
 
 
+
 """
     plot(ped::Pedigree)
 
@@ -292,18 +293,18 @@ plot a pedigree.
 
 """
 function plotped(pedigree::Pedigree;
-    curves = false,
-    names = nothing,
+    curves = true,
+    nodename = nothing,
     nodecolor = nothing,
     plotsize=nothing,
     markersize = nothing,
     fontsize = 10,
     nodesize = 0.1,
     edgecolor = :black,
-    edgestyle = :solid,
-    plotkeyargs... 
+    edgestyle = :solid,    
+    plotargs... 
     )
-    adj = Pedigrees.pedadjmtx(pedigree)
+    adj = pedadjmtx(pedigree)
     n=size(adj,1)
     if issubset(["female","male"], unique(pedigree.gender))
         nodeshape = [i=="male" ? :rect : :circle for i= pedigree.gender]
@@ -311,41 +312,50 @@ function plotped(pedigree::Pedigree;
         nodeshape = :circle
     end
     nf  = pedigree.nfounder
-    if isnothing(nodecolor)
-        # founder_colors = [3 for i=1:nf]
+    if isnothing(nodecolor)    
         founder_colors = distinguishable_colors(nf, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)
         nodecolor = vcat(founder_colors,[RGB(0.9,0.9,0.9) for i=nf+1:n])
     end
-    if isnothing(names)
-        isstr_ped = eltype(pedigree.member) <: AbstractString
-        if isstr_ped            
-            fls = pedigree.member[1:nf]
-            offls = nf+1:length(pedigree.member)
-            offls2 = [in(i,fls) ? string("O_",i) : i for i in offls]
-            nodename = string.(vcat(fls,offls2))
-            b = pedigree.generation .== last(pedigree.generation)
-            nodename[b] .= pedigree.member[b]
-        else
-            nodename = string.(pedigree.member)
-        end
-    else
-        nodename = string.(names)
+    nodename = isnothing(nodename) ? string.(pedigree.member) : string.(nodename)    
+    xls, yls = get_ped_xy(pedigree)    
+    xmin, xmax = extrema(xls)
+    if isnothing(plotsize)
+        plotsize = (120*(xmax-xmin),100*first(yls))
     end
-    namemax = max(length.(nodename[1:nf])...)
-    for i in 1:nf
-        len = length(nodename[i])
-        padlen = div(namemax-len,2)
-        nodename[i] = lpad(rpad(nodename[i],len+padlen),namemax)
-    end 
-    gen = pedigree.generation
+
+    if isnothing(markersize)
+        lenls = length.(splitvec(pedigree.generation))
+        maxlen = maximum(lenls)
+        markersize = min(maxlen<=4 ? 2 : 5, max(length(lenls),maxlen)/3.0)
+    end
+    fig = graphplot(adj;
+        x=xls, y=yls,
+        nodeshape,
+        nodecolor,        
+        curves,
+        markersize, 
+        nodesize, 
+        edgecolor, 
+        edgestyle,
+        size = plotsize, 
+        plotargs...
+    )
+    labls = [(xls[i],yls[i],Plots.text(nodename[i],fontsize,:black)) for i=eachindex(xls, yls, nodename)]
+    annotate!(fig,labls)
+    fig
+end
+
+function get_ped_xy(ped::Pedigree; minxspace=nothing)
+    gen = ped.generation
     gen2 = splitvec(gen)        
     gensize = reduce(vcat,[length(i)*ones(Int,length(i)) for i in gen2])      
     x_gen=reduce(vcat,[begin
         c = length(i)
         xx = (1:c) .- ((c+1)/2)        
     end for i=gen2])
-    iped = Pedigrees.toindexped(pedigree)
-    x = zeros(length(iped.member))
+    nf = ped.nfounder
+    iped = toindexped(ped)    
+    x = zeros(length(iped.member))    
     x[1:nf] .= (1:nf) .- ((nf+1)/2)
     for i in nf+1:length(iped.member)                
         x[i] = (x[iped.mother[i]] + x[iped.father[i]])/2
@@ -362,23 +372,52 @@ function plotped(pedigree::Pedigree;
     # enlarge founder populations
     b = gen .== 0
     x[b] .*= 1.1
-    y[b] .+= 1.0    
-    if isnothing(plotsize)
-        plotsize = (100*(xmax-xmin),80*first(y))
+    y[b] .+= 1.0
+
+    minxspace = isnothing(minxspace) ? xscale : 1
+    # set minxspace 
+    iils = splitindex(gen)
+    for ii in iils        
+        subx = view(x, ii)
+        oo = sortperm(subx)
+        d = diff(subx[oo])
+        d .= [i < minxspace ? minxspace : i for i in d]
+        d .= accumulate(+, d)
+        pushfirst!(d,0)
+        start = subx[oo[1]] - (d[end] - (subx[oo[end]] - subx[oo[1]]))/2
+        subx[oo] .= d .+ start        
     end
-    if isnothing(markersize)
-        markersize = min(maxlen<=4 ? 0.6 : 1.2, max(length(gen2),maxlen)/7.0)
-    end
-    graphplot(adj;
-        x, y,
-        nodeshape,
-        nodecolor,        
-        curves,names=nodename,markersize, fontsize,
-        nodesize, edgecolor, edgestyle,
-        # node_weights = ones(n), 
-        )
-    plot!(; size=plotsize,plotkeyargs... )
+
+    x, y
 end
+
+function splitindex(f::Function,A::AbstractVector)
+    size(A,1)==1 && return [1:1]
+    res=Vector{typeof(1:1)}()
+    i0=1
+    for i=2:size(A,1)
+        if !f(A[i-1],A[i])
+            push!(res,i0:i-1)
+            i0=i
+        end
+    end
+    push!(res,i0:size(A,1))
+    res
+end
+
+function splitindex(A::AbstractVector)
+    f(x,y)= if ismissing(x) 
+        ismissing(y)
+    else
+        if ismissing(y)
+            false
+        else
+            x==y
+        end
+    end        
+    splitindex(f,A)
+end
+
 
 function ped_nodename(pedigree::Pedigree)
     isstr_ped = eltype(pedigree.member) <: AbstractString

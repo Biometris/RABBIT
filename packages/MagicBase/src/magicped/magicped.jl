@@ -584,20 +584,27 @@ function plotmagicped(magicped::MagicPed;
                 if in(mem,offmem)
                     b = memls .== mem
                     ishomozygousls = magicped.offspringinfo[b,:ishomozygous]
-                    poptype = all(ishomozygousls) ? "Homo" : "N"
-                    nodename[i] = string(mem,"\n",poptype,"=",sum(b))
+                    poptype = all(ishomozygousls) ? "Homo" : "N"                    
+                    if length(mem) > 20
+                        subpop = findfirst(==(mem), offmem)
+                        mem2 = string("subpop",subpop) 
+                    else
+                        mem2 = mem
+                    end
+                    nodename[i] = string(mem2,"\n",poptype,"=",sum(b))
                     if all(ishomozygousls) 
                         nodecolor[i] = RGB(0.7,0.7,0.7)
-                        nodename[i] = string(mem,"\nHomo=",sum(b))
+                        nodename[i] = string(mem2,"\nHomo=",sum(b))
                     else
-                        nodename[i] = string(mem,"\nN=",sum(b))
+                        nodename[i] = string(mem2,"\nN=",sum(b))
                     end
                 end
             end
         else
             nodename = names
         end
-        fig = Pedigrees.plotped(ped;names=nodename,nodecolor,
+        # ped2 = Pedigrees.extract_compactped(ped)
+        fig = Pedigrees.plotped(ped; nodename,nodecolor,
             markersize, plotsize,
             curves,fontsize,nodesize,edgecolor,edgestyle,
             plotkeyargs...
@@ -711,6 +718,7 @@ function magicped2ped(magicped::MagicPed; isfounderinbred::Bool=true)
 end
 
 function split_subpop(magicpedfile::AbstractString;
+    minsubpop::Integer = 1, 
     outstem::AbstractString = "outstem",
     workdir::AbstractString=pwd())
     magicped = readmagicped(magicpedfile)
@@ -718,14 +726,23 @@ function split_subpop(magicpedfile::AbstractString;
 end
 
 function split_subpop(magicped::MagicPed;
+    minsubpop::Integer = 1, 
     outstem::AbstractString = "outstem",
     workdir::AbstractString=pwd())
     memls = unique(magicped.offspringinfo[!,:member])
+    namelen = maximum(length.(memls))
+    namebyindex = namelen > 20
     res = String[]
-    for mem in memls
+    for (i, mem) in enumerate(memls)
         subped = submagicped(magicped,mem)
-        mem2 = replace(mem,"/"=>"_","\\"=>"_")
-        outfile = getabsfile(workdir,outstem*"_"*mem2*"_ped.csv")
+        noff = size(subped.offspringinfo,1)
+        noff >= minsubpop || continue
+        if namebyindex 
+            subname = string("subpop",i)
+        else
+            subname = replace(mem,"/"=>"_","\\"=>"_")
+        end
+        outfile = getabsfile(workdir,outstem*"_"*subname*"_ped.csv")
         savemagicped(outfile, subped)
         push!(res,outfile)
     end
