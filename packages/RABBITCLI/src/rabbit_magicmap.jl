@@ -64,8 +64,8 @@ function parse_commandline()
         default = "nothing"
         "--minsilhouette"
         help = "delete markers withg silhouette scores < minsilhouette"
-        arg_type = Float64
-        default = 0.5
+        arg_type = AbstractString
+        default = "nothing"
         "--formatpriority"
         help = "priorities of genotype formats in a decreasing order"
         arg_type = AbstractString
@@ -192,10 +192,11 @@ function main(args::Vector{String})
     push!(parsed_args, :logfile => logfile)
     reset_priority!(parsed_args)            
     reset_kwarg_nothing!(parsed_args,:isdupebinning,Bool)
-    reset_kwarg_nothing!(parsed_args,:isrfbinning,Bool)
+    reset_kwarg_nothing!(parsed_args,:isrfbinning,Bool)    
     reset_kwarg_nothing!(parsed_args,:mincomponentsize,Int)    
     reset_kwarg_nothing!(parsed_args,:minlodcluster,Float64)    
     reset_kwarg_nothing!(parsed_args,:minlodorder,Float64)    
+    reset_kwarg_nothing!(parsed_args,:minsilhouette,Float64)    
     # ncluster, minncluster, maxncluster
     ncluster = tryparse(Int, parsed_args[:ncluster]) 
     minncluster = tryparse(Int, parsed_args[:minncluster])

@@ -10,7 +10,7 @@ function marker_grouping(recomnonfrac::AbstractMatrix,
     minlodcluster::Real,    
     kknncluster::Integer,
     mincomponentsize::Integer,
-    minsilhouette::Real,
+    minsilhouette::Union{Nothing,Real},
     clusteralg::Union{AbstractString,AbstractVector},    
     eigselect::AbstractString,
     eigweightfrac::Real,
@@ -36,7 +36,7 @@ end
 function marker_grouping(similarity::AbstractMatrix,        
     nclusters::AbstractVector;
     mincomponentsize::Integer=1,
-    minsilhouette::Real=0.5,
+    minsilhouette::Union{Nothing,Real}=nothing,
     clusteralg::Union{AbstractString,AbstractVector}="kmeans",
     eigselect::AbstractString="eigratio", 
     eigweightfrac::Real=0.01, 
@@ -60,32 +60,31 @@ function marker_grouping(similarity::AbstractMatrix,
     # remove markers with silhouette < minsilhouette    
     pos = argmax(SpectralEmbedding.weighted_avgsilhls(res_silhouettes.eigweightls, res_silhouettes.avgsilhls; eigweightfrac))
     silhs = res_silhouettes.silhsls[pos] 
-    badii = findall(silhs .< minsilhouette)
-    # println("minsilhouette=",minsilhouette, ", badii=",badii, ",silh=",silhs[badii])
-    # println("intersect=",intersect(reduce(vcat,clusters),badii))
-    clusters2 = [setdiff(i,badii) for i in clusters]    
-    clusters2 = clusters2[length.(clusters2) .>= mincomponentsize]    
-    oo = sortperm(length.(clusters2),rev=true)
-    clusters2 = clusters2[oo] 
-    res_silhouettes.clustersls[pos] = clusters2
-    # print info
-    nbadii = sum(length.(clusters)) - sum(length.(clusters2))
-    if nbadii == 0      
-        msg = string("no markers with silhouette < ", minsilhouette)        
+    if isnothing(minsilhouette)
+        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette=0.5)
+        printconsole(io,verbose,msg)    
+        if maxdiff >= 0.2
+            clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette=0.0)            
+            printconsole(io,verbose,msg)                
+            printconsole(io,verbose,"reset minsilhouette=0.0")    
+        else
+            printconsole(io,verbose,"reset minsilhouette=0.5")    
+        end
     else
-        msg = string(length(clusters2), " group sizes: ", join(length.(clusters2),","))
-        msg *= string(" after removing ", nbadii, " markers with silhouette < ", minsilhouette)
-        badfrac = nbadii/size(similarity,1)        
-        if badfrac > max(0.05,1/(2*median(nclusters)))
-            msg2 = string("minsilhouette might be too large!")
-            if minsilhouette > 0
-                msg2 *= string(" Suggest to set minsilhouette = 0")
-            end
-            @warn msg2
-            printconsole(io, false, "Warning: "*msg2)        
-        end        
+        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
+        printconsole(io,verbose,msg)    
     end
-    printconsole(io,verbose,msg)    
+    if maxdiff >= 0.2 # Kepp consistent with mapcorndel(minfreq=0.2)
+        msg = string("minsilhouette might be too large!")
+        if !isnothing(minsilhouette) && minsilhouette > 0
+            msg *= string(" Suggest to set minsilhouette = 0")
+        end           
+        @warn msg
+        printconsole(io,verbose,"WARN: "*msg)    
+    end    
+    clusters2 = clusters2[length.(clusters2) .>= mincomponentsize]        
+    res_silhouettes.clustersls[pos] = clusters2
+    # print info        
     mem = round(Int, memoryuse()/10^6);    
     msg = string("marker_grouping, tused=", round(time()-startt,digits=1),"s, mem=",mem, "MB")
     printconsole(io,verbose,msg)
@@ -97,6 +96,18 @@ function marker_grouping(similarity::AbstractMatrix,
     end        
     # return 
     (clusters=clusters2, eigenvals=eigenvals, eigenvecs=eigenvecs, silhouettes=silhouettes, res_silhouettes=res_silhouettes)
+end
+
+function trunc_clusters_by_silh(clusters::AbstractVector, silhs::AbstractVector; minsilhouette::Real)
+    badii = findall(silhs .< minsilhouette)    
+    clusters2 = [setdiff(i,badii) for i in clusters]        
+    # check differences 
+    nls = length.(clusters)
+    nls2 = length.(clusters2)
+    maxdiff, lgdiff = findmax((nls .- nls2) ./ nls)        
+    msg = string(length(nls2), " group sizes: ", join(nls2,","), "; maxdiff=", round(100*maxdiff,digits=1), "% in LG=", lgdiff)
+    msg *= string("; #del_markers = ", sum(nls .- nls2), " with silhouette < ", minsilhouette)
+    clusters2, maxdiff, msg
 end
 
 function calsimilarity_cluster(recomnonfrac::AbstractMatrix,

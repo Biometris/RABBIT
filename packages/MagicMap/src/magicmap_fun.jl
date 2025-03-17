@@ -52,7 +52,7 @@ genetic map construction from genofile and pedinfo.
 
 `clusteralg::Union{Nothing,AbstractString}=nothing`: clustering algorithm after spectral embedding. 
 
-`minsilhouette::Real=0.5`: delete markers withg silhouette scores < minsilhouette. 
+`minsilhouette::Union{Nothing,Real}=nothing`: delete markers withg silhouette scores < minsilhouette. 
 
 `minlodcluster::Union{Nothing, Real} = nothing`: minimum linkage LOD threshold.
   If it is nothing, estimated internally as the minimum lod keeping the resulting
@@ -122,7 +122,7 @@ function magicmap(genofile::AbstractString,
     maxncluster::Integer = isnothing(ncluster) ? 30 : ncluster,        
     eigselect::AbstractString="eigratio", 
     clusteralg::Union{Nothing,AbstractString}=nothing, 
-    minsilhouette::Real=0.5,        
+    minsilhouette::Union{Nothing,Real}=nothing,        
     ncomponent::Union{Nothing,Integer} = nothing,
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
