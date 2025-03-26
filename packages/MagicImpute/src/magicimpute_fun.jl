@@ -624,7 +624,13 @@ function get_map_binning(mapdf::DataFrame)
     for df in gdf
         bin = df[:,:marker]
         represents = bin[df[!,:represent] .> 0]
-        push!(inputbinning,only(represents) => bin)
+        if length(represents) > 1 # occursin when isdupebinning = true and isrfbinning = true            
+            for i in bin
+                push!(inputbinning,i => [i])
+            end
+        else    
+            push!(inputbinning,only(represents) => bin)
+        end
     end
     all(length.(values(inputbinning)) .== 1) && return nothing
     inputbinning
