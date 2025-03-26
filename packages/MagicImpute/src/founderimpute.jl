@@ -10,6 +10,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     allelebalancedisperse::Union{Real,AbstractVector},
     alleledropout::Union{Real,AbstractVector},
     offspringexcl::AbstractVector, 
+    inputloglike::Real,
     snporder::AbstractVector,
     israndallele::Bool,     
     issnpGT::AbstractVector,
@@ -23,26 +24,29 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     nsnp == length(snporder) || @error "dimension mismatch!"
     isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)
     allowmissing = true
-    if upbyhalf    
-        for findex in findexlist  
-            for reversechr in [false,true]                
-                # fixing phasing on one half of the chromosome                      
-                nhalf = nsnp ÷ 2                
-                fhaplosetpp2 = deepcopy(fhaplosetpp)                
-                snpls = reversechr ? snporder[1:nhalf] : snporder[nhalf+1:nsnp]
-                for p in eachindex(fhaplosetpp2)                    
-                    if isfounderinbred
-                        for j in snpls
-                            fhaplosetpp2[p][j] = [chrfhaplo[j,p]]                        
-                        end
-                    else
-                        for j in snpls
-                            fhaplosetpp2[p][j] = [chrfhaplo[j,[2p-1,2p]]]                        
-                        end
+    newchrfhaplo = deepcopy(chrfhaplo)
+    snpincl = snporder[first(values(priorprocess)).markerincl]				
+    ndiff = 0
+    if upbyhalf            
+        for reversechr in [false,true]                
+            # fixing phasing on one half of the chromosome                      
+            nhalf = nsnp ÷ 2                
+            fhaplosetpp2 = deepcopy(fhaplosetpp)                
+            snpls = reversechr ? snporder[1:nhalf] : snporder[nhalf+1:nsnp]
+            for p in eachindex(fhaplosetpp2)                    
+                if isfounderinbred
+                    for j in snpls
+                        fhaplosetpp2[p][j] = [newchrfhaplo[j,p]]                        
+                    end
+                else
+                    for j in snpls
+                        fhaplosetpp2[p][j] = [newchrfhaplo[j,[2p-1,2p]]]                        
                     end
                 end
+            end
+            for findex in findexlist  
                 founderforwardbackward!(findex,
-                    chrfhaplo,chroffgeno,
+                    newchrfhaplo,chroffgeno,
                     popmakeup,priorprocess,fhaplosetpp2; 
                     epsf,epso,epso_perind,seqerror,
                     allelebalancemean,allelebalancedisperse,alleledropout,
@@ -51,18 +55,42 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
             end 
         end
     else
-        for findex in findexlist        
-            reversechr =  rand([false,true])
-            founderforwardbackward!(findex,chrfhaplo,chroffgeno,
+        reversechr =  rand([false,true])
+        for findex in findexlist                    
+            founderforwardbackward!(findex,newchrfhaplo,chroffgeno,
                 popmakeup,priorprocess,fhaplosetpp; 
                 epsf,epso,epso_perind, seqerror,
                 allelebalancemean,allelebalancedisperse,alleledropout, 
                 offspringexcl, snporder,israndallele, issnpGT,
                 reversechr, forwardtempfile=imputetempfile, allowmissing)    
-        end                 
+        end                
+    end    
+    ndiff = get_ndiff(chrfhaplo,newchrfhaplo,snpincl) 
+    loglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
+        epsf,epso,epso_perind, seqerror,
+        allelebalancemean,allelebalancedisperse,alleledropout, 
+        decodetempfile=imputetempfile, israndallele,issnpGT,snporder
+    )	
+    loglikels[offspringexcl] .= 0.0 
+    newloglike = sum(loglikels)
+    if newloglike > inputloglike
+        deltloglike = newloglike - inputloglike
+        chrfhaplo .= newchrfhaplo
+    else
+        deltloglike = 0.0
     end
-    # GC.gc()
-    chrfhaplo
+    deltloglike, ndiff
+end
+
+function get_ndiff(oldchrfhaplo, newchrfhaplo, snpincl)
+    oldchrfhaplo2 = view(oldchrfhaplo,snpincl,:)
+    chrfhaplo2 = view(newchrfhaplo, snpincl,:)
+    perm = MagicBase.permfounder(oldchrfhaplo2, chrfhaplo2)
+    if perm != 1:length(perm)
+        oldchrfhaplo2 .= oldchrfhaplo2[:,perm]
+    end		
+    bdiff = map(isdiff_allele,oldchrfhaplo2, chrfhaplo2)    
+    sum(bdiff)		
 end
 
 function get_fmissls(fhaplosetpp::AbstractVector)
@@ -241,6 +269,7 @@ function calofflogl(logbwprob::AbstractVector,chroffgeno::AbstractMatrix,
 end
 
 
+# fhaplophase is modified  
 function founderforwardbackward!(findex::AbstractVector,
     fhaplophase::AbstractMatrix,
     chroffgeno::AbstractMatrix,

@@ -160,13 +160,13 @@ function magicmap(genofile::AbstractString,
     # step1 binning
     if isnothing(isdupebinning)
         nmarker = MagicBase.vcf_count_markers(genofile;commentstring)         
-        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster  
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/snpthin/(minncluster+maxncluster) : nmarker/snpthin/ncluster  
         magicped = formmagicped(genofile, pedinfo; commentstring, workdir)
         nsub = length(unique(magicped.offspringinfo[!,:member]))
-        npopsize = size(magicped.offspringinfo,1)
-        isdupebinning = nmarker_perchr > 1e3 && nsub == 1 && npopsize > 100
+        # npopsize = size(magicped.offspringinfo,1)
+        isdupebinning = nmarker_perchr > 500 && nsub == 1 
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
-            " (#markers=",nmarker, ", #subpops=", nsub, ", popsize=", npopsize, ")"))
+            " (#markers=",nmarker, ", snpthin=", snpthin, ", #subpops=", nsub, ")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning

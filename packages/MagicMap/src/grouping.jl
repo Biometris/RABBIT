@@ -60,28 +60,7 @@ function marker_grouping(similarity::AbstractMatrix,
     # remove markers with silhouette < minsilhouette    
     pos = argmax(SpectralEmbedding.weighted_avgsilhls(res_silhouettes.eigweightls, res_silhouettes.avgsilhls; eigweightfrac))
     silhs = res_silhouettes.silhsls[pos] 
-    if isnothing(minsilhouette)
-        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette=0.5)
-        printconsole(io,verbose,msg)    
-        if maxdiff >= 0.2
-            clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette=0.0)            
-            printconsole(io,verbose,msg)                
-            printconsole(io,verbose,"reset minsilhouette=0.0")    
-        else
-            printconsole(io,verbose,"reset minsilhouette=0.5")    
-        end
-    else
-        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
-        printconsole(io,verbose,msg)    
-    end
-    if maxdiff >= 0.2 # Kepp consistent with mapcorndel(minfreq=0.2)
-        msg = string("minsilhouette might be too large!")
-        if !isnothing(minsilhouette) && minsilhouette > 0
-            msg *= string(" Suggest to set minsilhouette = 0")
-        end           
-        @warn msg
-        printconsole(io,verbose,"WARN: "*msg)    
-    end    
+    clusters2 = repeat_trunc_clusters_by_silh(clusters,silhs; minsilhouette, io, verbose)  
     clusters2 = clusters2[length.(clusters2) .>= mincomponentsize]        
     res_silhouettes.clustersls[pos] = clusters2
     # print info        
@@ -96,6 +75,32 @@ function marker_grouping(similarity::AbstractMatrix,
     end        
     # return 
     (clusters=clusters2, eigenvals=eigenvals, eigenvecs=eigenvecs, silhouettes=silhouettes, res_silhouettes=res_silhouettes)
+end
+
+function repeat_trunc_clusters_by_silh(clusters::AbstractVector, silhs::AbstractVector; 
+    minsilhouette::Union{Nothing,Real}, io::Union{Nothing, IO},verbose::Bool)
+    if isnothing(minsilhouette)
+        minsilhouette=0.5
+        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
+        printconsole(io,verbose,msg)    
+        while maxdiff > 0.2 && minsilhouette > 0.0
+            minsilhouette -= 0.1
+            clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
+            printconsole(io,verbose,msg)                
+        end        
+    else
+        clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
+        printconsole(io,verbose,msg)    
+        if maxdiff >= 0.2 # Kepp consistent with mapcorndel(minfreq=0.2)
+            msg = string("minsilhouette might be too large!")
+            if !isnothing(minsilhouette) && minsilhouette > 0
+                msg *= string(" Suggest to set minsilhouette = 0")
+            end           
+            @warn msg
+            printconsole(io,verbose,"WARN: "*msg)    
+        end    
+    end        
+    clusters2
 end
 
 function trunc_clusters_by_silh(clusters::AbstractVector, silhs::AbstractVector; minsilhouette::Real)

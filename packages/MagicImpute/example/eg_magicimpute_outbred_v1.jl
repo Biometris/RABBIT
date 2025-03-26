@@ -15,7 +15,7 @@ isfounderinbred = false
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
-outstem = dataid*"_output"
+outstem = dataid*"_output2"
 
 tused = @elapsed magicimpute(genofile,pedfile;
     isfounderinbred,  
@@ -27,10 +27,10 @@ tused = @elapsed magicimpute(genofile,pedfile;
     # byfounder = 2, 
     # isrepeatimpute = false, 
     # nrepeatmin = 3, 
-    nrepeatmax = 20,     
+    nrepeatmax = 1,     
     # iscorrectfounder = true, 
     # isdelmarker = false,     
-    tempdirectory = "D://Temp",    
+    # tempdirectory = "D://Temp",    
     outstem,
 )
 
@@ -130,7 +130,7 @@ plot!(size=(1200,600))
 
 # clear up
 
-# cd(@__DIR__)
-# dataid = "sim"
-# rm.(filter(x->occursin(dataid, x), readdir()))
+cd(@__DIR__)
+dataid = "sim"
+rm.(filter(x->occursin(dataid, x), readdir()))
 

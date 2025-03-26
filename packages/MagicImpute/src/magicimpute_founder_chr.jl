@@ -719,6 +719,8 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	oldmapexpansion = mapexpansion			
 	correctdf = DataFrame()	
 	upbyhalf = false
+	imputestuck = 0
+	chrloglike = -Inf
 	for it in 1:maxiter						
 		slidewinsize = truncated(Poisson(max(2, winsizels[it])),2,maxwinsize)
 		reversechr = iseven(it)
@@ -726,16 +728,21 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 			# byfounder2 = last(ndiffls)/length(chrfhaplo) < 0.05 ? ceil(Int, byfounder/2) : byfounder			
 			findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss=1e-4)			
 		end
+		loglikels = cal_hmm_loglikels(chrfhaplo,chroffgeno,popmakeup,priorprocess;
+			likeerrortuple, offspringexcl, decodetempfile=imputetempfile, 
+			israndallele,issnpGT,snporder, incldelmarkers = false, 
+		)
+        chrloglike = sum(loglikels)
 		# modify chrfhaplo, priorprocess,chrlenls, ndiffls,ncorrectls, merrorlsls, actionlsls, offspringexcl
-		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order,upbyhalf = impute_refine_chr_it!(chrfhaplo,chroffgeno,
+		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order,upbyhalf,imputestuck, = impute_refine_chr_it!(chrfhaplo,chroffgeno,
 			popmakeup,priorprocess, priorspace, fhaplosetpp;
 			israndallele, ismalexls, founder2progeny,findexlist, avgfmiss, 
-			likeerrortuple, snporder, issnpGT,
-			threshlikeparameters, priorlikeparameters, liketargetls, tukeyfence,minoutlier, offspringexcl, 								
+			likeerrortuple, snporder, issnpGT, inputloglike = chrloglike, 
+			threshlikeparameters, priorlikeparameters, liketargetls, tukeyfence,minoutlier, offspringexcl, 											
 			temperature, reversechr,
 			delsiglevel, priorlength, trimcm, trimfraction, 
 			chrneighbor, minaccept,nbrmaxwin, slidewinsize, maxwinsize, orderactions,orderactions_neighbor, 
-			chrlenls, ndiffls, ncorrectls, merrorlsls, actionlsls, upbyhalf, iteration=it, miniteration_order, 
+			chrlenls, ndiffls, ncorrectls, merrorlsls, actionlsls, upbyhalf, imputestuck, iteration=it, miniteration_order, 
 			imputetempfile, spacebyviterbi, step_verbose)			
 		if isinferjunc
 			startt_junc = time()
@@ -831,7 +838,8 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		end			
 	end				
 	loglikels = cal_hmm_loglikels(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-		likeerrortuple, offspringexcl, decodetempfile=imputetempfile, israndallele,issnpGT,snporder
+		likeerrortuple, offspringexcl, decodetempfile=imputetempfile, 
+		israndallele,issnpGT,snporder, incldelmarkers = true, 
 	)
 	ncorrect = size(correctdf,1)
 	pri1=first(values(priorprocess))
@@ -866,6 +874,7 @@ function cal_hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     snporder::AbstractVector,    
     decodetempfile::AbstractString,    
     israndallele::Bool,
+	incldelmarkers::Bool, 
     offspringexcl::AbstractVector, 
     issnpGT::AbstractVector)
     (;epsfls, epsols, epsols_perind, seqerrorls,allelebalancemeanls,allelebalancedispersels, alleledropoutls) = likeerrortuple	
@@ -873,19 +882,21 @@ function cal_hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
         epsf=epsfls, epso=epsols,  epso_perind = epsols_perind, 
         seqerror = seqerrorls, allelebalancemean = allelebalancemeanls, 
         allelebalancedisperse = allelebalancedispersels, alleledropout = alleledropoutls, 
-        decodetempfile, israndallele,issnpGT,snporder
-    )	
-    delsnps = snporder[.!(first(values(priorprocess)).markerincl)]		    
-    if !isempty(delsnps) 
-        singlelogl = MagicImpute.calsinglelogl(chrfhaplo,chroffgeno;
-            snpincl = delsnps, popmakeup,
-            epsf=epsfls, epso=epsols,  epso_perind = epsols_perind, 
-            seqerror = seqerrorls, allelebalancemean = allelebalancemeanls, 
-            allelebalancedisperse = allelebalancedispersels, alleledropout = alleledropoutls, 
-            israndallele,issnpGT
-        )
-		loglikels .+= sum(singlelogl,dims=1)[1,:]
-    end
+        decodetempfile, israndallele,issnpGT,snporder    
+	)	
+	if incldelmarkers
+		delsnps = snporder[.!(first(values(priorprocess)).markerincl)]		    
+		if !isempty(delsnps) 
+			singlelogl = MagicImpute.calsinglelogl(chrfhaplo,chroffgeno;
+				snpincl = delsnps, popmakeup,
+				epsf=epsfls, epso=epsols,  epso_perind = epsols_perind, 
+				seqerror = seqerrorls, allelebalancemean = allelebalancemeanls, 
+				allelebalancedisperse = allelebalancedispersels, alleledropout = alleledropoutls, 
+				israndallele,issnpGT
+			)
+			loglikels .+= sum(singlelogl,dims=1)[1,:]
+		end
+	end
 	loglikels[offspringexcl] .= 0.0 # loglike is set to 0 for excluded offspring
     loglikels
 end
@@ -934,6 +945,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     threshlikeparameters::ThreshLikeParameters,
 	priorlikeparameters::PriorLikeParameters,	
 	offspringexcl::AbstractVector,
+	inputloglike::Real, 
 	snporder::AbstractVector,
     israndallele::Bool=true,     
 	issnpGT::AbstractVector, 	
@@ -958,6 +970,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     merrorlsls::AbstractVector, 
 	actionlsls::AbstractVector,		
 	upbyhalf::Bool, 	
+	imputestuck::Integer, 
 	iteration::Integer,	
 	miniteration_order::Integer,
     imputetempfile::AbstractString,
@@ -969,8 +982,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker, isordermarker = last(actionlsls)	
 	(;epsfls, epsols, epsols_perind, seqerrorls,allelebalancemeanls,allelebalancedispersels, alleledropoutls) = likeerrortuple
     tused =[]
-    msg = ""	
-	mean_bdiff = 0.0
+    msg = ""		
 	errortuples = (epsf=epsfls,epso=epsols,  epso_perind = epsols_perind, seqerror = seqerrorls, allelebalancemean=allelebalancemeanls, 
 		allelebalancedisperse=allelebalancedispersels, alleledropout = alleledropoutls)		
 	miditeration = 6
@@ -978,46 +990,20 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
         startt = time()		
         oldchrfhaplo = copy(chrfhaplo)		
 		if !upbyhalf
-			if iteration == 1
-				upbyhalf = false
-			elseif length(findexlist) == 1
-				upbyhalf = iteration >= 2		
-			elseif ndiffls[end] == 0
-				upbyhalf = true
-			else 
-				upbyhalf = length(ndiffls) >= 3 && (ndiffls[end]/length(chrfhaplo) <= 0.02 || ndiffls[end] >= ndiffls[end-1])
-			end
+			upbyhalf = imputestuck >= 3
 		end
-        founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
+        deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., 						
-			offspringexcl, snporder, upbyhalf,israndallele,issnpGT,imputetempfile)		
-		snpincl = snporder[first(values(priorprocess)).markerincl]				
-		oldchrfhaplo2 = view(oldchrfhaplo,snpincl,:)
-		chrfhaplo2 = view(chrfhaplo, snpincl,:)
-		perm = MagicBase.permfounder(oldchrfhaplo2, chrfhaplo2)
-		if perm != 1:length(perm)
-			oldchrfhaplo2 .= oldchrfhaplo2[:,perm]
-		end		
-		bdiff = map(isdiff_allele,oldchrfhaplo2, chrfhaplo2)
-		mean_bdiff =mean(bdiff)
-		ndiff = sum(bdiff)		
+			offspringexcl, inputloglike, snporder, upbyhalf,israndallele,issnpGT,imputetempfile)				
         push!(ndiffls,ndiff)		
-		if upbyhalf			
-			if iteration >=3 && ndiff == 0
-				isimputefounder = false						
-			elseif iteration >= miditeration 		
-				# set_fhaplosetpp_missing!(fhaplosetpp,chrfhaplo2, bdiff, snpincl)		
-				bool_diff = (mean_bdiff <= 0.02*max(0.1,avgfmiss) || iteration >= 2*miditeration || allequal(ndiffls[end-2:end]))
-				if bool_diff && (sum(ndiffls .<= ndiff) >=2 || ndiffls[end] >= ndiffls[end-1]) # the last coondiiton on ndiff implies that ndiff is non-decreasing													
-					chrfhaplo2[bdiff] .= "N"							
-					isimputefounder = false
-				end				
-			end		
+		imputestuck = (deltloglike > 0 && ndiff > 0) ? 0 : imputestuck+ (deltloglike ≈ 0.0) + (ndiff== 0)
+		if upbyhalf	&& imputestuck >= 5
+			isimputefounder = false					
 		end
-        msg *= string(", #diff=",ndiff)
+        msg *= string(", #diff=",ndiff, ", Δlogl=",round(deltloglike,digits=1))
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))		
-    end
+    end	
 	if iscorrectfounder && (iteration >= 2 || !isimputefounder)			
 		startt = time()
 		oldchrfhaplo = copy(chrfhaplo)		
@@ -1055,7 +1041,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			end
 		end
 	end
-	if mean_bdiff <= 0.05 && (iteration >= miditeration || !isimputefounder)		
+	if iteration >= miditeration || !isimputefounder
         snpincl = snporder[first(values(priorprocess)).markerincl]		
 		monosnps = findall([unique(i) in [["1"],["2"]] for i in eachrow(chrfhaplo)])
 		intersect!(monosnps,snpincl)
@@ -1133,7 +1119,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			in("allelebalancedisperse",liketargetls) && (msg *= string(", disperse=",round(merrorls[6],digits=3)))
 			in("alleledropout",liketargetls) && (msg *= string(", dropout=",round(merrorls[7],digits=3)))
 		end		
-        if bool && ((iteration >= miditeration && temperature <= 0.25) || !isimputefounder)			
+        if bool && ((iteration >= miditeration && temperature <= 0.5) || !isimputefounder)			
 			if bool && !any([isimputefounder,iscorrectfounder,isdelmarker, temperature > 0])	
 				# bool && !any([isimputefounder,iscorrectfounder,isdelmarker, isordermarker])	
 				if all(@. merrorls[1:3] - merrorlsls[end][1:3] <= 1e-3)
@@ -1308,11 +1294,11 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
         msg *= string(", l=",round(Int,chrlen),"cM")
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))
-    end
+    end	
 	push!(actionlsls, [isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker,isordermarker])
 	likeerrortuple = (epsfls=epsfls,epsols=epsols, epsols_perind=epsols_perind, seqerrorls=seqerrorls, 
 		allelebalancemeanls = allelebalancemeanls, allelebalancedispersels = allelebalancedispersels, alleledropoutls = alleledropoutls)	
-	likeerrortuple, offspringexcl, correctdf, tused, msg, logbook_order, upbyhalf
+	likeerrortuple, offspringexcl, correctdf, tused, msg, logbook_order, upbyhalf,imputestuck
 end
 
 
