@@ -25,9 +25,9 @@ tused = @elapsed magicimpute(genofile,pedfile;
     # bincm = 0.05, 
     # isinfererror = false, 
     # byfounder = 2, 
-    # isrepeatimpute = false, 
+    isrepeatimpute = true, 
     # nrepeatmin = 3, 
-    nrepeatmax = 1,     
+    nrepeatmax = 3,     
     # iscorrectfounder = true, 
     # isdelmarker = false,     
     # tempdirectory = "D://Temp",    
@@ -124,7 +124,6 @@ println(acc2)
 
 noff = size(magicancestry.magicped.offspringinfo,1)
 offspring = rand(1:noff)
-offspring = 40-4
 plotcondprob(magicancestry; truefgl, probtype="genoprob",offspring)
 plot!(size=(1200,600))
 

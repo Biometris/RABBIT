@@ -215,6 +215,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		end
 	end	
 	MagicBase.info_magicgeno(magicgeno;io,verbose)		
+	describe_phase_msg(io, verbose)
 	# isimpute_afterrepeat = true
 	if isrepeatimpute2		
 		nrepeatimpute =  nrepeatmin == nrepeatmax  ? nrepeatmin : (nrepeatmin,nrepeatmax)
@@ -415,6 +416,23 @@ function magicimpute_founder!(magicgeno::MagicGeno;
     tused = round(time()-starttime,digits=1)
     MagicBase.set_logfile_end(logfile, io, tused,"magicimpute_founder!"; verbose)
     magicgeno
+end
+
+function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool)
+    msg = "keywords in print message: \n"
+    msg *= "\t#diff ≡ #differences between proposal founder imputing and current values\n"    
+	msg *= "\tΔlogl ≡ increase of log-likelihood if proposal imputing is accepted (0 if rejected)\n"
+	msg *= "\t#correct_f ≡ #corrected founder genotypes (set to missing)\n"
+	msg *= "\t#del_mono ≡ #deleted monomorphic markers\n"
+	msg *= "\t#del_err ≡ #deleted markers with too large error rates\n"
+	msg *= "\t#del ≡ #deleted markers via Vuong's test\n"
+	msg *= "\tεo ≡ offspring error rate per marker\n"
+	msg *= "\tξo ≡ offspring error rate per offspring\n"
+	msg *= "\tεseq ≡ sequence base error rate per marker\n"
+	msg *= "\tABmean ≡ mean allelic balance bias per marker\n"
+	msg *= "\tdisperse ≡ overdispersion of allelic balance per marker\n"
+	msg *= "\tmem ≡ memory use before and after garbage collection"	
+    printconsole(io, verbose,msg)
 end
 
 function remove_GT_unphased!(magicgeno::MagicGeno) 
