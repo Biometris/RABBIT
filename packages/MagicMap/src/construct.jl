@@ -120,7 +120,7 @@ function construct(linkagefile::AbstractString;
         nmarker = length(markers)
         # nind = length(inds)
         nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster        
-        isrfbinning = nmarker_perchr > 500 
+        isrfbinning = nmarker_perchr > 1000 
         msg = string("reset isrfbinning = ", isrfbinning, "(nmarker_perchr = ", round(Int,nmarker_perchr), ")")
         printconsole(logio, verbose,msg)    
     end

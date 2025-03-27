@@ -111,7 +111,7 @@ function trunc_clusters_by_silh(clusters::AbstractVector, silhs::AbstractVector;
     nls2 = length.(clusters2)
     maxdiff, lgdiff = findmax((nls .- nls2) ./ nls)        
     msg = string(length(nls2), " group sizes: ", join(nls2,","), "; maxdiff=", round(100*maxdiff,digits=1), "% in LG=", lgdiff)
-    msg *= string("; #del_markers = ", sum(nls .- nls2), " with silhouette < ", minsilhouette)
+    msg *= string("; #del_markers = ", sum(nls .- nls2), " with silhouette < ", round(minsilhouette,digits=1))
     clusters2, maxdiff, msg
 end
 

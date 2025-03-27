@@ -14,24 +14,8 @@ pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
 
 @time magicgeno = magicimpute(genofile,pedfile;    
-    isfounderinbred,        
-    # israndallele = true, 
-    # likeparameters = LikeParameters(peroffspringerror=0.0),    
-    # target = "founder",         
-    # isbinning = true, 
-    # bincm = 0.01, 
-    # binriffle = -1, 
-    # byfounder = 2, 
-    # isrepeatimpute = true, 
-    # nrepeatmin = 2, 
-    # nrepeatmax = 3, 
-    isinfererror = false,            
-    # iscorrectfounder = false,
-    # isspacemarker = true,            
-    # isordermarker = true,                         
-    # skeletonsize = 10^6,     
-    # isparallel = true, 
-    tempdirectory = "D://Temp",    
+    isfounderinbred,            
+    # model = "depmodel",
     outstem,
 );
 
@@ -44,10 +28,8 @@ facc = imputeaccuracy!(truegeno, magicgeno;isfounderinbred, alignfounder=true,ta
 offacc = imputeaccuracy!(truegeno, magicgeno;isfounderinbred, alignfounder=true,targetfounder=false)
 acc = magicaccuracy!(truegeno, magicgeno;alignfounder=true,isfounderinbred)
 println(acc)
-acc
-
-
-magicgeno.foundergeno[1]
+show(facc)
+show(offacc)
 
 using Plots
 using StatsBase

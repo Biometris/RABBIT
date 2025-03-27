@@ -463,7 +463,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 			skeletonsize, slidewin, slidewin_neighbor,
 			minaccept,  orderactions,orderactions_neighbor, spacebyviterbi, 
-			imputetempfile,repeatrun, maxiter, verbose, more_verbose,io
+			magicgenofile, imputetempfile,repeatrun, maxiter, verbose, more_verbose,io
 		)		
 		savemagicgeno(magicgenofile, magicgeno)	 	
 		fhaplodf = get_chr_fhaplodf(magicgeno,chr)			
@@ -513,6 +513,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	orderactions::AbstractVector,
 	orderactions_neighbor::AbstractVector,            
 	spacebyviterbi::Bool,	
+	magicgenofile::AbstractString,
     imputetempfile::AbstractString,
 	repeatrun::Union{Nothing,Integer}=nothing, 	
 	maxiter::Integer = 50,	

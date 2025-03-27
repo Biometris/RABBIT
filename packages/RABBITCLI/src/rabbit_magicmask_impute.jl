@@ -187,7 +187,7 @@ function parse_commandline()
         "--coolrate"
         help = "temperature is mutiplied by coolrate after each iteration of annealing agrogrithm"
         arg_type = Float64
-        default = 0.7        
+        default = 0.85        
         "--isspacemarker"
         help = "if true, refine inter-marker distances. If it is nothing, isspacemarker=true if mapfile exists or isordermarker=true or isphysmap=true."
         arg_type = AbstractString

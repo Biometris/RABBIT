@@ -1,14 +1,14 @@
-# using Distributed
-# nprocs() < 3 && addprocs(3-nprocs())
-# @info string("nprocs=", nprocs())
-# @everywhere  using MagicReconstruct, MagicImpute
+using Distributed
+nprocs() < 7 && addprocs(7-nprocs())
+@info string("nprocs=", nprocs())
+@everywhere  using MagicReconstruct, MagicImpute
 
 using Revise
 using MagicBase, MagicReconstruct, MagicImpute
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = true
+isfounderinbred = false
 
 
 dataid = "sim"
@@ -24,20 +24,11 @@ for chr in eachindex(magicgeno.markermap)
 end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,               
-    model = ["depmodel","jointmodel"], 
+    # model = "depmodel",
+    # model = ["depmodel","jointmodel"], 
     # byfounder = 2, 
-    isrepeatimpute = false,  
-    # israndallele = true, 
-    # likeparameters = LikeParameters(peroffspringerror=0.0),
+    # isrepeatimpute = false,  
     # target = "founder",         
-    # isbinning = true, 
-    # isinfererror = true,        
-    # iscorrectfounder = true,
-    # isspacemarker = true,            
-    # isordermarker = true,                         
-    # skeletonsize = 10^6,     
-    # isparallel = true, 
-    tempdirectory = "D://Temp",    
     outstem, 
 );
 
@@ -49,7 +40,8 @@ facc = imputeaccuracy!(truegeno, magicgeno;isfounderinbred, alignfounder=true,ta
 offacc = imputeaccuracy!(truegeno, magicgeno;isfounderinbred, alignfounder=true,targetfounder=false)
 acc = magicaccuracy!(truegeno, magicgeno;alignfounder=true,isfounderinbred)
 println(acc)
-
+show(facc)
+show(offacc)
 
 using Plots
 using StatsBase

@@ -215,7 +215,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		end
 	end	
 	MagicBase.info_magicgeno(magicgeno;io,verbose)		
-	describe_phase_msg(io, verbose)
+	describe_phase_msg(io, verbose,offspringformat)
 	# isimpute_afterrepeat = true
 	if isrepeatimpute2		
 		nrepeatimpute =  nrepeatmin == nrepeatmax  ? nrepeatmin : (nrepeatmin,nrepeatmax)
@@ -338,7 +338,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				@warn msg
 				printconsole(io,false, "Warning: "*msg)                    
 			else
-				printconsole(io,verbose, "No offspring with too large peroffspringerror. ")
+				printconsole(io,verbose, "no offspring with too large peroffspringerror. ")
 			end
 			outputfile= string(outstem,"_peroffspringerror.csv")
 			CSV.write(getabsfile(workdir,outputfile),offinfo)       
@@ -418,20 +418,25 @@ function magicimpute_founder!(magicgeno::MagicGeno;
     magicgeno
 end
 
-function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool)
-    msg = "keywords in print message: \n"
-    msg *= "\t#diff ≡ #differences between proposal founder imputing and current values\n"    
-	msg *= "\tΔlogl ≡ increase of log-likelihood if proposal imputing is accepted (0 if rejected)\n"
+function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat::AbstractVector)
+    msg = "keywords in print messages: \n"
+    msg *= "\t#diff      ≡ #differences between proposal and current imputing\n"    
+	msg *= "\tΔlogl      ≡ increase of log-likelihood if proposal imputing is accepted (0 if rejected)\n"
 	msg *= "\t#correct_f ≡ #corrected founder genotypes (set to missing)\n"
-	msg *= "\t#del_mono ≡ #deleted monomorphic markers\n"
-	msg *= "\t#del_err ≡ #deleted markers with too large error rates\n"
-	msg *= "\t#del ≡ #deleted markers via Vuong's test\n"
-	msg *= "\tεo ≡ offspring error rate per marker\n"
-	msg *= "\tξo ≡ offspring error rate per offspring\n"
-	msg *= "\tεseq ≡ sequence base error rate per marker\n"
-	msg *= "\tABmean ≡ mean allelic balance bias per marker\n"
-	msg *= "\tdisperse ≡ overdispersion of allelic balance per marker\n"
-	msg *= "\tmem ≡ memory use before and after garbage collection"	
+	msg *= "\t#mono      ≡ #monomorphic markers\n"
+	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"
+	msg *= "\t#del_err   ≡ #deleted markers with too large error rates\n"
+	msg *= "\t#del       ≡ #deleted markers via Vuong's test\n"
+	msg *= "\tεo         ≡ offspring error rate per marker \n"
+	msg *= "\tξo         ≡ offspring error rate per individual\n"
+	if in("AD",offspringformat)	
+		msg *= "\tεseq       ≡ sequence base error rate per marker\n"
+		msg *= "\tABmean     ≡ sequence allelic bias per marker\n"
+		msg *= "\tdisperse   ≡ sequence overdispersion per marker\n"
+	end
+	msg *= "\t#off_excl  ≡ #offspring temporarily excluded due to large ξo\n"
+	msg *= "\tt          ≡ time used for each sub-step\n"	
+	msg *= "\tmem        ≡ memory use before and after garbage collection"	
     printconsole(io, verbose,msg)
 end
 

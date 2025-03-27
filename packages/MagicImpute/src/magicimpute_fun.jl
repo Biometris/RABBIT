@@ -621,17 +621,18 @@ function get_map_binning(mapdf::DataFrame)
     sort!(binningdf,[chrcol,:binno])
     gdf = groupby(binningdf,[chrcol,:binno])
     inputbinning = Dict{String,Vector{String}}()
+    nmulti_rep = 0
     for df in gdf
         bin = df[:,:marker]
         represents = bin[df[!,:represent] .> 0]
-        if length(represents) > 1 # occursin when isdupebinning = true and isrfbinning = true            
-            for i in bin
-                push!(inputbinning,i => [i])
-            end
+        if length(represents) > 1 # occursin when isdupebinning = true and isrfbinning = true     
+            nmulti_rep += 1
+            push!(inputbinning,first(represents) => bin)            
         else    
             push!(inputbinning,only(represents) => bin)
         end
     end
+    nmulti_rep > 0 && @warn string(nmulti_rep, " out of ", length(gdf), " bins with multiple represents!") 
     all(length.(values(inputbinning)) .== 1) && return nothing
     inputbinning
 end

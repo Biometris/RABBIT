@@ -164,7 +164,7 @@ function magicmap(genofile::AbstractString,
         magicped = formmagicped(genofile, pedinfo; commentstring, workdir)
         nsub = length(unique(magicped.offspringinfo[!,:member]))
         # npopsize = size(magicped.offspringinfo,1)
-        isdupebinning = nmarker_perchr > 500 && nsub == 1 
+        isdupebinning = nmarker_perchr > 1000 && nsub == 1 
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
             " (#markers=",nmarker, ", snpthin=", snpthin, ", #subpops=", nsub, ")"))
     end
