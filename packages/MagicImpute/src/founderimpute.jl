@@ -287,7 +287,7 @@ function founderforwardbackward!(findex::AbstractVector,
     israndallele::Bool,
     issnpGT::AbstractVector, 
     reversechr::Bool,
-    isallowmissing::Bool=true,    
+    isallowmissing::Bool=false,    
     forwardtempfile::AbstractString)
     if reversechr
         reverse!(snporder)

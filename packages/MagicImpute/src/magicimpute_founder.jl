@@ -20,7 +20,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	tukeyfence::Real=3.0,						
 	minoutlier::Real=0.05, 
 	isimputefounder::Union{Nothing,Bool}=nothing, 
-	isallowmissing::Bool=true,
+	isallowmissing::Bool=false,
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
