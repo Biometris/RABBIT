@@ -9,7 +9,7 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     allelebalancedisperse::Union{Real,AbstractVector},
     alleledropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
-    isallowmissing::Bool, 
+    inclmissingallele::Bool=false, 
     decodetempfile::AbstractString,    
     founder2progeny::AbstractVector,
     ismalexls::AbstractVector,    
@@ -28,7 +28,7 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
             epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
             snporder, decodetempfile,offspringexcl, issnpGT,israndallele))
         if !isempty(correctdf)
-            setcorrectdf!(chrfhaplo,correctdf,fhaplosetpp; isfounderinbred,isallowmissing)
+            setcorrectdf!(chrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
             push!(rescorrect,correctdf)
         end
         isempty(correctdf) && break
@@ -281,12 +281,12 @@ function setchrpostprob!(chrpostprob::AbstractVector,delsnps::AbstractVector)
     end
 end
 
-function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplosetpp::AbstractVector; isfounderinbred::Bool,isallowmissing)
+function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplosetpp::AbstractVector; isfounderinbred::Bool,inclmissingallele)
     for i=1:size(correctdf,1)
         snp, p, newg = correctdf[i,[1,2,4]]        
         if isfounderinbred        
             chrfhaplo[snp,p]=newg
-            if isallowmissing
+            if inclmissingallele
                 fhaplosetpp[p][snp] = ["1", "2","N"]            
             else
                 fhaplosetpp[p][snp] = ["1", "2"]
@@ -294,7 +294,7 @@ function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplose
             
         else
             chrfhaplo[snp,[2*p-1, 2*p]] .= newg            
-            if isallowmissing
+            if inclmissingallele
                 fhaplosetpp[p][snp] = [["1","1"],["1","2"],["2","1"],["2","2"],["1","N"],["2","N"],["N","1"],["N","2"],["N","N"]]        
             else
                 fhaplosetpp[p][snp] = [["1", "1"], ["1", "2"], ["2", "1"],["2", "2"]]

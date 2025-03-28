@@ -15,6 +15,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     israndallele::Bool,     
     issnpGT::AbstractVector,
     upbyhalf::Bool,
+    isallowmissing::Bool=false,
     imputetempfile::AbstractString)    
     nsnp = size(chrfhaplo,1)
     if nsnp == 1
@@ -22,8 +23,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     end
     nsnp <=1 && return chrfhaplo
     nsnp == length(snporder) || @error "dimension mismatch!"
-    isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)
-    allowmissing = true
+    isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)    
     newchrfhaplo = deepcopy(chrfhaplo)
     snpincl = snporder[first(values(priorprocess)).markerincl]				
     ndiff = 0
@@ -51,7 +51,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
                     epsf,epso,epso_perind,seqerror,
                     allelebalancemean,allelebalancedisperse,alleledropout,
                     offspringexcl, snporder,israndallele, issnpGT,
-                    reversechr = !reversechr, forwardtempfile=imputetempfile, allowmissing)            
+                    reversechr = !reversechr, forwardtempfile=imputetempfile, isallowmissing)            
             end 
         end
     else
@@ -62,7 +62,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
                 epsf,epso,epso_perind, seqerror,
                 allelebalancemean,allelebalancedisperse,alleledropout, 
                 offspringexcl, snporder,israndallele, issnpGT,
-                reversechr, forwardtempfile=imputetempfile, allowmissing)    
+                reversechr, forwardtempfile=imputetempfile, isallowmissing)    
         end                
     end    
     ndiff = get_ndiff(chrfhaplo,newchrfhaplo,snpincl) 
@@ -287,7 +287,7 @@ function founderforwardbackward!(findex::AbstractVector,
     israndallele::Bool,
     issnpGT::AbstractVector, 
     reversechr::Bool,
-    allowmissing::Bool=false,    
+    isallowmissing::Bool=true,    
     forwardtempfile::AbstractString)
     if reversechr
         reverse!(snporder)
@@ -317,11 +317,11 @@ function founderforwardbackward!(findex::AbstractVector,
     isgc && GC.gc()    
     nfounder = length(fhaplosetpp)
     nfgl = size(fhaplophase,2)
-    isfounderinbred = nfounder == nfgl
-    if allowmissing        
+    isfounderinbred = nfounder == nfgl    
+    if isallowmissing        
         findex2 = isfounderinbred ? findex : reduce(vcat,[[2*i-1,2*i] for i in findex])
-        for i in snps                
-            fhaplo = avg_sitefhaplo(fhaploset[i], fphaseprob[i],findex2; thresh = 0.7)            
+        for i in snps                            
+            fhaplo = avg_sitefhaplo(fhaploset[i], fphaseprob[i],findex2; thresh = 0.55)            
             fhaplophase[i, :] .= fhaplo
         end
     else    

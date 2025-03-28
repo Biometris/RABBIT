@@ -11,13 +11,13 @@ fhaplofile = dataid*"_fhaplo.vcf"
 ncluster = 1
 nsnpchr = 200
 @time simfhaplo(
-    nsnp=ncluster*nsnpchr, nparent=16,
+    nsnp=ncluster*nsnpchr, nparent=32,
     chrlen=100*ones(ncluster),
     outfile=fhaplofile
 )
 
 # designcode = "2star-self1"
-designcode = "4ril-self1"
+designcode = "32ril-self6"
 designinfo = MagicBase.parsedesign(designcode)
 magicped = formmagicped(designinfo,200)
 
@@ -37,7 +37,7 @@ epso = 0.01
     offspringerror = Beta(1, 2/epso-1.0),
     foundermiss = Beta(1,9),
     offspringmiss = Beta(1,9),    
-    seqfrac = 1.0,    
+    seqfrac = 0.0,    
     allelebalancemean = Beta(3,3),
     allelebalancedisperse = Exponential(0.2),
     alleledropout = Beta(1,199),

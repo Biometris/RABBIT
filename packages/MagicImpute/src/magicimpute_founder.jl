@@ -5,8 +5,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
 	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
 	israndallele::Bool=true,
-	isfounderinbred::Bool=true,			
-	threshrepeat::Real=0.05, 
+	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
 	isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
@@ -21,6 +20,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	tukeyfence::Real=3.0,						
 	minoutlier::Real=0.05, 
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool=true,
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
@@ -59,9 +59,9 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		"threshlikeparameters = ", threshlikeparameters, "\n",		
 		"priorlikeparameters = ", priorlikeparameters, "\n",	
 		"israndallele = ", israndallele,"\n",				
-		"isfounderinbred = ", isfounderinbred,"\n",						
-		"threshrepeat = ", threshrepeat,"\n",
+		"isfounderinbred = ", isfounderinbred,"\n",								
 		"byfounder = ", byfounder, "\n",
+		"isallowmissing = ", isallowmissing, "\n",
 		"isrepeatimpute = ", isrepeatimpute, "\n",	
 		"nrepeatmin = ", nrepeatmin, "\n",	
 		"nrepeatmax = ", nrepeatmax, "\n",	
@@ -227,8 +227,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 			printconsole(io,verbose, string("\nstart founder imputation with nrepeatmin = ", nrepeatmin, " and nrepeatmax = ",nrepeatmax))						
 			magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 				model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror = false,
-				israndallele, isfounderinbred, threshrepeat, byfounder,  
-				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder,  
+				israndallele, isfounderinbred, byfounder,  
+				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, 
 				isdelmarker, isinfererror, isordermarker, isspacemarker, 
 				delsiglevel, tukeyfence,  minoutlier, trimcm, trimfraction, skeletonsize, 
 				slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
@@ -249,8 +249,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				MagicBase.info_magicgeno(partmagicgeno;io,verbose)		
 				magicimpute_founder_repeat!(partmagicgeno,nrepeatimpute;
 					model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
-					israndallele, isfounderinbred, threshrepeat, byfounder,  
-					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, 
+					israndallele, isfounderinbred, byfounder,  
+					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,
 					isdelmarker, isinfererror, isordermarker, isspacemarker, 
 					delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
 					slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
@@ -293,8 +293,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	nrepeatimpute = isrepeatimpute2 ? 1 : -1           	
 	magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 		model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
-		israndallele, isfounderinbred, threshrepeat, byfounder, 
-		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder,		
+		israndallele, isfounderinbred, byfounder, 
+		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,	
 		isdelmarker, isinfererror, isordermarker, isspacemarker, 
 		delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
 		slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
@@ -422,7 +422,8 @@ function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat
     msg = "keywords in print messages: \n"
     msg *= "\t#diff      ≡ #differences between proposal and current imputing\n"    
 	msg *= "\tΔlogl      ≡ increase of log-likelihood if proposal imputing is accepted (0 if rejected)\n"
-	msg *= "\t#correct_f ≡ #corrected founder genotypes (set to missing)\n"
+	msg *= "\tstuck      ≡ measure of imputation being stuck\n"
+	msg *= "\t#correct_f ≡ #corrected founder genotypes (and set obsgeno missing)\n"
 	msg *= "\t#mono      ≡ #monomorphic markers\n"
 	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"
 	msg *= "\t#del_err   ≡ #deleted markers with too large error rates\n"
@@ -544,12 +545,12 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
 	quickinfererror::Bool=false,
 	israndallele::Bool=true,
-	isfounderinbred::Bool=true,			
-	threshrepeat::Real, 
+	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,		
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool,
     isdelmarker::Bool = true,    
 	isinfererror::Bool = false,	
 	isordermarker::Bool = !isnothing(inputneighbor),
@@ -629,8 +630,8 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 		        pmap((x,y,z)->impute_refine_repeat_chr!(x,nrepeatimpute;
 	                magicprior,
 					model,israndallele, isfounderinbred,
-					threshrepeat, byfounder,
-	                isinferjunc, iscorrectfounder,isimputefounder, 
+					byfounder,
+	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing,
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -663,8 +664,8 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 				impute_refine_repeat_chr!(magicgenofilels[i],nrepeatimpute;
 					magicprior,
 					model,israndallele, isfounderinbred,
-					threshrepeat, byfounder,
-	                isinferjunc, iscorrectfounder,isimputefounder, 
+					byfounder,
+	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -702,12 +703,12 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
 	quickinfererror::Bool=false,
 	israndallele::Bool=true,
-	isfounderinbred::Bool=true,			
-	threshrepeat::Real,  # not used
+	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool, 
     isdelmarker::Bool = true,    
 	isinfererror::Bool = false,	
 	isordermarker::Bool = !isnothing(inputneighbor),
@@ -805,7 +806,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	                magicprior,
 					model,israndallele, isfounderinbred,
 					byfounder,
-	                isinferjunc, iscorrectfounder,isimputefounder, 
+	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing,
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -840,7 +841,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 					magicprior,
 					model,israndallele, isfounderinbred,
 					byfounder,
-	                isinferjunc, iscorrectfounder,isimputefounder, 
+	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -879,11 +880,8 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 					nbrgeno = readmagicgeno(magicgenofilemtx[i,nbrrun])				
 					nbrfhaplo = get_chr_fhaplodf(nbrgeno,1)
 					isdiff = isdiff_fhaplo(bestfhaplo,nbrfhaplo,founders; isfounderinbred)							
-					bestgeno.markermap[1][!,:marker] == bestfhaplo[!,:marker] || @error "inconsisent markers"
-					misscode = isfounderinbred ? "N" : ["N","N"]					
-					bestgeno.foundergeno[1][isdiff] .= [misscode for _ in 1:sum(isdiff)]
-					ndiff = sum(isdiff)
-					ndiff > 0 && savemagicgeno(magicgenofilels[i], bestgeno)
+					bestgeno.markermap[1][!,:marker] == bestfhaplo[!,:marker] || @error "inconsisent markers"					
+					ndiff = sum(isdiff)					
 				else
 					ndiff = 0
 				end

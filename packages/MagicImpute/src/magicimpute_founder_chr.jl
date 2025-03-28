@@ -2,11 +2,11 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	magicprior::NamedTuple,
     model::AbstractString="jointmodel",
 	israndallele::Bool,
-	isfounderinbred::Bool=true,	        
-	threshrepeat::Real,
+	isfounderinbred::Bool=true,	        	
 	byfounder::Integer=0, 
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool, 
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -70,7 +70,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 						magicprior,
 						model,israndallele, isfounderinbred,
 						byfounder,
-						isinferjunc, iscorrectfounder,isimputefounder,
+						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, 
 						isdelmarker, delsiglevel,
 						isspacemarker, trimcm, trimfraction,skeletonsize,
 						isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -79,10 +79,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 						logio=io, imputetempfile, repeatrun=runit, maxiter, verbose,more_verbose)																	
 					write(file, string("run",runit),fhaplodf)
 					logl_components = [sum(loglikels[pedcomponent["offspring"]]) for pedcomponent in pedcompoents]
-					logl_components .= round.(logl_components,digits=1)
-					avgfmiss_compoents = [mean(fmissls[pedcomponent["founders"]]) for pedcomponent in pedcompoents]
-					# thresh_components = [isfounderinbred ? threshrepeat*max(0.1,i) : 2*threshrepeat for i in avgfmiss_compoents]					\
-					thresh_components = [threshrepeat*max(0.1,i) for i in avgfmiss_compoents]														
+					logl_components .= round.(logl_components,digits=1)													
 					push!(loglhis, logl_components)		
 					done_components = []  # collect compoents that converge after current run
 					for c in findall(.!isdone_components)
@@ -132,7 +129,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 								if !isfounderinbred																		
 									phasediff_components[c] = round.(phasediff[c][bestrun,1:runit],digits=3)																		
 								end											
-								isapproxrun = mindiff <= thresh_components[c] || abs(loglhis[minrun][c] - bestlogl_components[c]) <= log(10.0)
+								isapproxrun = mindiff <= 0.001 || abs(loglhis[minrun][c] - bestlogl_components[c]) <= log(10.0)
 								if runit == nrepeatmax && !isapproxrun
 									warnmsg = string("chr=",chrid,", run=", runit, ", optimization reaches nrepeatmax=",nrepeatmax, " for component=",c)
 									verbose && @warn warnmsg
@@ -141,18 +138,11 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 								end																									
 								if runit == nrepeatmax || isapproxrun
 									isdone_components[c] = true																						
-									push!(done_components,c)		
-									# For the founder genotypes that differ between bestrun and minrun, they are set to missing
+									push!(done_components,c)											
 									if mindiff > 0 
 										minfhaplo = file[string("run",minrun)]
 										isdiff = isdiff_fhaplo(bestfhaplo,minfhaplo,founders; isfounderinbred)		
-										magicgeno = readmagicgeno(magicgenofilels[bestrun])								
-										magicgeno.markermap[1][!,:marker] == bestfhaplo[!,:marker] || @error "inconsisent markers"
-										misscode = isfounderinbred ? "N" : ["N","N"]
-										# @info string(sum(isdiff)," mismatch genotypes are set to missing")
-										magicgeno.foundergeno[1][isdiff] .= [misscode for _ in 1:sum(isdiff)]
-										printconsole(io, verbose, string("chr=", chrid, ", #diff=",sum(isdiff), " between bestrun ", bestrun, " and neighborrun ", minrun))
-										savemagicgeno(magicgenofilels[bestrun],magicgeno)																
+										printconsole(io, verbose, string("chr=", chrid, ", #diff=",sum(isdiff), " between bestrun ", bestrun, " and neighborrun ", minrun))										
 									end									
 								end						
 							end  
@@ -409,6 +399,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	byfounder::Integer, 
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool,
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -458,7 +449,8 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			magicprior, model, isfounderinbred, 
 			israndallele, inputneighbor, byfounder,			
 			likeparameters, threshlikeparameters, priorlikeparameters, 
-			isinferjunc, iscorrectfounder, isimputefounder, isinfererror, isdelmarker, isspacemarker, isordermarker, 
+			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, 
+			isinfererror, isdelmarker, isspacemarker, isordermarker, 
 			tukeyfence, minoutlier, 
 			inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 			skeletonsize, slidewin, slidewin_neighbor,
@@ -494,6 +486,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	isinferjunc::Bool,	
 	iscorrectfounder::Bool, 
 	isimputefounder::Union{Nothing,Bool}=nothing, 
+	isallowmissing::Bool,
 	isinfererror::Bool, 
 	isdelmarker::Bool, 
 	isspacemarker::Bool,
@@ -559,7 +552,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 		popmakeup, priorprocess, fhaplosetpp;
 		isfounderinbred, isfounderphased, byfounder, israndallele, issnpGT,issnpAD,  
 		chrid,  			
-		iscorrectfounder, isimputefounder, isinfererror, isdelmarker, isspacemarker,isordermarker,
+		iscorrectfounder, isimputefounder, isallowmissing, isinfererror, isdelmarker, isspacemarker,isordermarker,
 		liketargetls, likeerrortuple, threshlikeparameters, priorlikeparameters, tukeyfence,minoutlier, 
 		inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 		skeletonsize, slidewin, slidewin_neighbor,
@@ -605,6 +598,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	threshlikeparameters::ThreshLikeParameters,
 	priorlikeparameters::PriorLikeParameters,	
 	isimputefounder::Union{Nothing, Bool},
+	isallowmissing::Bool, 
 	iscorrectfounder::Bool, 
 	isinfererror::Bool, 
 	isdelmarker::Bool, 
@@ -627,7 +621,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	mapexpansion::Union{Nothing,Real}=nothing, 
 	spacebyviterbi::Bool, 
     imputetempfile::AbstractString,
-	repeatrun::Union{Nothing,Integer}=nothing, 	
+	repeatrun::Union{Nothing,Integer}=nothing, 		
 	maxiter::Integer = 50,	
 	io::Union{Nothing,IO}=nothing, 
     verbose::Bool=true,	
@@ -737,10 +731,10 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		# modify chrfhaplo, priorprocess,chrlenls, ndiffls,ncorrectls, merrorlsls, actionlsls, offspringexcl
 		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order,upbyhalf,imputestuck, = impute_refine_chr_it!(chrfhaplo,chroffgeno,
 			popmakeup,priorprocess, priorspace, fhaplosetpp;
-			israndallele, ismalexls, founder2progeny,findexlist, avgfmiss, 
+			israndallele, ismalexls, founder2progeny,findexlist, 
 			likeerrortuple, snporder, issnpGT, inputloglike = chrloglike, 
 			threshlikeparameters, priorlikeparameters, liketargetls, tukeyfence,minoutlier, offspringexcl, 											
-			temperature, reversechr,
+			temperature, reversechr,isallowmissing, 
 			delsiglevel, priorlength, trimcm, trimfraction, 
 			chrneighbor, minaccept,nbrmaxwin, slidewinsize, maxwinsize, orderactions,orderactions_neighbor, 
 			chrlenls, ndiffls, ncorrectls, merrorlsls, actionlsls, upbyhalf, imputestuck, iteration=it, miniteration_order, 
@@ -939,8 +933,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     fhaplosetpp::AbstractVector;    	
     ismalexls::AbstractVector,
     founder2progeny::AbstractVector,
-    findexlist::AbstractVector, 
-	avgfmiss::Real,     
+    findexlist::AbstractVector, 	
 	liketargetls::AbstractVector,
 	likeerrortuple::NamedTuple,     
     threshlikeparameters::ThreshLikeParameters,
@@ -972,6 +965,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	actionlsls::AbstractVector,		
 	upbyhalf::Bool, 	
 	imputestuck::Integer, 
+	isallowmissing::Bool,
 	iteration::Integer,	
 	miniteration_order::Integer,
     imputetempfile::AbstractString,
@@ -986,22 +980,23 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     msg = ""		
 	errortuples = (epsf=epsfls,epso=epsols,  epso_perind = epsols_perind, seqerror = seqerrorls, allelebalancemean=allelebalancemeanls, 
 		allelebalancedisperse=allelebalancedispersels, alleledropout = alleledropoutls)		
-	miditeration = 6
+	miditeration = 6	
     if isimputefounder
         startt = time()		
         oldchrfhaplo = copy(chrfhaplo)		
 		if !upbyhalf
 			upbyhalf = imputestuck >= 3
 		end
+		# if isallowmissing = true, imputation might get worse in case of small size (e.g. 8ril of size20)
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
-            findexlist, errortuples..., 						
+            findexlist, errortuples..., isallowmissing,  						
 			offspringexcl, inputloglike, snporder, upbyhalf,israndallele,issnpGT,imputetempfile)				
         push!(ndiffls,ndiff)		
 		imputestuck = (deltloglike > 0 && ndiff > 0) ? 0 : imputestuck+ (deltloglike ≈ 0.0) + (ndiff== 0)
 		if upbyhalf	&& imputestuck >= 5
 			isimputefounder = false					
 		end
-        msg *= string(", #diff=",ndiff, ", Δlogl=",round(deltloglike,digits=1))
+        msg *= string(", #diff=",ndiff, ", Δlogl=",round(deltloglike,digits=1), ", stuck=",imputestuck)
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))		
     end	
@@ -1011,7 +1006,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		correctdf = foundercorrect_chr!(chrfhaplo, chroffgeno,            
 			popmakeup,priorprocess,priorspace, fhaplosetpp;
 			errortuples..., offspringexcl, snporder, 
-			decodetempfile = imputetempfile,isallowmissing = false, 
+			decodetempfile = imputetempfile,
 			ismalexls,founder2progeny,israndallele, issnpGT)
 		ncorrect =  isempty(correctdf) ? 0 : size(correctdf,1)
 		push!(ncorrectls,ncorrect)		
@@ -1020,10 +1015,10 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		end	
 		if ncorrect == 0 
 			iscorrectfounder = false        
-		elseif !isimputefounder
+		elseif !isimputefounder && isallowmissing
 			bdiff = oldchrfhaplo .!= chrfhaplo  # set correctino into  missing instead of one of the other possible values
 			chrfhaplo[bdiff] .= "N"
-			correctdf[:,:newg] .= "N"
+			correctdf[:,:newg] .= "N"			
 			iscorrectfounder = false
 		end
 		msg *= string(", #correct_f=",ncorrect)
