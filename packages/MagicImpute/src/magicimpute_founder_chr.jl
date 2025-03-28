@@ -1015,6 +1015,8 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		end	
 		if ncorrect == 0 
 			iscorrectfounder = false        
+		elseif isimputefounder && length(ndiffls) >= 5 && allequal(ndiffls[end-4:end])
+			iscorrectfounder = false        
 		elseif !isimputefounder && isallowmissing
 			bdiff = oldchrfhaplo .!= chrfhaplo  # set correctino into  missing instead of one of the other possible values
 			chrfhaplo[bdiff] .= "N"
