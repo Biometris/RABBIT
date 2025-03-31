@@ -13,7 +13,7 @@ isfounderinbred = false
 fhaplofile = dataid*"_fhaplo.vcf.gz"
 ncluster = 1
 nsnpchr = 200
-nparent = 4
+nparent = 2
 @time simfhaplo(;
     nsnp=ncluster*nsnpchr, 
     nparent,
@@ -29,7 +29,7 @@ misso = 0.1
 # pedcode = string(nparent, "star-self0")
 pedcode = string(nparent, "ril-self0")
 @time magicsimulate(fhaplofile,pedcode;
-    popsize=200,
+    popsize=5,
     isfounderinbred,    
     foundererror = Beta(2, 2/epsf-2.0),
     offspringerror = Beta(2, 2/epso-2.0),

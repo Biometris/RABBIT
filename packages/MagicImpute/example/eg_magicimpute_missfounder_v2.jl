@@ -11,7 +11,7 @@ pwd()
 isfounderinbred = true
 
 
-dataid = "sim2"
+dataid = "si2"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
