@@ -67,7 +67,7 @@ function parsegenodf!(mapdf::DataFrame, fgenodf::Union{Nothing,DataFrame},
         foundergeno = nothing
     else
         formatls = mapdf[:,:founderformat]
-        foundergeno = [Matrix{Any}(fgenodf[snps,:]) for snps in snpsls];    
+        foundergeno = [Matrix{Any}(fgenodf[snps,:]) for snps in snpsls]   
         empty!(fgenodf) 
         for chr in eachindex(snpsls)
             chrfgeno = foundergeno[chr]
@@ -83,7 +83,7 @@ function parsegenodf!(mapdf::DataFrame, fgenodf::Union{Nothing,DataFrame},
         offspringgeno = nothing
     else
         formatls = mapdf[:,:offspringformat]
-        offspringgeno = [Matrix{Any}(offgenodf[snps,:]) for snps in snpsls];     
+        offspringgeno = [Matrix{Any}(offgenodf[snps,:]) for snps in snpsls]     
         empty!(offgenodf)   
         GC.gc()
         for chr in eachindex(snpsls)

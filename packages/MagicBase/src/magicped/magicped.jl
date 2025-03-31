@@ -33,6 +33,12 @@ mutable struct MagicPed
     #offspringinfo [:individual,:member, :ishomozygous,:isfglexch,:gender]
     offspringinfo::Union{Nothing,DataFrame}
     function MagicPed(designinfo,founderinfo,offspringinfo)
+        if !isnothing(founderinfo) && !isnothing(offspringinfo)
+            ls = intersect(founderinfo[!,:individual],offspringinfo[!,:individual])
+            if !isempty(ls)
+                error(string("Founders and offspring must be different. Intersect of founders and offspring: ",ls))
+            end
+        end
         new(designinfo,founderinfo,offspringinfo)
     end
 end
