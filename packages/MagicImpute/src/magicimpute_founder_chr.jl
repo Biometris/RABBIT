@@ -121,9 +121,16 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 							if runit >= nrepeatmin	|| runit == nrepeatmax				
 								genodiff_best = round.(genodiff[c][bestrun,1:runit],digits=3)
 								genodiff_components[c] = copy(genodiff_best)
-								genodiff_best[bestrun] = Inf								
-								mindiff = minimum(genodiff_best)								
-								minrun_components[c] = minrun = rand(findall(genodiff_best .== mindiff))
+								genodiff_best[bestrun] = Inf				
+								minrunls = setdiff(findall(isinf.(genodiff_best)),[bestrun])		
+								if isempty(minrunls)
+									mindiff = minimum(genodiff_best)		
+									minrun = rand(findall(genodiff_best .== mindiff))
+								else
+									minrun = first(minrunls)
+									mindiff = 0.0
+								end																
+								minrun_components[c] = minrun
 								# diff betetween best run and other runs
 								genodiff_components[c] = round.(genodiff[c][bestrun,1:runit],digits=3)
 								if !isfounderinbred																		

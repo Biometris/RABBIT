@@ -58,12 +58,35 @@ mutable struct MagicGeno
     end
 end
 
+
+function insert_rabbitdupe!(genodf::AbstractDataFrame, magicped::MagicPed)
+    dupels = get_rabbitdupels(magicped)
+    namels = names(genodf)
+    setdiff!(dupels,namels)
+    for i in eachindex(dupels)
+        dupe = replace(dupels[i],"_rabbitdupe"=>"")
+        col = findfirst(==(dupe),namels)
+        if isnothing(col) 
+            @error string("For ",dupels[i], ", col of ", dupe, " is missing in genodf")
+        else
+            insertcols!(genodf,size(genodf,2)+1,dupels[i] => copy(genodf[!,col]))
+        end
+    end
+end
+
+function get_rabbitdupels(magicped::MagicPed)
+    offls = magicped.offspringinfo[!,1]
+    b = occursin.("_rabbitdupe",offls) 
+    offls[b]
+end
+
 const _col_1stsample = 15
 
 function formmagicgeno!(genodf::DataFrame,magicped::MagicPed;
     isfounderinbred::Bool=true,
     isphysmap::Bool=false,
     recomrate::Real=1.0)
+    insert_rabbitdupe!(genodf,magicped)
     founderid = isnothing(magicped.founderinfo) ? nothing : magicped.founderinfo[!,:individual]
     offspringid = isnothing(magicped.offspringinfo) ? nothing : magicped.offspringinfo[!,:individual]    
     if isnothing(founderid) && isnothing(offspringid)

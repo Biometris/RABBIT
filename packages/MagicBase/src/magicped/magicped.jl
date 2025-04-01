@@ -36,7 +36,7 @@ mutable struct MagicPed
         if !isnothing(founderinfo) && !isnothing(offspringinfo)
             ls = intersect(founderinfo[!,:individual],offspringinfo[!,:individual])
             if !isempty(ls)
-                error(string("Founders and offspring must be different. Intersect of founders and offspring: ",ls))
+                error(string("Intersect of founders and offspring: ",ls))
             end
         end
         new(designinfo,founderinfo,offspringinfo)

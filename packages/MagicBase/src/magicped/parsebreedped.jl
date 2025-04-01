@@ -47,17 +47,31 @@ function parsebreedped(pedfile::AbstractString;
             @error string("Could not parse number of inbreeding generations: ",g)
         end for g in gencol]
     dfls = map((x,y)->parsebreedcode(string(x,"=>", y); fixed_nself),pedcode,ngeration)
-    member = [i[end,:member] for i in dfls]
+    founderls = unique(reduce(vcat, [d[d[!,:mother] .== "0",:member] for d in dfls]))
+    offls = string.(peddf[:,1])
+    indexls = findall([in(i, founderls) for i in offls])
+    midpls = offls[indexls]
+    if !isempty(midpls)         
+        msg = string(length(midpls), " intermediate individuals that act as parents and offspring: ", midpls)
+        msg *= "\nWhen an intermediate individual acts as a parent, keep its id. "
+        msg *= "\nWhen an intermediate individual acts as a sampled offspring, rename its id into id_rabbitdupe. "
+        @warn msg
+        offls = [in(i,indexls) ? string(offls[i],"_rabbitdupe") : offls[i] for i in eachindex(offls)]        
+        # dict = Dict(midpls .=> string.(midpls,"_actf")) 
+        # for col in [:member, :mother, :father]
+        #     df[!,col] .= [haskey(dict, i) ? dict[i] : i for i in df[!,col]]
+        # end
+    end
     df = unique(reduce(vcat, dfls))
+    member = [i[end,:member] for i in dfls]    
     designinfo = Pedigree(df)
     nf=designinfo.nfounder
     founderinfo = DataFrame(:individual=>designinfo.member[1:nf],
-        :gender=>designinfo.gender[1:nf])
-    ind = string.(peddf[:,1])
+        :gender=>designinfo.gender[1:nf])    
     dict = Dict(designinfo.member .=> 1:length(designinfo.member))
     ii = [get(dict, i, nothing) for i in member]
     gender = designinfo.gender[ii]
-    offspringinfo = DataFrame([:individual=> ind,:member=>member,
+    offspringinfo = DataFrame([:individual=> offls,:member=>member,
         :ishomozygous=>ishomozygous,
         :isfglexch=>false,
         :gender=>gender])

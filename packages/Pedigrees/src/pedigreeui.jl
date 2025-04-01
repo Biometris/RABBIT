@@ -320,7 +320,8 @@ function plotped(pedigree::Pedigree;
     xls, yls = get_ped_xy(pedigree)    
     xmin, xmax = extrema(xls)
     if isnothing(plotsize)
-        plotsize = (120*(xmax-xmin),100*first(yls))
+        plotsize = (min(10000,120*(xmax-xmin)),min(10000,100*first(yls)))
+        # @info "" plotsize
     end
 
     if isnothing(markersize)

@@ -87,6 +87,7 @@ function repeat_trunc_clusters_by_silh(clusters::AbstractVector, silhs::Abstract
             minsilhouette -= 0.1
             clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
             printconsole(io,verbose,msg)                
+            minsilhouette <= 0.0 && break
         end        
     else
         clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)

@@ -271,12 +271,15 @@ function parse_titlerow(titlerow::AbstractVector,pedinfo::Union{Integer,Abstract
         founderid = founderid[.!b]
     end
     offcols = [get(dict,i,nothing) for i in offspringid]
-    b = isnothing.(offcols)
-    if any(b)
-        msg = string(sum(b)," offspring in pedfile but not in genofie: ",offspringid[b])
-        @warn msg
-        printconsole(logio, false, "Warning: "*msg)
-        offcols = offcols[.!b]
+    bls = findall(isnothing.(offcols))
+    if !isempty(bls)
+        bls2 = bls[.!occursin.("_rabbitdupe",offspringid[bls])]
+        if !isempty(bls2)
+            msg = string(length(bls2)," offspring in pedfile but not in genofie: ",offspringid[bls2])
+            @warn msg
+            printconsole(logio, false, "Warning: "*msg)
+        end
+        setdiff!(offcols, offcols[bls])
     end
     if keepvcf
         res = titlerow[vcat(1:9, fcols,offcols)]
