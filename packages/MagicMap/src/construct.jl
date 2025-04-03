@@ -350,8 +350,8 @@ function construct(linkagefile::AbstractString;
         printconsole(logio,verbose,string("construct_map in ", magicmapfile))    
         # heatmap   
         try 
-            snpthin = max(1,round(Int,size(mapdf,1)/10^4))        
-            plotrecomheat(ldfile,linkagefile,magicmapfile;  snpthin, 
+            markerthin = max(1,round(Int,size(mapdf,1)/10^4))        
+            plotrecomheat(ldfile,linkagefile,magicmapfile;  markerthin, 
                 workdir, iseachlg = false, outstem = outstem*"_construct",io=logio,verbose)
         catch err
             msg = string(err, ". Cound not plot recomheatmap")
@@ -381,17 +381,17 @@ function binning_cosegrate!(markers, nmissingls, recomnonfrac, recomlod, ldlod, 
     sort!(bindf,:represent)
     # binning results
     for row in eachrow(bindf)
-        snp_represent = markers[row[1]]    
-        snp_bin = markers[row[2]]
-        if length(snp_bin) > 1   
-            ls = [dupebindict[s] for s in snp_bin]
+        marker_represent = markers[row[1]]    
+        marker_bin = markers[row[2]]
+        if length(marker_bin) > 1   
+            ls = [dupebindict[s] for s in marker_bin]
             ls1 = join([s[1] for s in ls],"||")
             ls2 = join([s[2] for s in ls],"||")
             ls3 = join([s[3] for s in ls],"||")
-            for snp in setdiff(snp_bin,[snp_represent])
+            for snp in setdiff(marker_bin,[marker_represent])
                 delete!(dupebindict,snp)
             end                
-            dupebindict[snp_represent] = (ls1,ls2,ls3)
+            dupebindict[marker_represent] = (ls1,ls2,ls3)
         end
     end    
     represents = bindf[!,:represent]

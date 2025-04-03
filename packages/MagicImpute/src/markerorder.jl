@@ -220,7 +220,7 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
             end
             bw_tmax = bwls[tseq[kkmax]]
             logbwprob = isnothing(bw_tmax) ? bwfile[string("t", tseq[kkmax])] : bw_tmax
-            if rand() < 1.01                
+            if rand() < 0.01                
                 segtseq, segttranls = getsegprop("original", kkmin, kkmax, tseq)
                 fwsegcheck = calsegforward!(dataprobls, segtseq, segttranls,kkmin,tseq,fwls,
                     chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;

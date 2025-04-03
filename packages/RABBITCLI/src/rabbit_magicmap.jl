@@ -82,8 +82,8 @@ function parse_commandline()
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
         default = true                        
-        "--snpthin"
-        help = "thin markers by taking every snpthin-th markers"
+        "--markerthin"
+        help = "thin markers by taking every markerthin-th markers"
         arg_type = Int
         default = 1
         "--ispermmarker"
@@ -171,7 +171,7 @@ function reset_priority!(parsed_args)
     else
         @error string("unknown formatpriority: ",formatpriority)
     end
-    # snpthin exists in magicmap
+    # markerthin exists in magicmap
 end
 
 function main(args::Vector{String})

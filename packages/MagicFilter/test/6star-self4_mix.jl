@@ -9,8 +9,8 @@ genofile = dataid*"_magicsimulate_geno.vcf.gz"
 pedfile = dataid*"_magicsimulate_ped.csv"
 outstem=dataid
 magicgeno = magicfilter(genofile, pedfile;
-    snp_minmaf = 0.01,
-    snp_missfilter = (f,o) -> f<=0.0 || o <= 0.5,
+    minmaf = 0.01,
+    missfilter = (f,o) -> f<=0.0 || o <= 0.5,
     outstem,
     verbose=false
 );

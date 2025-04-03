@@ -56,8 +56,8 @@ magicsimulate(fhaplofile,pedfile;
 genofile = outstem*"_magicsimulate_geno.vcf.gz"
 pedfile = outstem*"_magicsimulate_ped.csv"
 magicfilter(genofile,pedfile;        
-    snp_minmaf = 0.05,
-    snp_missfilter = (f,o) -> o <= 0.7,     
+    minmaf = 0.05,
+    missfilter = (f,o) -> o <= 0.7,     
     offspring_maxmiss = 0.95,
     isfilterdupe = true,  
     outstem

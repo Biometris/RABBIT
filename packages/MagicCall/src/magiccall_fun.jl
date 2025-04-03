@@ -30,13 +30,13 @@ single marker genotype call from genofile and pedinfo.
 `threshcall::Real = 0.9`: offspring genotypes are call if 
   the maximum posterior probability > threshcall.
 
-`delmultiallelic::Bool=true`: if true, delete markers with >=3 alleles. 
+`isdelmultiallelic::Bool=true`: if true, delete markers with >=3 alleles. 
 
-`delmonomorphic::Bool=true`: if true, delete monomorphic markers. 
+`isdelmonomorphic::Bool=true`: if true, delete monomorphic markers. 
 
-`snp_minmaf::Real = 0.05`: delete makrs with minor allele frequency (MAF) < 0.05. 
+`minmaf::Real = 0.05`: delete makrs with minor allele frequency (MAF) < 0.05. 
 
-`snp_maxmiss::Real = 0.99`: delete makrs with genotype missing frequency > 0.99. 
+`maxmiss::Real = 0.99`: delete makrs with genotype missing frequency > 0.99. 
 
 `israwcall::Bool= false`: if true, perform raw genotype calling. 
 
@@ -66,10 +66,10 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     threshcall::Real = 0.9,
     israwcall::Bool= false, 
     byfounder::Integer=1,
-    delmultiallelic::Bool=true,
-    delmonomorphic::Bool=true,    
-    snp_minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < snp_minmaf
-    snp_maxmiss::Real = 0.99,         
+    isdelmultiallelic::Bool=true,
+    isdelmonomorphic::Bool=true,    
+    minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < minmaf
+    maxmiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 
     isparallel::Bool=true,    
     outstem::AbstractString = "outstem",
@@ -102,10 +102,10 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "isfounderinbred = ", isfounderinbred, "\n",        
         "israndallele = ", israndallele, "\n",        
         "byfounder = ", byfounder, "\n",        
-        "delmultiallelic = ", delmultiallelic, "\n",
-        "delmonomorphic = ", delmonomorphic, "\n",        
-        "snp_minmaf = ", snp_minmaf, "\n",        
-        "snp_maxmiss = ", snp_maxmiss, "\n",        
+        "isdelmultiallelic = ", isdelmultiallelic, "\n",
+        "isdelmonomorphic = ", isdelmonomorphic, "\n",        
+        "minmaf = ", minmaf, "\n",        
+        "maxmiss = ", maxmiss, "\n",        
         "threshcall = ", threshcall, "\n",        
         "israwcall = ", israwcall, "\n",        
         "isinfererror = ", isinfererror, "\n",                
@@ -150,7 +150,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
                 magiccall_io(inio, outio, delio, logio, pedinfo,model, 
                     likeparameters, threshlikeparameters, priorlikeparameters, 
                     formatpriority, israndallele,isfounderinbred, byfounder, 
-                    delmultiallelic, delmonomorphic, snp_minmaf,snp_maxmiss, 
+                    isdelmultiallelic, isdelmonomorphic, minmaf,maxmiss, 
                     threshcall, israwcall, isinfererror,
                     paragraphls,commentstring, nheader, workdir, verbose)            
             end
@@ -197,10 +197,10 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     israndallele::Bool,
     isfounderinbred::Bool,
     byfounder::Integer,     
-    delmultiallelic::Bool,
-    delmonomorphic::Bool,
-    snp_minmaf::Real,
-    snp_maxmiss::Real,
+    isdelmultiallelic::Bool,
+    isdelmonomorphic::Bool,
+    minmaf::Real,
+    maxmiss::Real,
     threshcall::Real,        
     israwcall::Bool,
     isinfererror::Bool,
@@ -242,9 +242,9 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             end
             nmarker += 1                        
             rowstring = readline(inio,keep=false)
-            res = magiccall_rowgeno(rowstring,fcols,offcols,magicped; israwcall, delmultiallelic, delmonomorphic,
+            res = magiccall_rowgeno(rowstring,fcols,offcols,magicped; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
-                snp_minmaf,snp_maxmiss,threshcall, isinfererror,
+                minmaf,maxmiss,threshcall, isinfererror,
                 likeparameters, threshlikeparameters, priorlikeparameters, missingset, nstate,nfgl)        
             if res[1] == "maxmiss"
                 write(delio,res[2],"\n")
@@ -253,14 +253,14 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                 write(outio,res[2],"\n")
             elseif res[1] == "multiallelic"
                 nmultia += 1
-                if delmultiallelic  
+                if isdelmultiallelic  
                     write(delio,res[2],"\n")
                 else
                     write(outio,res[2],"\n")
                 end
             elseif res[1] == "monomorphic"
                 nmono += 1
-                if delmonomorphic  
+                if isdelmonomorphic  
                     write(delio,res[2],"\n")
                 else
                     write(outio,res[2],"\n")
@@ -289,9 +289,9 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             nline = length(paragraph)            
             nmarker += nline            
             multirows = [readline(inio,keep=false) for i in 1:nline]                        
-            res = pmap(x-> magiccall_rowgeno(x,fcols,offcols,magicped; israwcall, delmultiallelic, delmonomorphic,
+            res = pmap(x-> magiccall_rowgeno(x,fcols,offcols,magicped; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
-                snp_minmaf, snp_maxmiss, threshcall, isinfererror,
+                minmaf, maxmiss, threshcall, isinfererror,
                 likeparameters, threshlikeparameters, priorlikeparameters, missingset, nstate,nfgl), multirows)            
             for i in res
                 if i[1] == "maxmiss"
@@ -301,14 +301,14 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                     write(outio,i[2],"\n")
                 elseif i[1] == "multiallelic"
                     nmultia += 1
-                    if delmultiallelic  
+                    if isdelmultiallelic  
                         write(delio,i[2],"\n")
                     else
                         write(outio,i[2],"\n")
                     end                
                 elseif i[1] == "monomorphic"
                     nmono += 1
-                    if delmonomorphic  
+                    if isdelmonomorphic  
                         write(delio,i[2],"\n")
                     else
                         write(outio,i[2],"\n")
@@ -364,16 +364,16 @@ function magiccall_rowgeno(rowstring::AbstractString,
     fcols::AbstractVector,offcols::AbstractVector,
     magicped::MagicPed;
     israwcall::Bool,
-    delmultiallelic::Bool,
-    delmonomorphic::Bool,
+    isdelmultiallelic::Bool,
+    isdelmonomorphic::Bool,
     israndallele::Bool,
     isfounderinbred::Bool,
     byfounder::Integer, 
     model::AbstractString, 
     popmakeup::AbstractDict,    
     formatpriority::AbstractVector,
-    snp_minmaf::Real,
-    snp_maxmiss::Real,
+    minmaf::Real,
+    maxmiss::Real,
     threshcall::Real,
     isinfererror::Bool,
     likeparameters::LikeParameters,    
@@ -384,9 +384,9 @@ function magiccall_rowgeno(rowstring::AbstractString,
     nfgl::Integer)
     rowgeno = split(rowstring,"\t")
     ismultiallele = length(split(rowgeno[5],",")) > 1 # col5=alternative                     
-    ismultiallele && delmultiallelic && return ("multiallelic", rowstring)
+    ismultiallele && isdelmultiallelic && return ("multiallelic", rowstring)
     res = transform_rowgeno!(rowgeno, fcols,offcols,likeparameters,formatpriority,
-        missingset,isfounderinbred,delmonomorphic)    
+        missingset,isfounderinbred,isdelmonomorphic)    
     res == "monomorphic" && return ("monomorphic",join(rowgeno,"\t"))
     inputformat, fgeno, offgeno, offspringformat = res
     isoffmiss = rowgeno[offcols] .== "NA"
@@ -405,7 +405,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     calledgeno2vcf!(newfgeno; ishaplo = isfounderinbred)       
     add_error_info!(rowgeno,esterrors)    
     ismono = in(unique(fhaplo),[["1"],["2"]])
-    if delmonomorphic && ismono        
+    if isdelmonomorphic && ismono        
         if !israwcall
             rowgeno[8] *= string(";FOUNDERHAPLO=",replace(join(newfgeno),"/"=>""))
         end
@@ -453,10 +453,10 @@ function magiccall_rowgeno(rowstring::AbstractString,
     end
     newoffgeno = MagicBase.callfromprob.(offpostprob, threshcall; isphased=false,ishalfcall=true)        
     
-    geno_mono2miss!(newoffgeno, offpostprob, popmakeup; minmaf = snp_minmaf)
+    geno_mono2miss!(newoffgeno, offpostprob, popmakeup; minmaf = minmaf)
     b = [occursin("N",i) for i in newoffgeno]    
     noff = length(newoffgeno)
-    if snp_maxmiss < 1 && all(b)
+    if maxmiss < 1 && all(b)
         resid = "maxmiss"
     else
         alleles = split(join(newoffgeno),"")
@@ -464,11 +464,11 @@ function magiccall_rowgeno(rowstring::AbstractString,
         n1 = sum(alleles .== "1")
         n2 = sum(alleles .== "2")
         missfreq = 1 - (n1+n2)/(2*noff)
-        if missfreq > snp_maxmiss
+        if missfreq > maxmiss
             resid = "maxmiss"
         else            
-            if snp_minmaf > 0 && (n1+n2) > 1/snp_minmaf            
-                if min(n1,n2)/(n1+n2) < snp_minmaf
+            if minmaf > 0 && (n1+n2) > 1/minmaf            
+                if min(n1,n2)/(n1+n2) < minmaf
                     resid = "monomorphic"
                 end
             end
@@ -511,7 +511,7 @@ function transform_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcol
     formatpriority::AbstractVector,
     missingset::AbstractVector,    
     isfounderinbred::Bool,
-    delmonomorphic::Bool)
+    isdelmonomorphic::Bool)
     keepvcf = true    
     ids = Symbol.(formatpriority)
     vals = 1:length(formatpriority)
@@ -523,7 +523,7 @@ function transform_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcol
     founderformat = MagicBase.parse_rowgeno!(fgeno,rowgeno[fcols],
         formatcode, formatpriority, missingset,keepvcf)        
     ismono = in(unique(split(replace(join(fgeno),"/"=>"", "|"=>""),"")),[["0"],["1"]])
-    if delmonomorphic && ismono        
+    if isdelmonomorphic && ismono        
         return "monomorphic"
     end  
     parse2_internalgeno!(fgeno,founderformat; ishaplo=isfounderinbred)    
@@ -541,7 +541,7 @@ function transform_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcol
         fgeno = MagicBase.callfromprob.(fgeno, threshcall; isphased=false,ishaplo=isfounderinbred)
     end    
     ismono = in(unique(split(join(fgeno),"")),[["1"],["2"]])
-    if delmonomorphic && ismono        
+    if isdelmonomorphic && ismono        
         return "monomorphic"
     end      
     # set offspring geno
@@ -552,7 +552,7 @@ function transform_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcol
     alleleset = unique(split(join(offgeno),""))
     setdiff!(alleleset,["N"])
     ismono = in(alleleset,[["1"],["2"]])
-    if delmonomorphic && ismono        
+    if isdelmonomorphic && ismono        
         return "monomorphic"
     end      
     inputformat, fgeno,offgeno,offspringformat

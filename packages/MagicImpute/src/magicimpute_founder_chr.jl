@@ -831,7 +831,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 						chrid, startit=it+1, spacebyviterbi, verbose, io)
 					rescalemap!(priorprocess,skeletonprior)						
 				else
-					msg  = string("chr=", chrid, msg_repeatrun, ", #snp=", nsnp, ", #snp_incl=", nsnpincl,
+					msg  = string("chr=", chrid, msg_repeatrun, ", #snp=", nsnp, ", #marker_incl=", nsnpincl,
 						", #segment=",ndiffloc, ", no distance rescale by skeleton markers")
 					printconsole(io,verbose, msg)
 				end
@@ -858,7 +858,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	msg  = string("chr=", chrid, msg_repeatrun, 
 		", logl=", round(sum(loglikels),digits=1),		
 		", #snp=", nsnp, 
-		", #snp_incl=", nsnpincl,
+		", #marker_incl=", nsnpincl,
 		iscorrectfounder ? string(", #correct_f=", ncorrect) : "",			
 		", l=", round(chrlen,digits=1), "cM",		
 		", fmiss=", join(round.(fmissls_after,digits=4),"|"), 	
@@ -1022,7 +1022,8 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		end	
 		if ncorrect == 0 
 			iscorrectfounder = false        
-		elseif isimputefounder && length(ndiffls) >= 5 && allequal(ndiffls[end-4:end])
+		elseif isimputefounder && length(ncorrectls) >= 6 && (all(ndiffls[end-4:end]  .== ncorrectls[end-5:end-1]) || all(ncorrectls[end-4:end] .<= 3) || allequal(ncorrectls[end-4:end])) 
+			# scenario isimputefounder and iscorrectfounder are locked with each other
 			iscorrectfounder = false        
 		elseif !isimputefounder && isallowmissing
 			bdiff = oldchrfhaplo .!= chrfhaplo  # set correctino into  missing instead of one of the other possible values

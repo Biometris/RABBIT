@@ -162,14 +162,14 @@ function formmagicgeno(genofile::AbstractString,nfounder::Integer;
     formatpriority::AbstractVector=["AD","GT"],
     isphysmap::Bool=false,
     recomrate::Real=1.0,    
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     commentstring::AbstractString="##",
     missingstring=["NA","missing"],
     workdir::AbstractString=pwd())
     designinfo = parsedesign(string("nfounder=",nfounder))
     formmagicgeno(genofile,designinfo;
         isfounderinbred, formatpriority,isphysmap,recomrate,
-        delmultiallelic,
+        isdelmultiallelic,
         commentstring,missingstring,workdir)
 end
 
@@ -178,13 +178,13 @@ function formmagicgeno(genofile::AbstractString,designinfo::DesignInfo;
     formatpriority::AbstractVector=["AD","GT"],    
     isphysmap::Bool=false,
     recomrate::Real=1.0,
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     commentstring::AbstractString="##",
     missingstring=["NA","missing"],
     workdir::AbstractString=pwd())        
     # read genofile
     genodf,commentlines = readgenodf(genofile,designinfo.designcode; isfounderinbred,formatpriority,
-        delmultiallelic,commentstring, missingstring, workdir)
+        isdelmultiallelic,commentstring, missingstring, workdir)
     # set magicped    
     indidls = names(genodf)[_col_1stsample:end]
     magicped = formmagicped!(designinfo,indidls)    
@@ -239,7 +239,7 @@ function formmagicgeno(genofile::AbstractString,pedinfo::AbstractString;
     formatpriority::AbstractVector=["AD","GT"],
     isphysmap::Bool=false,
     recomrate::Real=1.0,
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     commentstring::AbstractString="##",
     missingstring=["NA","missing"],
     workdir::AbstractString=pwd())
@@ -248,7 +248,7 @@ function formmagicgeno(genofile::AbstractString,pedinfo::AbstractString;
         magicped = readmagicped(pedinfo; commentstring, workdir)
         # read genofile
         genodf,commentlines = readgenodf(genofile,pedinfo; isfounderinbred,formatpriority,
-            delmultiallelic,commentstring, missingstring, workdir)
+            isdelmultiallelic,commentstring, missingstring, workdir)
         #form magicgeno
         magicgeno = formmagicgeno!(genodf, magicped;isfounderinbred, isphysmap,recomrate)
         if !isempty(commentlines)
@@ -262,7 +262,7 @@ function formmagicgeno(genofile::AbstractString,pedinfo::AbstractString;
         designinfo = parsedesign(pedinfo)
         magicgeno = formmagicgeno(genofile,designinfo; 
             isfounderinbred, formatpriority, isphysmap,recomrate,
-            delmultiallelic,commentstring, missingstring, workdir)        
+            isdelmultiallelic,commentstring, missingstring, workdir)        
     end
 end
 

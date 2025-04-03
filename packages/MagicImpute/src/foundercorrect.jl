@@ -15,23 +15,41 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     ismalexls::AbstractVector,    
     israndallele::Bool,     
     offspringexcl::AbstractVector, 
-    issnpGT::AbstractVector, 
-    itmax::Integer=3)  
+    issnpGT::AbstractVector)
     isfounderinbred = length(founder2progeny) == size(chrfhaplo,2)	    
     rescorrect = []
-    for it in 1:itmax        
+    newchrfhaplo = deepcopy(chrfhaplo)
+    itmax = 3
+    minnerrdiff = 2
+    for it in 1:itmax
         calledchroffgeno = singlesite_genocall(chrfhaplo,chroffgeno; ismalexls, popmakeup,
             epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,alleledropout, 
             israndallele,issnpGT,callthreshold = 0.7,tempjld2file = decodetempfile)
-        correctdf = last(foundererror_chr(chrfhaplo, chroffgeno, calledchroffgeno, 
+        loglikels, correctdf = foundererror_chr(chrfhaplo, chroffgeno, calledchroffgeno, 
             founder2progeny, popmakeup,priorprocess,priorspace;
             epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
-            snporder, decodetempfile,offspringexcl, issnpGT,israndallele))
-        if !isempty(correctdf)
-            setcorrectdf!(chrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
-            push!(rescorrect,correctdf)
+            snporder, decodetempfile,offspringexcl, issnpGT,israndallele, minnerrdiff)        
+        loglikels[offspringexcl] .= 0.0 
+        if isempty(correctdf)            
+            break
+        else
+            setcorrectdf!(newchrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
+            newloglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
+                epsf,epso,epso_perind, seqerror,
+                allelebalancemean,allelebalancedisperse,alleledropout, 
+                decodetempfile, israndallele,issnpGT,snporder
+            )	
+            newloglikels[offspringexcl] .= 0.0 
+            isaccept = sum(newloglikels) - sum(loglikels) > 0
+            if isaccept
+                chrfhaplo .= newchrfhaplo      
+                push!(rescorrect,correctdf)
+            else
+                # newchrfhaplo .= chrfhaplo
+                break          
+            end            
+            # println("it_correct=", it, ",isaccept=",isaccept, ", ncorrect=",size(correctdf,1))
         end
-        isempty(correctdf) && break
     end
     res = isempty(rescorrect) ? rescorrect : reduce(vcat, rescorrect)
     res
@@ -52,7 +70,8 @@ function foundererror_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     decodetempfile::AbstractString,    
     israndallele::Bool,
     offspringexcl::AbstractVector, 
-    issnpGT::AbstractVector)
+    issnpGT::AbstractVector,
+    minnerrdiff::Integer=2)
     loglike = first(MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
         epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
         hmmalg="viterbi", decodetempfile, israndallele, issnpGT,snporder));
@@ -66,7 +85,7 @@ function foundererror_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     end 
     chrviterbi = MagicReconstruct.get_chr_viterbi(decodetempfile, snporder)
     bestgeno = get_chr_bestgeno(chrfhaplo, chrviterbi,ancestralstate)
-    chrbadsnp = getchrbadsnp(calledchroffgeno, bestgeno, popmakeup; minnerr = 2)
+    chrbadsnp = getchrbadsnp(calledchroffgeno, bestgeno, popmakeup; minnerr = minnerrdiff)
     # max 50% markers are labled as chrbadsnp
     wwls = [max(i[2]...) for i in chrbadsnp]
     q0=1.0-0.50*length(snporder)/length(wwls)
@@ -74,10 +93,10 @@ function foundererror_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
         q = quantile(wwls, q0)
         chrbadsnp = chrbadsnp[wwls.>q]
     end
-    nselsnp = length(chrbadsnp)
+    # nselsnp = length(chrbadsnp)
     correctdf = getchrchange(chrfhaplo,calledchroffgeno,chrviterbi,chrbadsnp, 
-        decodetempfile, ancestralstate,founder2progeny; offspringexcl, minnerrdiff = 2)
-    loglike, nselsnp, correctdf    
+        decodetempfile, ancestralstate,founder2progeny; offspringexcl, minnerrdiff = minnerrdiff)
+    loglike, correctdf    
 end
 
 

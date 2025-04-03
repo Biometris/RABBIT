@@ -817,7 +817,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	                magicgenofilemtx[chroo,:],imputetempfilemtx[chroo,:], logfilemtx[chroo,:],repeatrunmtx[chroo,:])				
 				loglikemtx[chroo,:] .= sum.(first.(res))				
 			catch err 				
-				printconsole(io,verbose, string("ERROR: ",err))
+				printconsole(io,verbose, string("ERROR: ",err))				
 				for (exc, bt) in current_exceptions()
 					showerror(stdout, exc, bt)
 				  	showerror(io, exc, bt)

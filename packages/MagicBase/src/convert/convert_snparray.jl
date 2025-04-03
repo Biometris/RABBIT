@@ -69,7 +69,7 @@ extract pedfile from arrayfile. Work only for a non-subdivided population.
 
 # Keyword arguments
 
-`delmultiallelic::Bool = true,`: if true, delete markers with #alleles >= 3. 
+`isdelmultiallelic::Bool = true,`: if true, delete markers with #alleles >= 3. 
 
 `delim= ","`: text delimiter. 
 
@@ -84,7 +84,7 @@ extract pedfile from arrayfile. Work only for a non-subdivided population.
 """
 function arrayfile2vcf(arrayfile::AbstractString; 
     missingallele = "-", 
-    delmultiallelic::Bool = true,
+    isdelmultiallelic::Bool = true,
     delim = ',',        
     outstem::AbstractString = first(MagicBase.split_allext(basename(arrayfile))),
     workdir::AbstractString = pwd(),
@@ -125,7 +125,7 @@ function arrayfile2vcf(arrayfile::AbstractString;
                 aset = unique(alleles)
                 if length(aset) >= 3 
                     nmulti += 1
-                    delmultiallelic && continue
+                    isdelmultiallelic && continue
                 end
                 if isempty(aset)
                     ref = "N"
@@ -159,7 +159,7 @@ function arrayfile2vcf(arrayfile::AbstractString;
     end
     msg = string("#individuals=",nsample[1],", #markers=",nmarker)
     if nmulti > 0
-        msg *= string(", #markers_multiallelic=",nmulti, delmultiallelic ? "(deleted)" : "" )
+        msg *= string(", #markers_multiallelic=",nmulti, isdelmultiallelic ? "(deleted)" : "" )
     end
     printconsole(logio,verbose,msg)    
     msg = string("ouput vcffile: ", outfile)

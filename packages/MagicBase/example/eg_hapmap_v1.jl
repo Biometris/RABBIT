@@ -5,7 +5,7 @@ pwd()
 
 
 hapmapfile = "data_hmp.txt"
-delmultiallelic = true
+isdelmultiallelic = true
 delim = r" +"
 outstem  = "outstem"
 workdir = pwd()

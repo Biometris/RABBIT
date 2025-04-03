@@ -7,7 +7,7 @@ function magicld(genofile::AbstractString,
     isdepmodel::Bool=false,        
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
     seqerror::Real=0.001,
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     minlodsave::Union{Nothing, Real}=nothing,
     minldsave::Union{Nothing, Real}=nothing,
     isparallel::Bool=true,    
@@ -47,7 +47,7 @@ function magicld(genofile::AbstractString,
     MagicBase.printconsole(io,verbose,msg)  
     res=magicld!(magicgeno; binfile,
         isdepmodel, threshcall,
-        seqerror, snpthin, minlodsave,minldsave, 
+        seqerror, markerthin, minlodsave,minldsave, 
         isparallel,workdir, outstem,logfile=io,verbose
     )
     tused = round(time()-starttime,digits=1)
@@ -60,7 +60,7 @@ function magicld!(magicgeno::MagicGeno;
     isdepmodel::Bool=false,    
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
     seqerror::Real=0.001,
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     minlodsave::Union{Nothing, Real}=nothing,
     minldsave::Union{Nothing, Real}=nothing,    
     isparallel::Bool=true,
@@ -78,7 +78,7 @@ function magicld!(magicgeno::MagicGeno;
         "isdepmodel = ", isdepmodel,"\n",          
         "threshcall = ", threshcall, "\n",          
         "seqerror = ", seqerror,"\n",
-        "snpthin = ", snpthin, "\n",
+        "markerthin = ", markerthin, "\n",
         "minlodsave = ", minlodsave, "\n",
         "minldsave = ", minldsave, "\n",        
         "isparallel = ", isparallel, isparallel ? string("(nworkers=",nworkers(),")") : "", "\n",
@@ -89,9 +89,9 @@ function magicld!(magicgeno::MagicGeno;
     )
     printconsole(io,verbose,msg)
     merge_chromosome!(magicgeno)    # only ignore chrom/linagegroup
-    if snpthin>1
+    if markerthin>1
         nsnp = sum(size.(magicgeno.markermap,1))
-        submagicgeno!(magicgeno; snpsubset = 1:snpthin:nsnp)
+        submagicgeno!(magicgeno; snpsubset = 1:markerthin:nsnp)
     end
     # incorperate binfile    
     if isnothing(binfile)        

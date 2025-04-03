@@ -2,7 +2,7 @@
 function parsevcf(genofile::AbstractString,pedinfo::Union{Integer,AbstractString};
     isfounderinbred::Bool=true,
     formatpriority::AbstractVector=["AD","GT"],
-    delmultiallelic::Bool=true,    
+    isdelmultiallelic::Bool=true,    
     commentstring::AbstractString="##",
     outstem::Union{IO,AbstractString} = "outstem",
     outext::AbstractString = ".csv.gz",
@@ -19,7 +19,7 @@ function parsevcf(genofile::AbstractString,pedinfo::Union{Integer,AbstractString
         "pedinfo = ", pedinfo, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
         "formatpriority = ", formatpriority, "\n",
-        "delmultiallelic = ", delmultiallelic, "\n",
+        "isdelmultiallelic = ", isdelmultiallelic, "\n",
         "commentstring = ", commentstring, "\n",
         "outstem = ", outstem, "\n",
         "outext = ", outext, "\n",
@@ -38,14 +38,14 @@ function parsevcf(genofile::AbstractString,pedinfo::Union{Integer,AbstractString
             outfile = getabsfile(workdir,outstem*outext)
             out_open(outfile, "w") do outio
                 parsevcf_io(inio, outio, logio, pedinfo,isfounderinbred,
-                    formatpriority,delmultiallelic, commentstring, nheader, keepvcf, workdir, verbose)
+                    formatpriority,isdelmultiallelic, commentstring, nheader, keepvcf, workdir, verbose)
             end
             msg = string("save parsed genofile: ", outfile)
             printconsole(logio,verbose,msg)
         else
             # isa(outstem, IO)
             parsevcf_io(inio, outstem, logio, pedinfo, isfounderinbred,
-                formatpriority,delmultiallelic,commentstring, nheader, keepvcf, workdir, verbose)
+                formatpriority,isdelmultiallelic,commentstring, nheader, keepvcf, workdir, verbose)
         end
     end
     tused = round(time()-starttime,digits=1)
@@ -56,7 +56,7 @@ end
 function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
     pedinfo::Union{Integer,AbstractString}, isfounderinbred::Bool,
     formatpriority::AbstractVector,
-    delmultiallelic::Bool,    
+    isdelmultiallelic::Bool,    
     commentstring::AbstractString,
     nheader::Integer, 
     keepvcf::Bool,    
@@ -99,7 +99,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
         ismultia =length(split(alt,",")) > 1                                
         if ismultia 
             nmultia += 1
-            delmultiallelic && continue
+            isdelmultiallelic && continue
         end          # 
         format = Symbol.(split(rowgeno[9],":"))
         formatcode = [get(prioritytuple,i,-1) for i in format] # -1 denotes missing fromat        
@@ -172,7 +172,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
         println(msg, "\n", df)
     end
     msg = string("end, #founders=",length(fcols), ", #offspring=",length(offcols), ", #markers=",nmarker, 
-        ",#multiallelic=",nmultia, delmultiallelic ? "(del)" : "(keep)")
+        ",#multiallelic=",nmultia, isdelmultiallelic ? "(del)" : "(keep)")
     printconsole(logio,verbose,msg)
 end
 

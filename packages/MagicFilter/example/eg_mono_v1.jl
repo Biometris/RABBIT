@@ -15,7 +15,7 @@ pedfile = "sim_ped.csv"
 magicgeno = formmagicgeno(genofile,pedfile);
 
 @time MagicFilter.filter_marker!(magicgeno;
-    snp_mono2miss = true,    
+    mono2miss = true,    
 );
 
 # cd(@__DIR__)

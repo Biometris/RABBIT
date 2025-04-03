@@ -16,10 +16,10 @@ try
         "MagicPrior" => ["Pedigrees"],
         "MagicBase" => ["Pedigrees"],    
         "MagicSimulate" => ["Pedigrees","MagicBase"],    
-        "MagicReconstruct" => ["HMM","Pedigrees","MagicBase","MagicPrior"],
-        "MagicCall" => ["HMM","Pedigrees","MagicBase","MagicPrior","MagicReconstruct"],
+        "MagicReconstruct" => ["HMM","Pedigrees","MagicBase","MagicPrior"],        
         "MagicFilter" => ["HMM","Pedigrees","MagicBase","MagicPrior","MagicReconstruct"],
         "MagicImpute" => ["HMM","Pedigrees","MagicBase","MagicPrior","MagicReconstruct"],    
+        "MagicCall" => ["HMM","Pedigrees","MagicBase","MagicPrior","MagicReconstruct"],
         "SpectralEmbedding" => [],
         "MagicLD" => ["Pedigrees","MagicBase"], 
         "MagicLinkage" => ["HMM","Pedigrees","MagicBase","MagicLD","MagicPrior",
@@ -29,23 +29,31 @@ try
         "MagicScan" => ["Pedigrees","MagicBase"],        
         "RABBITCLI" => ["HMM", "Pedigrees","MagicBase","MagicSimulate", "MagicPrior","MagicReconstruct","MagicFilter", 
             "MagicCall", "MagicImpute","MagicLD","MagicLinkage", "SpectralEmbedding","MagicMap", "MagicScan"]
-    ]
-    rabbit_url = "https://github.com/Biometris/RABBIT"
-    filedir = abspath(dirname(@__FILE__),"packages")    
+    ]    
+    # rabbit_url = "https://github.com/Biometris/RABBIT2"
+    filedir = abspath(dirname(@__FILE__))
     @time for (pkg,deps) in pkgdeps
-        println("######update dependencies of ",pkg, "#######")
-        repopath = joinpath(filedir,pkg)
-        Pkg.activate(repopath)        
+        println("-------------update dependencies of ",pkg, "-------------")
+        Pkg.activate(abspath(filedir, "packages",pkg))        
+        try 
+            Pkg.rm.(deps)   
+        catch err            
+            @error err
+        end
         for i in deps
-            Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",i)))
+            @info string("-------------add ",i, " for ", pkg, "----------------")
+            # Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",i)))
+            Pkg.add(PackageSpec(path=filedir,subdir=string("packages/",i)))
         end
         Pkg.update()
         Pkg.activate()          
     end
     0
 catch err
-    @error err
+    rethrow(err)
     -1
 finally
     Pkg.activate()
 end
+
+

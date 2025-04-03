@@ -7,21 +7,23 @@ try
         "MagicPrior",
         "MagicBase",    
         "MagicSimulate",    
-        "MagicReconstruct",
-        "MagicCall",
+        "MagicReconstruct",        
         "MagicFilter",
         "MagicImpute",    
+        "MagicCall",
         "MagicMap",
         "MagicScan",
         "RABBITCLI"
     ]
     Pkg.activate()
-    @time for pn in pnls
-        println("Test ", pn)    
+    @time for pn in pnls        
+        println("-------------test ",pn, "-------------")
         @time Pkg.test(pn)             
     end
+    using RABBITCLI
+    @info rabbitversion()
     0
 catch err
-    @error err
+    rethrow(err)
     -1
 end

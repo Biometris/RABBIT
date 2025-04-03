@@ -9,7 +9,7 @@ convert from a hapmap genofile into a vcf genofile.
 
 # Keyword arguments
 
-`delmultiallelic::Bool = true,`: if true, delete markers with #alleles >= 3. 
+`isdelmultiallelic::Bool = true,`: if true, delete markers with #alleles >= 3. 
 
 `delim= ","`: text delimiter. 
 
@@ -25,7 +25,7 @@ convert from a hapmap genofile into a vcf genofile.
 
 """
 function hapmap2vcf(hapmapfile::AbstractString;     
-    delmultiallelic::Bool = true,
+    isdelmultiallelic::Bool = true,
     missingallele::AbstractString="-",
     delim = '\t',    
     outstem::AbstractString  = "outstem", 
@@ -89,7 +89,7 @@ function hapmap2vcf(hapmapfile::AbstractString;
                 else
                     if length(alleles) > 2
                         nmulti += 1
-                        delmultiallelic && continue
+                        isdelmultiallelic && continue
                     end                    
                     ref = first(alleles)
                     alt = join(alleles[2:end],"")
@@ -127,7 +127,7 @@ function hapmap2vcf(hapmapfile::AbstractString;
     end
     msg = string("#individuals=",nsample[1],", #markers=",nmarker)
     if nmulti > 0
-        msg *= string(", #markers_multiallelic=",nmulti, delmultiallelic ? "(deleted)" : "" )
+        msg *= string(", #markers_multiallelic=",nmulti, isdelmultiallelic ? "(deleted)" : "" )
     end
     printconsole(logio,verbose,msg)    
     msg = string("ouput vcffile: ", outfile)

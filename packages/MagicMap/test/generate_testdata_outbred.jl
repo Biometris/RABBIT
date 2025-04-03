@@ -23,8 +23,8 @@ genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
 @time magicfilter(genofile,pedfile;
     isfounderinbred = false,
-    snp_missfilter = (f,o) -> o < 0.8,
-    snp_minmaf = 0.1,    
+    missfilter = (f,o) -> o < 0.8,
+    minmaf = 0.1,    
     outstem = dataid, 
 )
 

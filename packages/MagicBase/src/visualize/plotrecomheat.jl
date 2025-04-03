@@ -2,7 +2,7 @@
 function plotrecomheat(ldfile::Union{Nothing,AbstractString}, 
     linkagefile::AbstractString, mapfile::AbstractString;       
     iseachlg::Bool = false, 
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     missingstring=["NA","missing"],
     workdir::AbstractString=pwd(),    
     outstem::AbstractString="outstem",
@@ -37,12 +37,12 @@ function plotrecomheat(ldfile::Union{Nothing,AbstractString},
     else
         if !isnothing(ldfile)
             tused = @elapsed outfile = plotrecomheat(ldfile,mapfile;
-                ispairwiseld=true,  iseachlg = false, snpthin,workdir, outstem)
+                ispairwiseld=true,  iseachlg = false, markerthin,workdir, outstem)
             msg = string("LD heatmap in ", outfile, ", tused = ",round(tused,digits=1), "s")
             printconsole(io,verbose,msg)  
         end
         tused = @elapsed outfile = plotrecomheat(linkagefile,mapfile;
-            ispairwiseld=false,  iseachlg = false, snpthin, workdir, outstem)
+            ispairwiseld=false,  iseachlg = false, markerthin, workdir, outstem)
         msg = string("Linkage heatmap in ", outfile, ", tused = ",round(tused,digits=1), "s")
         printconsole(io,verbose,msg)          
     end
@@ -51,7 +51,7 @@ end
 function plotrecomheat(pairwisefile::AbstractString, mapfile::AbstractString;
     ispairwiseld::Bool=false,    
     iseachlg::Bool = false,
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     color = Plots.cgrad([:aqua, :blue, :pink,:red], ispairwiseld ? [0,0.2,0.4,0.6] : [0,0.4,0.8,0.9]),
     boundaryline = (0.2,:dot,:gray),
     commentstring::AbstractString = "##", 
@@ -67,8 +67,8 @@ function plotrecomheat(pairwisefile::AbstractString, mapfile::AbstractString;
      missrows = findall(ismissing.(mapdf[!,chrcol]))
      deleteat!(mapdf, missrows)
      select!(mapdf,1:2) 
-     if !iseachlg && snpthin > 1
-        mapdf = mapdf[1:snpthin:end,:]
+     if !iseachlg && markerthin > 1
+        mapdf = mapdf[1:markerthin:end,:]
      end
     # read pairwisefile
     if ispairwiseld
@@ -166,7 +166,7 @@ function plotrecomheat(pairwisefile::AbstractString, mapfile::AbstractString;
             line = boundaryline,
             legend=false,
         )
-        thinid = snpthin==1 ? "" : string("_thin", snpthin)
+        thinid = markerthin==1 ? "" : string("_thin", markerthin)
         outfile = string(outstem,"_", outid, thinid, "_heatmap.png")
         savefig(simmap,getabsfile(workdir,outfile))
         outfile        

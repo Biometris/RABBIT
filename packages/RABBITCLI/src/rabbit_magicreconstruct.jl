@@ -80,8 +80,8 @@ function parse_commandline()
         e.g, \"[2,10]\" denotes the second and tenth chromosomes"
         arg_type = AbstractString
         default = "nothing"
-        "--snpthin"
-        help = "subset of markers by taking every snpthin-th markers"
+        "--markerthin"
+        help = "subset of markers by taking every markerthin-th markers"
         arg_type = Int
         default = 1
         "--hmmalg"
@@ -178,11 +178,11 @@ function reset_priority_subset!(parsed_args)
             end
         end
     end
-    if haskey(parsed_args,:snpthin)
-        snpthin = parsed_args[:snpthin]
+    if haskey(parsed_args,:markerthin)
+        markerthin = parsed_args[:markerthin]
         # assum the max number of markers in a linkage group < 10^6
-        snpsubset= snpthin<=1 ? nothing : 1:snpthin:10^6
-        delete!(parsed_args, :snpthin)
+        snpsubset= markerthin<=1 ? nothing : 1:markerthin:10^6
+        delete!(parsed_args, :markerthin)
         push!(parsed_args, :snpsubset => snpsubset)
     end
 end

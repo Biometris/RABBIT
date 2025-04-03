@@ -2,19 +2,19 @@
 function filter_founder_progeny!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
     isfounderinbred::Bool=true,
-    min_nprogeny::Real = 1,
+    minnprogeny::Real = 1,
     outstem::AbstractString= "outstem",
     logfile::Union{AbstractString,IO} = outstem*"_purify_founder.log",
     workdir::AbstractString=pwd(),
     verbose::Bool=true)
     starttime = time()
-    min_nprogeny < 1 && return magicgeno
+    minnprogeny < 1 && return magicgeno
     logio = MagicBase.set_logfile_begin(logfile, workdir, "filter_founder_progeny!"; verbose)
     model = MagicBase.reset_model(magicgeno.magicped,model;io=logio,verbose)
     msg = string("list of options: \n",
         "model = ", model, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
-        "min_nprogeny = ", min_nprogeny, "\n",
+        "minnprogeny = ", minnprogeny, "\n",
         "workdir = ",workdir,"\n",
         "outstem = ", outstem,"\n",
         "logfile = ",logfile,"\n",
@@ -23,13 +23,13 @@ function filter_founder_progeny!(magicgeno::MagicGeno;
     MagicBase.setunphasedgeno!(magicgeno)
     MagicBase.info_magicgeno(magicgeno;io=logio,verbose)
     # MagicBase.info_missing(magicgeno;io=logio,verbose)
-    # del founder with nprogeny < min_nprogeny
+    # del founder with nprogeny < minnprogeny
     del_off = []
     f2off = MagicBase.get_founder2offspring(magicgeno.magicped)
     offls = collect(values(f2off))
     nprogenyls = length.(offls)
     while true
-        b = length.(offls) .< min_nprogeny
+        b = length.(offls) .< minnprogeny
         if any(b)
             append!(del_off,offls[b]...)
             unique!(del_off)

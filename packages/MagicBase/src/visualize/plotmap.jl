@@ -35,8 +35,8 @@ function plotmarkermap(mapxfile::AbstractString,mapyfile::AbstractString,
     poscol1 = first(isphysmap) ? :physposbp : :poscm
     b = ismissing.(mapls[1][!,poscol1])
     all(b) && return nothing
-    nsnp_map1 = size(mapls[1],1)
-    markersize = in(:markersize, keys(plotkeyargs)) ? plotkeyargs[:markersize] : (nsnp_map1 < 1000 ? 3.0 : (nsnp_map1 < 10000 ? 2.0 : 1.5))
+    nmarker_map1 = size(mapls[1],1)
+    markersize = in(:markersize, keys(plotkeyargs)) ? plotkeyargs[:markersize] : (nmarker_map1 < 1000 ? 3.0 : (nmarker_map1 < 10000 ? 2.0 : 1.5))
     res = [plotmarkermap(mapls[1],mapls[j];
         boundaryline,
         markersize, 

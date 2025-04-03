@@ -2,7 +2,7 @@
 function readgenodf(genofile::AbstractString,pedinfo::Union{Integer,AbstractString};
     isfounderinbred::Bool=true,
     formatpriority::AbstractVector=["AD","GT"],
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     commentstring::AbstractString="##",
     missingstring=["NA","missing"],
     logfile::Union{Nothing, AbstractString,IO} = nothing,
@@ -24,7 +24,7 @@ function readgenodf(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
     tempgenofile = outstem*outext
     try 
         if isvcf            
-            parsevcf(genofile2, pedinfo;isfounderinbred, formatpriority,delmultiallelic,
+            parsevcf(genofile2, pedinfo;isfounderinbred, formatpriority,isdelmultiallelic,
                 commentstring, outstem,outext, workdir, logfile, verbose
             ) # "NA" as misingstring in output of parsevcf            
         end        
@@ -43,7 +43,7 @@ end
 
 function readgenodf(genofile::AbstractString;
     formatpriority::AbstractVector=["AD","GT"],
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     commentstring::AbstractString="##",
     missingstring=["NA","missing"],
     logfile::Union{Nothing, AbstractString,IO} = nothing,
@@ -51,7 +51,7 @@ function readgenodf(genofile::AbstractString;
     verbose::Bool=false)
     nfounder = 0
     readgenodf(genofile,nfounder;
-        isfounderinbred=false,formatpriority,delmultiallelic,
+        isfounderinbred=false,formatpriority,isdelmultiallelic,
         commentstring, missingstring, workdir,
         logfile,verbose
     )

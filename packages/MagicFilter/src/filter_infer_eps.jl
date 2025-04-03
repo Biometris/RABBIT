@@ -1,7 +1,7 @@
 
 function infer_eps(magicgeno::MagicGeno;
     model::AbstractString,
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     mapavailable::Bool=false,
     accuracy_eps::Real = 0.001,
     maxiteration::Integer = 20,
@@ -9,10 +9,10 @@ function infer_eps(magicgeno::MagicGeno;
     historyfile::AbstractString,
     logio::Union{Nothing,IO},
     verbose::Bool)
-    if snpthin > 1
-        msg = string("take every ",snpthin, "-th marker")
+    if markerthin > 1
+        msg = string("take every ",markerthin, "-th marker")
         MagicBase.printconsole(logio,verbose, msg)
-        snpsubset = 1:snpthin:max(size.(magicgeno.markermap,1)...)
+        snpsubset = 1:markerthin:max(size.(magicgeno.markermap,1)...)
         subgeno = submagicgeno(magicgeno;snpsubset)
     else
         subgeno = magicgeno

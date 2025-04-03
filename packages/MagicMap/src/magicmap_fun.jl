@@ -27,7 +27,7 @@ genetic map construction from genofile and pedinfo.
 
 `isfounderinbred::Bool=true`: if true, founders are inbred, and otherwise they are outbred.
 
-`snpthin::Integer = 1`: take every snpthin-th markers.
+`markerthin::Integer = 1`: take every markerthin-th markers.
 
 `ispermmarker::Bool=true`: if true, permute input marker ordering
 
@@ -110,7 +110,7 @@ function magicmap(genofile::AbstractString,
     israndallele::Bool=true, 
     threshcall::Real = (model == "depmodel" || !israndallele) ? 0.95 : 0.9, 
     isfounderinbred::Bool = true,        
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     ispermmarker::Bool=true,
     isdupebinning::Union{Nothing,Bool}=nothing,
     binshare::Real=0.5,    
@@ -160,13 +160,13 @@ function magicmap(genofile::AbstractString,
     # step1 binning
     if isnothing(isdupebinning)
         nmarker = MagicBase.vcf_count_markers(genofile;commentstring)         
-        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/snpthin/(minncluster+maxncluster) : nmarker/snpthin/ncluster  
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/markerthin/(minncluster+maxncluster) : nmarker/markerthin/ncluster  
         magicped = formmagicped(genofile, pedinfo; commentstring, workdir)
         nsub = length(unique(magicped.offspringinfo[!,:member]))
         # npopsize = size(magicped.offspringinfo,1)
         isdupebinning = nmarker_perchr > 1000 && nsub == 1 
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
-            " (#markers=",nmarker, ", snpthin=", snpthin, ", #subpops=", nsub, ")"))
+            " (#markers=",nmarker, ", markerthin=", markerthin, ", #subpops=", nsub, ")"))
     end
     seqerror = MagicBase.get_seqerror(likeparameters)
     if isdupebinning
@@ -180,7 +180,7 @@ function magicmap(genofile::AbstractString,
             binfile = first(MagicMap.binning(genofile,pedinfo;
                 isdepmodel = model == "depmodel",
                 formatpriority, isfounderinbred,
-                seqerror, snpthin,binshare,
+                seqerror, markerthin,binshare,
                 isparallel,commentstring, workdir,
                 outstem,verbose))
             msg  = string("tused = ", round(time()-startbin,digits=1), "s in binning", 
@@ -202,7 +202,7 @@ function magicmap(genofile::AbstractString,
             binfile, 
             formatpriority, threshcall,
             isdepmodel = model == "depmodel",
-            seqerror, snpthin,minlodsave, minldsave,
+            seqerror, markerthin,minlodsave, minldsave,
             isparallel,commentstring, workdir,
             outstem,verbose
         )
@@ -221,7 +221,7 @@ function magicmap(genofile::AbstractString,
         linkagefile = magiclinkage(genofile,pedinfo;
             formatpriority, ldfile,  isfounderinbred, 
             model,likeparameters, israndallele, threshcall,
-            snpthin,
+            markerthin,
             byfounder, 
             minlodsave,maxrfsave = 1.0,
             isparallel, commentstring, workdir,

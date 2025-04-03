@@ -23,15 +23,9 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
-[sources]
-HMM = {rev = "main", subdir = "packages/HMM", url = "https://github.com/Biometris/RABBIT"}
-MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
-MagicPrior = {rev = "main", subdir = "packages/MagicPrior", url = "https://github.com/Biometris/RABBIT"}
-Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
-
 [compat]
 HMM = "1.0.0"
-MagicBase = "1.0.0"
+MagicBase = "1.1.0"
 MagicPrior = "1.0.0"
 Pedigrees = "1.0.0"
 

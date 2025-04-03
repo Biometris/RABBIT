@@ -11,8 +11,8 @@ pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid
 @time magicfilter(genofile,pedfile;
     isfounderinbred = true,
-    snp_mono2miss = true,    
-    snp_missfilter = (f,o) -> o < 0.9,
-    snp_minmaf = 0.05,    
+    mono2miss = true,    
+    missfilter = (f,o) -> o < 0.9,
+    minmaf = 0.05,    
     outstem 
 )

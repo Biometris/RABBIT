@@ -2,19 +2,19 @@
 function filter_subpop_size!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
     isfounderinbred::Bool=true,
-    min_subpop::Real = 1,
+    minsubpop::Real = 1,
     outstem::AbstractString= "outstem",
     logfile::Union{AbstractString,IO} = outstem*"_purify_subpop.log",
     workdir::AbstractString=pwd(),
     verbose::Bool=true)
     starttime = time()
-    min_subpop < 1 && return magicgeno
+    minsubpop < 1 && return magicgeno
     logio = MagicBase.set_logfile_begin(logfile, workdir, "filter_subpop_size!"; verbose)
     model = MagicBase.reset_model(magicgeno.magicped,model;io=logio,verbose)
     msg = string("list of options: \n",
         "model = ", model, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
-        "min_subpop = ", min_subpop, "\n",
+        "minsubpop = ", minsubpop, "\n",
         "workdir = ",workdir,"\n",
         "outstem = ", outstem,"\n",
         "logfile = ",logfile,"\n",
@@ -29,7 +29,7 @@ function filter_subpop_size!(magicgeno::MagicGeno;
     memset = unique(memls)
     offlsls = [findall(memls .== i) for i in memset]
     subsizels = length.(offlsls)
-    b = subsizels .< min_subpop
+    b = subsizels .< minsubpop
     resdf = DataFrame(subpop=memset,size=subsizels,keep = .!b)
     outfile = outstem*"_subpop_size.csv"
     outfile2 = getabsfile(workdir,outfile)
@@ -44,7 +44,7 @@ function filter_subpop_size!(magicgeno::MagicGeno;
     msg = string("save sizes of each subpop in ", outfile)
     printconsole(logio, verbose,msg)
     try 
-        plot_subpop_size(outfile2;annotate_subpop_size = min_subpop-1)
+        plot_subpop_size(outfile2;annotate_subpop_size = minsubpop-1)
         savefig(joinpath(workdir,outstem*"_subpop_size.png"))  
     catch
         @warn string("Could not plot sizes of sub-populations")
@@ -53,7 +53,7 @@ function filter_subpop_size!(magicgeno::MagicGeno;
     indls = magicgeno.magicped.offspringinfo[!,:individual]
     del_off =  isempty(del_subpop) ? [] : indls[reduce(vcat, offlsls[b])]
     if !isempty(del_subpop)
-        msg = string(length(del_subpop), " subpops of size < ", min_subpop,
+        msg = string(length(del_subpop), " subpops of size < ", minsubpop,
             ": ", join(del_subpop,","))
         printconsole(logio, verbose, msg)
     end

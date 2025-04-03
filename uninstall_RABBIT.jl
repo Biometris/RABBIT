@@ -6,10 +6,10 @@ try
         "MagicPrior",
         "MagicBase",    
         "MagicSimulate",    
-        "MagicReconstruct",
-        "MagicCall",
+        "MagicReconstruct",        
         "MagicFilter",
         "MagicImpute",    
+        "MagicCall",
         "SpectralEmbedding",
         "MagicLD",
         "MagicLinkage",
@@ -19,11 +19,11 @@ try
     ]
     Pkg.activate()
     @time for pkg in pkgls
-        println("Uninstall ", pkg)    
+        println("-------------remove ",pkg, "-------------")
         Pkg.rm(pkg)                    
     end
     0
 catch err
-    @error err
+    rethrow(err)
     -1
 end

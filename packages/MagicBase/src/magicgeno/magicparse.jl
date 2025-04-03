@@ -5,7 +5,7 @@ function magicparse(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
     formatpriority::AbstractVector=["AD","GT"],
     isphysmap::Bool=false,
     recomrate::Real=1.0,
-    delmultiallelic::Bool=true,
+    isdelmultiallelic::Bool=true,
     fixed_nself::Integer = 10,
     commentstring::AbstractString="##",
     missingstring::AbstractString="NA",
@@ -37,7 +37,7 @@ function magicparse(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
         "formatpriority = ", formatpriority,"\n",
         "isphysmap = ", isphysmap,"\n",
         "recomrate = ", recomrate,"\n",
-        "delmultiallelic = ", delmultiallelic, "\n",
+        "isdelmultiallelic = ", isdelmultiallelic, "\n",
         "fixed_nself = ", fixed_nself,"\n",
         "workdir = ",workdir,"\n",
         "outstem = ", isnothing(outstem) ? "no output files" : outstem,"\n",
@@ -62,7 +62,7 @@ function magicparse(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
             newpedinfo = pedinfo
         end        
         genodf,commentlines = readgenodf(genofile,newpedinfo; isfounderinbred,formatpriority,
-            delmultiallelic,commentstring, missingstring, workdir,
+            isdelmultiallelic,commentstring, missingstring, workdir,
             logfile=logio, verbose)
         isbreedped && isnothing(outstem) && rm(newpedinfo;force=true)
         magicgeno = formmagicgeno!(genodf, magicped;

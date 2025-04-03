@@ -36,10 +36,10 @@ function main()
         "MagicPrior",
         "MagicBase",    
         "MagicSimulate",    
-        "MagicReconstruct",
-        "MagicCall",
+        "MagicReconstruct",        
         "MagicFilter",
         "MagicImpute",    
+        "MagicCall",
         "SpectralEmbedding",
         "MagicLD",
         "MagicLinkage",
@@ -49,15 +49,17 @@ function main()
     ]
     Pkg.activate()
     rabbit_url = "https://github.com/Biometris/RABBIT"
-    @time for pkg in pkgls            
-        @info string(installstr, " ", pkg)
+    @time for pkg in pkgls                    
+        println("-------------",installstr, " ", pkg, "-------------")
         if isdev            
             Pkg.develop(PackageSpec(path=joinpath(filedir,pkg)))                        
         else
             Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",pkg)))      
         end
     end
-    return 0
+    using RABBITCLI
+    @info rabbitversion()
+    0
 end
 
 main()

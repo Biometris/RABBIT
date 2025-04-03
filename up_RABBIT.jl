@@ -6,10 +6,10 @@ try
         "MagicPrior",
         "MagicBase",    
         "MagicSimulate",    
-        "MagicReconstruct",
-        "MagicCall",
+        "MagicReconstruct",        
         "MagicFilter",
         "MagicImpute",    
+        "MagicCall",
         "SpectralEmbedding",
         "MagicLD",
         "MagicLinkage",
@@ -18,15 +18,15 @@ try
         "RABBITCLI"
     ]
     Pkg.activate()
-    for pn in pkgls    
-        println("Update ", pn)
+    for pn in pkgls            
+        println("-------------update ",pn, "-------------")
         Pkg.update(pn)    
     end
     using RABBITCLI
     @info rabbitversion()
     0
 catch err
-    @error err
+    rethrow(err)
     -1
 end
 

@@ -40,7 +40,7 @@ function filter_ped_error!(magicgeno::MagicGeno;
 	end
     historyfile = (isnothing(outstem) ? "" : outstem)*"_ind_allelicerror_history.txt"
     historyfile = joinpath(workdir,historyfile)
-    epsf_vec,epso_vec = infer_eps(magicgeno; model,snpthin=1,
+    epsf_vec,epso_vec = infer_eps(magicgeno; model,markerthin=1,
         isfounderinbred,mapavailable, historyfile,
         accuracy_eps,maxiteration,logio,verbose)
     isnothing(outstem) && rm(historyfile;force=true)

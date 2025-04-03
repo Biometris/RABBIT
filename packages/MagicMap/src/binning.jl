@@ -6,7 +6,7 @@ function binning(genofile::AbstractString,
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
     isfounderinbred::Bool=true,
     seqerror::Real=0.001,
-    snpthin::Integer=1,
+    markerthin::Integer=1,
     binshare::Real=0.5,
     commentstring::AbstractString="##",
     isparallel::Bool=true,
@@ -24,7 +24,7 @@ function binning(genofile::AbstractString,
         "threshcall = ", threshcall, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
         "seqerror = ", seqerror, "\n",
-        "snpthin = ", snpthin, "\n",
+        "markerthin = ", markerthin, "\n",
         "binshare = ", binshare, "\n",
         "commentstring = ", commentstring, "\n",
         "isparallel = ", isparallel, isparallel ? string("(nworkers=",nworkers(),")") : "", "\n",
@@ -38,7 +38,7 @@ function binning(genofile::AbstractString,
         formatpriority,isfounderinbred, commentstring,workdir)
     merge_chromosome!(magicgeno)
     nsnp = size(only(magicgeno.markermap),1)
-    MagicBase.submagicgeno!(magicgeno, snpsubset=1:snpthin:nsnp)
+    MagicBase.submagicgeno!(magicgeno, snpsubset=1:markerthin:nsnp)
     MagicBase.info_magicgeno(magicgeno;io=logio,verbose)
     MagicBase.rawgenoprob!(magicgeno; seqerror,isfounderinbred,
         isoffspringinbred = isdepmodel)

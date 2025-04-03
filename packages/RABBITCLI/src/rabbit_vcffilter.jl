@@ -57,11 +57,11 @@ function parse_commandline()
         help = "if true, delete sucessive markers that have exactly duplicated genotypes in format of GT"
         arg_type = Bool
         default = false        
-        "--delmultiallelic"
+        "--isdelmultiallelic"
         help = "delete markers with >2 alleles"
         arg_type = Bool
         default = true
-        "--delmonomorphic"
+        "--isdelmonomorphic"
         help = "delete markers with only one allele"
         arg_type = Bool
         default = true        
@@ -69,12 +69,12 @@ function parse_commandline()
         help = "delete non-initial markers in a sequence stretch of length <= seqstretch (in bp), assuming marker are ordered by physical positions. If it is not positive, no filtering for short streches."
         arg_type = Int
         default = 0
-        "--snp_maxmiss"
-        help = "delete markers with missing fraction > snp_maxmiss"
+        "--maxmiss"
+        help = "delete markers with missing fraction > maxmiss"
         arg_type = Float64
         default = 0.99
-        "--snp_minmaf"
-        help = "delete markers with minor allele frequency < snp_minmaf"
+        "--minmaf"
+        help = "delete markers with minor allele frequency < minmaf"
         arg_type = Float64
         default = 0.01
         "--commentstring"

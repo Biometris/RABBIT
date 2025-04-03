@@ -25,8 +25,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     nsnp == length(snporder) || @error "dimension mismatch!"
     isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)    
     newchrfhaplo = deepcopy(chrfhaplo)
-    snpincl = snporder[first(values(priorprocess)).markerincl]				
-    ndiff = 0
+    snpincl = snporder[first(values(priorprocess)).markerincl]				    
     if upbyhalf            
         for reversechr in [false,true]                
             # fixing phasing on one half of the chromosome                      
@@ -73,7 +72,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     )	
     loglikels[offspringexcl] .= 0.0 
     newloglike = sum(loglikels)
-    if newloglike > inputloglike
+    isaccept = newloglike > inputloglike    
+    if isaccept
         deltloglike = newloglike - inputloglike
         chrfhaplo .= newchrfhaplo
     else
@@ -82,8 +82,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     deltloglike, ndiff
 end
 
-function get_ndiff(oldchrfhaplo, newchrfhaplo, snpincl)
-    oldchrfhaplo2 = view(oldchrfhaplo,snpincl,:)
+function get_ndiff(oldchrfhaplo, newchrfhaplo, snpincl)    
+    oldchrfhaplo2 = deepcopy(oldchrfhaplo[snpincl,:])
     chrfhaplo2 = view(newchrfhaplo, snpincl,:)
     perm = MagicBase.permfounder(oldchrfhaplo2, chrfhaplo2)
     if perm != 1:length(perm)

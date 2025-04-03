@@ -35,14 +35,14 @@ function magicfilter(genofile::AbstractString,
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,    
     threshcall::Real = 0.95, 
-    delmultiallelic::Bool=true,
-    del_inconsistent::Bool = false,    
-    min_subpop::Integer = 1, 
-    min_nprogeny::Integer = 1,
-    snp_minmaf::Real=0.05,            
-    snp_monosubpop::Integer = max(20,round(Int,1/snp_minmaf)),	    
-    snp_mono2miss::Union{Nothing,Bool} = true,	    
-    snp_missfilter::Union{NamedTuple,Function}= (fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
+    isdelmultiallelic::Bool=true,
+    isdelinconsistent::Bool = false,    
+    minsubpop::Integer = 1, 
+    minnprogeny::Integer = 1,
+    minmaf::Real=0.05,            
+    minmonotest::Integer = max(20,round(Int,1/minmaf)),	    
+    mono2miss::Union{Nothing,Bool} = true,	    
+    missfilter::Union{NamedTuple,Function}= (fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
     isfilterdupe::Bool=false,
     offspring_maxmiss::Real = 0.99,
     offspring_maxcorr::Real = 0.99,
@@ -66,25 +66,25 @@ function magicfilter(genofile::AbstractString,
     MagicReconstruct.info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,
         commentstring,workdir, logio, verbose)
     check_filter_arg(outext) #TODO: check more args
-    if isa(snp_missfilter, NamedTuple)
-        msg = string("(fmiss,omiss)-> omiss <= ",snp_missfilter.snp_maxomiss, " || fmiss < ", snp_missfilter.or_snp_maxfmiss)        
-        msg = string("snp_missfilter=",snp_missfilter, " is transformed into an anonymous function:\n\t",  msg)
+    if isa(missfilter, NamedTuple)
+        msg = string("(fmiss,omiss)-> omiss <= ",missfilter.maxomiss, " || fmiss < ", missfilter.ormaxfmiss)        
+        msg = string("missfilter=",missfilter, " is transformed into an anonymous function:\n\t",  msg)
         MagicBase.printconsole(logio,verbose,msg)        
-        snp_maxomiss = snp_missfilter.snp_maxomiss
-        or_snp_maxfmiss = snp_missfilter.or_snp_maxfmiss        
-        snp_missfilter = (f,o)-> o <= snp_maxomiss || f < or_snp_maxfmiss            
+        maxomiss = missfilter.maxomiss
+        ormaxfmiss = missfilter.ormaxfmiss        
+        missfilter = (f,o)-> o <= maxomiss || f < ormaxfmiss            
     end
     tused = @elapsed magicgeno = formmagicgeno(genofile, pedinfo;
-        isfounderinbred, isphysmap, recomrate,delmultiallelic,
+        isfounderinbred, isphysmap, recomrate,isdelmultiallelic,
         formatpriority, commentstring, missingstring="NA", workdir)
     msg = string("tused=", round(tused,digits=1), " seconds by formmagicgeno")
     MagicBase.printconsole(logio,verbose,msg)    
     magicfilter!(magicgeno; model, likeparameters,
         isfounderinbred,  threshcall,
         chrsubset,snpsubset,      
-        min_subpop,min_nprogeny,
-        snp_monosubpop, del_inconsistent,snp_mono2miss,
-        snp_missfilter,snp_minmaf, 
+        minsubpop,minnprogeny,
+        minmonotest, isdelinconsistent,mono2miss,
+        missfilter,minmaf, 
         offspring_maxmiss,
         isfilterdupe, offspring_maxcorr,offspring_cutcorr,                
         outstem, logfile=logio, isparallel,workdir, verbose)
@@ -145,20 +145,20 @@ It must be "depmodel", "indepmodel", or "jointmodel".
 
 `threshcall::Real = model == "depmodel" ? 0.95 : 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
   
-`min_subpop::Integer = 1`: delete subpopulations with size < min_subpop.
+`minsubpop::Integer = 1`: delete subpopulations with size < minsubpop.
 
-`min_nprogeny::Integer = 1`: delete founder and their progeny if the number of progeny < min_nprogeny.
+`minnprogeny::Integer = 1`: delete founder and their progeny if the number of progeny < minnprogeny.
 
-`snp_monosubpop::Integer = 20`: a subpopulation is tested for monomorphic at a marker only if the number of observed genotypes >= snp\\_mono\\_subpop.
+`minmonotest::Integer = 20`: a subpopulation is tested for monomorphic at a marker only if the number of observed genotypes >= snp\\_mono\\_subpop.
 
-`snp_mono2miss::Union{Nothing,Bool} = true`: if true, all offspring genotypes in a monomorphic subpopulation are set to missing, 
+`mono2miss::Union{Nothing,Bool} = true`: if true, all offspring genotypes in a monomorphic subpopulation are set to missing, 
 and otherwise only inconsistent offspring genotypes are set to missing. And if nothing, offspring genotypes are not changed.
 
-`del_inconsistent::Bool = false`: if true, delete markers with inconsistent changes of founder genotypes. 
+`isdelinconsistent::Bool = false`: if true, delete markers with inconsistent changes of founder genotypes. 
 
-`snp_minmaf::Real = 0.05`: keep only markers if maf >= snp\\_min\\_maf; maf denotes minor allele frequency.
+`minmaf::Real = 0.05`: keep only markers if maf >= snp\\_min\\_maf; maf denotes minor allele frequency.
 
-`snp_missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0`: keep only markers if snp_missfilter(fmiss, omiss);
+`missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0`: keep only markers if missfilter(fmiss, omiss);
 fmiss denotes missing fraction in founders, and omiss for offspring.
 
 `offspring_maxmiss::Real = 0.99`: delete offspring if its missing > offspring\\_max\\_miss
@@ -193,13 +193,13 @@ function magicfilter!(magicgeno::MagicGeno;
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,        
     threshcall::Real = 0.95, 
-    min_subpop::Integer = 1, 
-    min_nprogeny::Integer = 1,    
-    snp_monosubpop::Integer = 20,	    
-    snp_mono2miss::Union{Nothing,Bool} = true,	 
-    del_inconsistent::Bool = false,    
-    snp_minmaf::Real=0.05,            
-    snp_missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
+    minsubpop::Integer = 1, 
+    minnprogeny::Integer = 1,    
+    minmonotest::Integer = 20,	    
+    mono2miss::Union{Nothing,Bool} = true,	 
+    isdelinconsistent::Bool = false,    
+    minmaf::Real=0.05,            
+    missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
     isfilterdupe::Bool=false,
     offspring_maxmiss::Real = 0.99,        
     offspring_maxcorr::Real = 0.99,    
@@ -240,23 +240,23 @@ function magicfilter!(magicgeno::MagicGeno;
     if nsubpop > 1
         filter_subpop_size!(magicgeno;
             model, isfounderinbred,
-            min_subpop,
+            minsubpop,
             outstem,logfile=logio,workdir, verbose)
         filter_founder_progeny!(magicgeno;
             model, isfounderinbred,
-            min_nprogeny,
+            minnprogeny,
             outstem,logfile=logio,workdir, verbose)        
     end
     filter_marker!(magicgeno; model, isfounderinbred, threshcall,
-        snp_monosubpop, epso,
-        del_inconsistent,snp_mono2miss,
-        snp_missfilter, snp_minmaf,
+        minmonotest, epso,
+        isdelinconsistent,mono2miss,
+        missfilter, minmaf,
         outstem, logfile=logio, 
         isparallel, workdir, verbose)
     filter_offspring_missing!(magicgeno; model, isfounderinbred, offspring_maxmiss,
         outstem,logfile=logio,workdir, verbose)          
     if isfilterdupe
-        # population structure will disappear if running filter_offspring_dupe! after test_monomorphic! with snp_mono2miss = true
+        # population structure will disappear if running filter_offspring_dupe! after test_monomorphic! with mono2miss = true
         filter_offspring_dupe!(magicgeno;
             model, isfounderinbred,
             offspring_maxcorr, offspring_cutcorr,

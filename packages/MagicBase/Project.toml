@@ -1,7 +1,7 @@
 name = "MagicBase"
 uuid = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.1.0"
+version = "1.2.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -29,9 +29,6 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
-
-[sources]
-Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
 
 [compat]
 Pedigrees = "1.0.0"

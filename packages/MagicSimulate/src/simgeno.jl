@@ -208,11 +208,11 @@ function simread!(magicgeno::MagicGeno;
     for chr in eachindex(magicgeno.markermap)
         isseq = rand(Bernoulli(seqfrac),size(magicgeno.markermap[chr],1))
         if any(isseq) 
-            nsnp_seq = sum(isseq)
+            nmarker_seq = sum(isseq)
             col = :seqerror
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                seqerrls = rand(seqerror, nsnp_seq)
+                seqerrls = rand(seqerror, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
                 ls[isseq] .= seqerrls
                 magicgeno.markermap[chr][!,col] .= ls
@@ -223,7 +223,7 @@ function simread!(magicgeno::MagicGeno;
             col = :allelebalancemean
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                allelebalancemeanls = rand(allelebalancemean, nsnp_seq)
+                allelebalancemeanls = rand(allelebalancemean, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
                 ls[isseq] .= allelebalancemeanls
                 magicgeno.markermap[chr][!,col] .= ls
@@ -234,7 +234,7 @@ function simread!(magicgeno::MagicGeno;
             col = :allelebalancedisperse
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                allelebalancedispersels = rand(allelebalancedisperse, nsnp_seq)
+                allelebalancedispersels = rand(allelebalancedisperse, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
                 ls[isseq] .= allelebalancedispersels
                 magicgeno.markermap[chr][!,col] .= ls
@@ -246,7 +246,7 @@ function simread!(magicgeno::MagicGeno;
             col = :alleledropout
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                alleledropoutls = rand(alleledropout, nsnp_seq)
+                alleledropoutls = rand(alleledropout, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
                 ls[isseq] .= alleledropoutls
                 magicgeno.markermap[chr][!,col] .= ls
@@ -261,8 +261,8 @@ function simread!(magicgeno::MagicGeno;
                     chrtrue = permutedims(magicgeno.offspringgeno[chr][isseq,:])
                 end
                 nind = size(chrtrue,1)
-                chrdepth = MagicSimulate.randdepth(seqdepth, seqdepth_overdispersion,nind,nsnp_seq)                
-                for snp in 1:nsnp_seq
+                chrdepth = MagicSimulate.randdepth(seqdepth, seqdepth_overdispersion,nind,nmarker_seq)                
+                for snp in 1:nmarker_seq
                     chrtrue[:,snp] .= trueg2AD.(chrtrue[:,snp],chrdepth[:,snp],seqerrls[snp],
                         allelebalancemeanls[snp],allelebalancedispersels[snp],alleledropoutls[snp])
                 end

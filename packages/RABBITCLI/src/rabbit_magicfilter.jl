@@ -78,44 +78,44 @@ function parse_commandline()
         e.g, \"[2,10]\" denotes the second and tenth chromosomes"
         arg_type = AbstractString
         default = "nothing"
-        "--snpthin"
-        help = "subset of markers by taking every snpthin-th markers"
+        "--markerthin"
+        help = "subset of markers by taking every markerthin-th markers"
         arg_type = Int
         default = 1
-        "--delmultiallelic"
+        "--isdelmultiallelic"
         help = "delete markers with >2 alleles"
         arg_type = Bool
         default = true        
-        "--del_inconsistent"
+        "--isdelinconsistent"
         help = "if true, delete markers with inconsistent changes of founder genotypes."
         arg_type = Bool
         default = false
-        "--min_subpop"
-        help = "delete subpopulaions with size < min_subpop"
+        "--minsubpop"
+        help = "delete subpopulaions with size < minsubpop"
         arg_type = Int
         default =1
-        "--min_nprogeny"
-        help = "delete founder and their progeny if the number of progeny < min_nprogeny"
+        "--minnprogeny"
+        help = "delete founder and their progeny if the number of progeny < minnprogeny"
         arg_type = Int
         default =1
-        "--snp_monosubpop"
-        help = "monomorphic test for a subpopulation at a marker only if #observed genotypes >= snp_monosubpop."
+        "--minmonotest"
+        help = "monomorphic test for a subpopulation at a marker only if #observed genotypes >= minmonotest."
         arg_type = Int
         default =20        
-        "--snp_mono2miss"
+        "--mono2miss"
         help = "if true, offspring genotypes in each monomorphic subpopulation are set to missing, and otherwise only inconsistent offspring genotypes are corrected. And if it is nothing, offspring genotypes are not changed."        
         arg_type = AbstractString
         default = "true"
-        "--snp_minmaf"
-        help = "test monomorphic for a subpopulation only if its minor allele frequency (maf) < snp_minmaf. And filter for markers with maf >= snp_minmaf."
+        "--minmaf"
+        help = "test monomorphic for a subpopulation only if its minor allele frequency (maf) < minmaf. And filter for markers with maf >= minmaf."
         arg_type = Float64
         default = 0.05
-        "--snp_maxomiss"
-        help = "filter for markers with missing fraction in offspring <= snp_maxomiss || missing fraction in founder <  or_snp_maxfmiss"
+        "--maxomiss"
+        help = "filter for markers with missing fraction in offspring <= maxomiss || missing fraction in founder <  ormaxfmiss"
         arg_type = Float64
         default = 1.0
-        "--or_snp_maxfmiss"
-        help = "filter for markers with missing fraction in offspring <= snp_maxomiss || missing fraction in founder <  or_snp_maxfmiss"
+        "--ormaxfmiss"
+        help = "filter for markers with missing fraction in offspring <= maxomiss || missing fraction in founder <  ormaxfmiss"
         arg_type = Float64
         default = 0.0        
         "--offspring_maxmiss"
@@ -206,11 +206,11 @@ function reset_priority_subset!(parsed_args)
             end
         end
     end
-    if haskey(parsed_args,:snpthin)
-        snpthin = parsed_args[:snpthin]
+    if haskey(parsed_args,:markerthin)
+        markerthin = parsed_args[:markerthin]
         # assum the max number of markers in a linkage group < 10^6
-        snpsubset= snpthin<=1 ? nothing : 1:snpthin:10^6
-        delete!(parsed_args, :snpthin)
+        snpsubset= markerthin<=1 ? nothing : 1:markerthin:10^6
+        delete!(parsed_args, :markerthin)
         push!(parsed_args, :snpsubset => snpsubset)
     end
 end
@@ -232,17 +232,17 @@ function main(args::Vector{String})
     delete!(parsed_args, :pedinfo)
     push!(parsed_args, :logfile => logfile)
     reset_priority_subset!(parsed_args)    
-    reset_kwarg_nothing!(parsed_args,:snp_mono2miss,Bool)       
-    # snp_missfilter        
-    maxomiss = parsed_args[:snp_maxomiss]
-    maxfmiss = parsed_args[:or_snp_maxfmiss]
-    snp_missfilter = (snp_maxomiss = maxomiss, or_snp_maxfmiss = maxfmiss)
-    delete!(parsed_args, :snp_maxomiss)
-    delete!(parsed_args, :or_snp_maxfmiss)
+    reset_kwarg_nothing!(parsed_args,:mono2miss,Bool)       
+    # missfilter        
+    maxomiss = parsed_args[:maxomiss]
+    maxfmiss = parsed_args[:ormaxfmiss]
+    missfilter = (maxomiss = maxomiss, ormaxfmiss = maxfmiss)
+    delete!(parsed_args, :maxomiss)
+    delete!(parsed_args, :ormaxfmiss)
     like = parsed_args[:likeparameters]
     likeparameters = MagicFilter.parse_likeparameters(like)
     delete!(parsed_args, :likeparameters)
-    @time magicfilter(genofile, pedinfo; likeparameters,snp_missfilter, parsed_args...)
+    @time magicfilter(genofile, pedinfo; likeparameters,missfilter, parsed_args...)
     return 0
 end
 

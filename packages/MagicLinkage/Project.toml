@@ -1,7 +1,7 @@
 name = "MagicLinkage"
 uuid = "7e46d71e-e3ca-4f00-8e51-0df20d7851f3"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.0.0"
+version = "1.1.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -24,19 +24,10 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
-[sources]
-HMM = {rev = "main", subdir = "packages/HMM", url = "https://github.com/Biometris/RABBIT"}
-MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
-MagicImpute = {rev = "main", subdir = "packages/MagicImpute", url = "https://github.com/Biometris/RABBIT"}
-MagicLD = {rev = "main", subdir = "packages/MagicLD", url = "https://github.com/Biometris/RABBIT"}
-MagicPrior = {rev = "main", subdir = "packages/MagicPrior", url = "https://github.com/Biometris/RABBIT"}
-MagicReconstruct = {rev = "main", subdir = "packages/MagicReconstruct", url = "https://github.com/Biometris/RABBIT"}
-Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
-
 [compat]
 HMM = "1.0.0"
-MagicBase = "1.0.0"
-MagicImpute = "1.0.0"
+MagicBase = "1.1.0"
+MagicImpute = "1.1.3"
 MagicLD = "1.0.0"
 MagicPrior = "1.0.0"
 MagicReconstruct = "1.0.0"

@@ -19,12 +19,8 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 
-[sources]
-MagicBase = {rev = "main", subdir = "packages/MagicBase", url = "https://github.com/Biometris/RABBIT"}
-Pedigrees = {rev = "main", subdir = "packages/Pedigrees", url = "https://github.com/Biometris/RABBIT"}
-
 [compat]
-MagicBase = "1.0.0"
+MagicBase = "1.1.0"
 Pedigrees = "1.0.0"
 
 [extras]

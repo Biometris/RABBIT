@@ -7,7 +7,7 @@ function magiclinkage(genofile::AbstractString, pedinfo::Union{MagicBase.JuncDis
     likeparameters::LikeParameters=LikeParameters(),   
     israndallele::Bool=true, 
     threshcall::Real = model == "depmodel" ? 0.95 : 0.9,   
-    snpthin::Integer=1,    
+    markerthin::Integer=1,    
     byfounder::Integer=0,    
     minlodsave::Union{Nothing, Real}=nothing,
     maxrfsave::Real=1.0, # rf scaled from 0 to 1
@@ -40,7 +40,7 @@ function magiclinkage(genofile::AbstractString, pedinfo::Union{MagicBase.JuncDis
     MagicBase.printconsole(logio,verbose,msg)            
     linkagefile=magiclinkage!(magicgeno;        
         ldfile,model, likeparameters, israndallele, threshcall,
-        snpthin, byfounder, minlodsave, maxrfsave,
+        markerthin, byfounder, minlodsave, maxrfsave,
         isfounderinbred, 
         isparallel,workdir,outstem,
         logfile=logio,verbose
@@ -58,7 +58,7 @@ function magiclinkage!(magicgeno::MagicGeno;
     likeparameters::LikeParameters=LikeParameters(),   
     israndallele::Bool=true, 
     threshcall::Real = model == "depmodel" ? 0.95 : 0.9,   
-    snpthin::Integer=1,    
+    markerthin::Integer=1,    
     byfounder::Integer=0,    
     minlodsave::Union{Nothing, Real}=nothing,
     maxrfsave::Real=1.0, # rf scaled from 0 to 1
@@ -77,7 +77,7 @@ function magiclinkage!(magicgeno::MagicGeno;
         "likeparameters = ", likeparameters, "\n",        
         "israndallele = ", israndallele, "\n",        
         "threshcall = ", threshcall, "\n",        
-        "snpthin = ", snpthin, "\n",        
+        "markerthin = ", markerthin, "\n",        
         "byfounder = ", byfounder, "\n",        
         "minlodsave = ", minlodsave, "\n",
         "maxrfsave = ", maxrfsave, "\n",
@@ -88,9 +88,9 @@ function magiclinkage!(magicgeno::MagicGeno;
         "verbose = ",verbose)
     printconsole(logio,verbose,msg)    
     merge_chromosome!(magicgeno)
-    if snpthin > 1
-        @info string("take every ",snpthin, "-th marker")
-        snpsubset = 1:snpthin:size(only(magicgeno.markermap),1)
+    if markerthin > 1
+        @info string("take every ",markerthin, "-th marker")
+        snpsubset = 1:markerthin:size(only(magicgeno.markermap),1)
         submagicgeno!(magicgeno;snpsubset)
     end
     MagicBase.info_magicgeno(magicgeno;io=logio,verbose)

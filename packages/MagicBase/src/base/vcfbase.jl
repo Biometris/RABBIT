@@ -330,15 +330,15 @@ filter markers line by line.
 
 `deldupe::Bool=false`: if true, delete sucessive markers that have exactly duplicated genotypes in format of GT
 
-`delmultiallelic::Bool=true`: if true, delete markers with >2 alleles. 
+`isdelmultiallelic::Bool=true`: if true, delete markers with >2 alleles. 
 
-`delmonomorphic::Bool=true`: if true, delete markers with single allele. 
+`isdelmonomorphic::Bool=true`: if true, delete markers with single allele. 
 
 `seqstretch::Integer=0`: delete non-initial markers in a sequence stretch of length <= seqstretch (in bp), assuming marker are ordered by physical positions. If it is not positive, no filtering for short streches.
 
-`snp_maxmiss::Real = 0.99`: delete markers with missing fraction > snp_maxmiss
+`maxmiss::Real = 0.99`: delete markers with missing fraction > maxmiss
 
-`snp_minmaf::Real = 0.01`: delete markers with minor allele frequency < snp_minmaf
+`minmaf::Real = 0.01`: delete markers with minor allele frequency < minmaf
 
 `commentstring::AbstractString="##"`: the lines beginning with  are ignored
 
@@ -355,12 +355,12 @@ function vcffilter(vcffile::AbstractString;
     setmarkerid::Union{Nothing,Bool}=nothing,  # if it is nothign, set it in format of CHROM_POS only if markerid is missing
     delsamples::Union{Nothing,AbstractVector}=nothing,     
     deldupe::Bool=false, 
-    delmultiallelic::Bool=true,    
-    delmonomorphic::Bool=true,    
+    isdelmultiallelic::Bool=true,    
+    isdelmonomorphic::Bool=true,    
     keeponlypass::Bool=true, 
     seqstretch::Integer=0, # 64 bp for length of sequence tags
-    snp_maxmiss::Real = 0.99,
-    snp_minmaf::Real = 0.01,
+    maxmiss::Real = 0.99,
+    minmaf::Real = 0.01,
     commentstring::AbstractString="##",
     outstem::AbstractString = first(split_allext(basename(vcffile))),      
     workdir::AbstractString=pwd(),
@@ -375,12 +375,12 @@ function vcffilter(vcffile::AbstractString;
         "setmarkerid = ", setmarkerid, "\n",        
         "delsamples = ", delsamples, "\n",        
         "deldupe = ", deldupe, " \n",        
-        "delmonomorphic = ", delmonomorphic, "\n",        
-        "delmultiallelic = ", delmultiallelic, "\n",                
+        "isdelmonomorphic = ", isdelmonomorphic, "\n",        
+        "isdelmultiallelic = ", isdelmultiallelic, "\n",                
         "keeponlypass = ", keeponlypass, "\n",                
         "seqstretch = ", seqstretch, " \n",        
-        "snp_maxmiss = ", snp_maxmiss, "\n",        
-        "snp_minmaf = ", snp_minmaf, "\n",        
+        "maxmiss = ", maxmiss, "\n",        
+        "minmaf = ", minmaf, "\n",        
         "commentstring = ", commentstring, "\n",
         "outstem = ", outstem, "\n",        
         "logfile = ", logfile, "\n",
@@ -389,7 +389,7 @@ function vcffilter(vcffile::AbstractString;
     printconsole(logio,verbose,msg)    
     msg = deldupe ? "delete sucessive duplicate markers\n" : ""
     seqstretch > 0 && (msg *= string("delete noninitial markers in a sequence stretch of length < ", seqstretch, "\n"))
-    msg *= string("filter sequentially for biallelic, non-monomorphic, missing <= ", snp_maxmiss, ", and maf >= ",snp_minmaf)
+    msg *= string("filter sequentially for biallelic, non-monomorphic, missing <= ", maxmiss, ", and maf >= ",minmaf)
     printconsole(logio,verbose,msg)        
     in_open = inext in [".vcf.gz"] ? GZip.open : open
     vcffile2=getabsfile(workdir,vcffile)
@@ -481,7 +481,7 @@ function vcffilter(vcffile::AbstractString;
                         bingeno = nowgeno
                         if ismultia 
                             nmultia += 1
-                            isdel = delmultiallelic                    
+                            isdel = isdelmultiallelic                    
                         else
                             isdel = false
                         end            
@@ -495,7 +495,7 @@ function vcffilter(vcffile::AbstractString;
                     ismono = isempty(alleles) || length(alleleset) == 1    # isempty(alleles) == 100% missing
                     if ismono
                         nmono += 1
-                        isdel = delmonomorphic
+                        isdel = isdelmonomorphic
                     end                
                     if length(alleleset) >=3  && !ismultia && !deldupe
                         msg = string("inconsistent multi-allelic: marker index = ", nmarker, ", allele_set=",alleleset, ", ALT=",alt)
@@ -505,22 +505,22 @@ function vcffilter(vcffile::AbstractString;
                     if !isdel                        
                         # filter missing                        
                         if ismono
-                            if snp_minmaf > 0 && snp_maxmiss < 1.0
+                            if minmaf > 0 && maxmiss < 1.0
                                 nmaf += 1
                                 isdel = true
                             end
                         else
                             freqmiss = mean([in(i,[".","./.",".|."]) for i in genols])
-                            if freqmiss > snp_maxmiss 
+                            if freqmiss > maxmiss 
                                 nmiss += 1
                                 isdel = true
                             else
                                 # filter for maf
-                                if snp_minmaf > 0 
+                                if minmaf > 0 
                                     alleles = replace(string(genols...),"/"=>"","|"=>"","."=>"")
                                     freqls = [count(i,alleles)/length(alleles) for i in alleleset]
                                     maf = 1.0- max(freqls...)
-                                    if maf < snp_minmaf || maf > 1-snp_minmaf
+                                    if maf < minmaf || maf > 1-minmaf
                                         nmaf += 1
                                         isdel = true
                                     end
@@ -552,8 +552,8 @@ function vcffilter(vcffile::AbstractString;
                         keeponlypass ? string(", #del_notpass=", nnotpass) : "",                         
                         deldupe ? string(", #del_dupe=", ndupe) : "",                         
                         seqstretch > 0 ? string(", #del_stretch=", nstretch) : "",                         
-                        string(", #multi", delmultiallelic ? "=" : "(keep)=",nmultia), 
-                        string(", #mono", delmonomorphic ? "=" : "(keep)=",nmono), 
+                        string(", #multi", isdelmultiallelic ? "=" : "(keep)=",nmultia), 
+                        string(", #mono", isdelmonomorphic ? "=" : "(keep)=",nmono), 
                         ", #>maxmiss=", nmiss, ", #<minmaf=", nmaf,                         
                         ", tused=", round(time()-startt,digits=1),"s")
                     printconsole(logio,verbose,msg)
@@ -565,8 +565,8 @@ function vcffilter(vcffile::AbstractString;
                 keeponlypass ? string(", #del_notpass=", nnotpass) : "",                         
                 deldupe ? string(", #del_dupe=", ndupe) : "",                         
                 seqstretch > 0 ? string(", #del_stretch=", nstretch) : "",                         
-                string(", #multi", delmultiallelic ? "=" : "(keep)=",nmultia), 
-                string(", #mono", delmonomorphic ? "=" : "(keep)=",nmono), 
+                string(", #multi", isdelmultiallelic ? "=" : "(keep)=",nmultia), 
+                string(", #mono", isdelmonomorphic ? "=" : "(keep)=",nmono), 
                 ", #>maxmiss=", nmiss, ", #<minmaf=", nmaf,                                         
             )
             printconsole(logio,verbose,msg)
@@ -869,7 +869,7 @@ function readmarkermap(mapfile::AbstractString;
         # since readmarkermap_vcf read only non-geno on the left part of dataframe
         mapdf = readmarkermap_vcf(mapfile; commentstring,missingstring, workdir)
     else
-        mapdf, _ = readgenodf(mapfile;delmultiallelic=false,commentstring,missingstring, workdir)
+        mapdf, _ = readgenodf(mapfile;isdelmultiallelic=false,commentstring,missingstring, workdir)
     end
     if size(mapdf,2) < 3
         error(string(mapfile, " must contain #column >= 3"))
