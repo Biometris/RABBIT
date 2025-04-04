@@ -56,11 +56,17 @@ function main()
         else
             Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",pkg)))      
         end
-    end
-    using RABBITCLI
-    @info rabbitversion()
+    end        
     0
 end
 
 main()
 
+
+try
+    using RABBITCLI
+    @info rabbitversion()
+catch err
+    rethrow(err)
+    -1
+end
