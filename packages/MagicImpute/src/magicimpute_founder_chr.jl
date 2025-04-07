@@ -1020,8 +1020,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		# if isallowmissing = true, imputation might get worse in case of small size (e.g. 8ril of size20)
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., offspringexcl, snporder, 
-			isallowmissing = (alwaysaccept && !upbyhalf) ? true : isallowmissing, 			
-			alwaysaccept, upbyhalf,israndallele,issnpGT,imputetempfile)				
+			isallowmissing, alwaysaccept, upbyhalf,israndallele,issnpGT,imputetempfile)				
         push!(ndiffls,ndiff)		
 		if alwaysaccept 			
 			imputestuck = -1
