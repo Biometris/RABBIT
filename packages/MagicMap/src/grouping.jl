@@ -137,7 +137,7 @@ function calsimilarity_cluster(recomnonfrac::AbstractMatrix,
     printconsole(io,verbose,msg)
     ncc = sum(length.(cc) .>= mincomponentsize)
     if ncc == 0
-        msg = string("No connected components")
+        msg = string("no connected components")
         @error msg
         printconsole(io, verbose, "Error: "*msg) 
     elseif ncc > ncluster

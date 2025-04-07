@@ -47,8 +47,7 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
             else
                 # newchrfhaplo .= chrfhaplo
                 break          
-            end            
-            # println("it_correct=", it, ",isaccept=",isaccept, ", ncorrect=",size(correctdf,1))
+            end                        
         end
     end
     res = isempty(rescorrect) ? rescorrect : reduce(vcat, rescorrect)

@@ -27,8 +27,8 @@ function main()
     parsed_args = parse_commandline()    
     isdev = parsed_args["isdev"]
     installstr = isdev ? "develop" : "add"
-    @info string("Start to ", installstr, "RABBIT packages...")    
-    filedir = abspath(dirname(@__FILE__),"packages")    
+    @info string("Start to ", installstr, "RABBIT packages...")        
+    filedir = dirname(@__FILE__)
     println("Install RABBIT from ",filedir)    
     pkgls = [
         "HMM",
@@ -52,7 +52,7 @@ function main()
     @time for pkg in pkgls                    
         println("-------------",installstr, " ", pkg, "-------------")
         if isdev            
-            Pkg.develop(PackageSpec(path=joinpath(filedir,pkg)))                        
+            Pkg.develop(PackageSpec(path=joinpath(filedir,"packages", pkg)))                        
         else
             Pkg.add(PackageSpec(url=rabbit_url,subdir=string("packages/",pkg)))      
         end

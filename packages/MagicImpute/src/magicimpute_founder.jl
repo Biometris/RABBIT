@@ -20,7 +20,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	tukeyfence::Real=3.0,						
 	minoutlier::Real=0.05, 
 	isimputefounder::Union{Nothing,Bool}=nothing, 
-	isallowmissing::Bool=false,
+	isallowmissing::Bool=true,
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
@@ -140,7 +140,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		nsnpmiss = sum(size.(missgeno.markermap,1))		
 		printconsole(io,verbose,msg)		
 		if nsnpmiss == 0
-			msg = "No markers with all offspring genotypes being missing"
+			msg = "no markers with all offspring genotypes being missing"
 			printconsole(io,verbose,msg)
 		else
 			msg = string("remove (and insert afterwards) ", nsnpmiss, " markers with all offspring genotypes being missing")			
@@ -421,8 +421,9 @@ end
 function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat::AbstractVector)
     msg = "keywords in print messages: \n"
     msg *= "\t#diff      ≡ #differences between proposal and current imputing\n"    
-	msg *= "\tΔlogl      ≡ increase of log-likelihood if proposal imputing is accepted (0 if rejected)\n"
+	msg *= "\tΔlogl      ≡ increase of log-likelihood due to proposal imputing\n"
 	msg *= "\tstuck      ≡ measure of imputation being stuck\n"
+	msg *= "\tbyhalf     ≡ if true, obtain proposal for one-half-chr and the other\n"
 	msg *= "\t#correct_f ≡ #corrected founder genotypes (and set obsgeno missing)\n"
 	msg *= "\t#mono      ≡ #monomorphic markers\n"
 	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"

@@ -5,7 +5,7 @@ pwd()
 using MagicBase
 using MagicSimulate
 using Distributions
-dataid="sim2"
+dataid="sim"
 
 isfounderinbred = true
 
@@ -22,19 +22,20 @@ nsnpchr = 200
 
 magicped = MagicBase.generate_magicped(;
     designcodes = ["P1/P2=>DH","P1/P3=>2","P2/P3=>1","P4/P5//P6/P7=>1"],    
-    subpopsizes = 10*ones(Int, 4));
+    subpopsizes = 5*ones(Int, 4));
 plotmagicped(magicped)
 
 pedfile = dataid*"_ped.csv"
 savemagicped(pedfile,magicped)
 
-epsf = 0.01
-epso = 0.01
+epsf = 0.02
+epso = 0.02
+missf = 0.5
 @time magicsimulate(fhaplofile,pedfile;    
     isfounderinbred, 
     foundererror = Beta(1, 1/epsf-1.0),
     offspringerror = Beta(1, 1/epso-1.0),
-    foundermiss = Beta(1,10),
+    foundermiss = Beta(1,1/missf-1),
     offspringmiss = Beta(1,10),
     error_randallele = 1.0,
     seqfrac = 0.0,    

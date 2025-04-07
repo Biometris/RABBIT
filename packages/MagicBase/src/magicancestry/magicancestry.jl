@@ -869,7 +869,7 @@ function deloutlier!(magicancestry::MagicAncestry)
     if any(isoutlier)
         @info string("delete ",sum(isoutlier), " outlier offspring: ", magicancestry.magicped.offspringinfo[isoutlier, :individual])
     else
-        @info string("No outlier offspring")
+        @info string("no outlier offspring")
     end
     isnonoutlier = .!isoutlier
     magicancestry.magicped.offspringinfo = magicancestry.magicped.offspringinfo[isnonoutlier, :]

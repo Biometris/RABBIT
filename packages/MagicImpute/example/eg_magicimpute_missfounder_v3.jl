@@ -8,7 +8,7 @@ using MagicBase, MagicReconstruct, MagicImpute
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = true
+isfounderinbred = false
 
 
 dataid = "sim"
@@ -19,13 +19,13 @@ outstem = dataid*"_output"
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
 missingcode = isfounderinbred ? "N" : "NN"
-for chr in eachindex(magicgeno.markermap)
-    # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
-    magicgeno.foundergeno[chr] .= missingcode
-end
+# for chr in eachindex(magicgeno.markermap)
+#     # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
+#     magicgeno.foundergeno[chr] .= missingcode
+# end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
-    target = "founder",           
+    # target = "founder",           
     # model = "depmodel",
     # model = ["depmodel","jointmodel"], 
     # byfounder = 8, 

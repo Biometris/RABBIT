@@ -139,7 +139,7 @@ function parse_commandline()
         "--isallowmissing"
         help = "if true, allow missing in founders during imputation"
         arg_type = Bool
-        default = false
+        default = true
         "--isrepeatimpute"
         help = byfounder_help
         arg_type = AbstractString
