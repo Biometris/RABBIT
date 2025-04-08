@@ -424,6 +424,7 @@ function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat
 	msg *= "\tΔlogl      ≡ increase of log-likelihood due to proposal imputing\n"
 	msg *= "\tstuck      ≡ measure of imputation being stuck\n"
 	msg *= "\tbyhalf     ≡ if true, obtain proposal for one-half-chr and the other\n"
+	msg *= "\t#miss_f    ≡ #missing founder alleles\n"
 	msg *= "\t#correct_f ≡ #corrected founder genotypes (and set obsgeno missing)\n"
 	msg *= "\t#mono      ≡ #monomorphic markers\n"
 	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"
@@ -606,7 +607,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	imputetempfilels = [string(tempid, "_impute_founder_",chrid, ".tmp") for chrid in chridls]
 	nsnpls = [size(i,1) for i in magicgeno.markermap]
 	chroo = MagicBase.get_chroo(nsnpls)	
-	msg = string("chrid=>#snp: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
+	msg = string("chrid=>#marker: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
 	printconsole(io,verbose,msg)	
 	jltempdir = mktempdir(tempdirectory; prefix="jl_magicimpute_founder_", cleanup=true)
 	tempid = tempname(jltempdir,cleanup=false)	
@@ -769,7 +770,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	end for chrid in chridls, run in 1:nrepeatimpute]			
 	nsnpls = [size(i,1) for i in magicgeno.markermap]
 	chroo = MagicBase.get_chroo(nsnpls)	
-	msg = string("chrid=>#snp: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
+	msg = string("chrid=>#marker: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
 	printconsole(io,verbose,msg)	
 	tempid = tempname(jltempdir,cleanup=false)	
 	tused = @elapsed magicgenofilels = MagicBase.saveby_chromosome(magicgeno; 

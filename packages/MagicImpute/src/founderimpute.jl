@@ -13,7 +13,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     snporder::AbstractVector,
     israndallele::Bool,     
     issnpGT::AbstractVector,
-    upbyhalf::Bool,
+    upbyhalf::Bool,    
     alwaysaccept::Bool, 
     isallowmissing::Bool=true,
     imputetempfile::AbstractString)    
@@ -36,8 +36,9 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     newchrfhaplo = deepcopy(chrfhaplo)
     snpincl = snporder[first(values(priorprocess)).markerincl]				    
     if upbyhalf                    
-        for findex in findexlist        
-            for reversechr in [false,true]                      
+        for findex in findexlist                    
+            reversechrls = [false, true] 
+            for reversechr in reversechrls
                 # fixing phasing on one half of the chromosome                      
                 nhalf = nsnp ÷ 2                
                 fhaplosetpp2 = deepcopy(fhaplosetpp)                

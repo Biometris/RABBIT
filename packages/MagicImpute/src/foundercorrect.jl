@@ -28,9 +28,9 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
         loglikels, correctdf = foundererror_chr(chrfhaplo, chroffgeno, calledchroffgeno, 
             founder2progeny, popmakeup,priorprocess,priorspace;
             epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
-            snporder, decodetempfile,offspringexcl, issnpGT,israndallele, minnerrdiff)        
+            snporder, decodetempfile,offspringexcl, issnpGT,israndallele, minnerrdiff)
         loglikels[offspringexcl] .= 0.0 
-        if isempty(correctdf)            
+        if isempty(correctdf)                 
             break
         else
             setcorrectdf!(newchrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
@@ -46,7 +46,7 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
                 push!(rescorrect,correctdf)
             else
                 # newchrfhaplo .= chrfhaplo
-                break          
+                break
             end                        
         end
     end

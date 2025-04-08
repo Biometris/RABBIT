@@ -314,7 +314,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 		magicgeno.offspringgeno = nothing
 		GC.gc()
 		mem2 = round(Int,memoryuse()/10^6)
-		msg = string("chr=", chrid, ", #snp=", nsnp, 
+		msg = string("chr=", chrid, ", #marker=", nsnp, 
 			", tused=", round(time()-startt,digits=1),"s",
 			", mem=",mem1,"|",mem2, "MB, end",
 		)

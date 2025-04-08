@@ -148,7 +148,7 @@ function getchrchange(chrfhaplo::AbstractMatrix, calledchroffgeno::AbstractMatri
     ancestralstate::AbstractVector,founder2progeny::AbstractVector;    
     minnerrdiff::Integer=3, callthreshold::Real=0.55)
     res=[]
-    # println("#badsnp=",length(chrbadsnp), " out of #snp=",size(chrfhaplo,1))
+    # println("#badsnp=",length(chrbadsnp), " out of #marker=",size(chrfhaplo,1))
     isfounderinbred = length(founder2progeny) == size(chrfhaplo,2)
 	snpdict = Dict(snporder .=> 1:length(snporder))
 	jldopen(decodetempfile, "r") do file
