@@ -13,7 +13,7 @@
 * MagicBase: update parsebreed for an input breeder's pedfile with some sample indviduals acting also as founders in pedcode
 * MagicReconstruct: new option "thincm"
 
-## RABBIT v1.2.1
+## RABBIT v1.2.2
 
 * MagicFilter and others: rename options by removing "snp_". For example, change snp_minmaf to minmaf
 * MagicImpute: additional likelihood-based accept/reject for foundercorrect
