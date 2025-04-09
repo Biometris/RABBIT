@@ -5,7 +5,7 @@ using MagicBase, MagicReconstruct, MagicImpute
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = false
+isfounderinbred = true
 
 
 dataid = "sim"
@@ -17,7 +17,7 @@ outstem = dataid*"_output"
 @time magicgeno = magicimpute(genofile,pedfile;    
     isfounderinbred,            
     # model = "depmodel",
-    # isallowmissing = true,
+    # isallowmissing = false,
     # target = "founder", 
     # isrepeatimpute = true, 
     outstem,
@@ -37,7 +37,7 @@ show(offacc)
 
 # clear up
 
-cd(@__DIR__)
-dataid = "sim"
-rm.(filter(x->occursin(dataid, x), readdir()))
+# cd(@__DIR__)
+# dataid = "sim"
+# rm.(filter(x->occursin(dataid, x), readdir()))
 

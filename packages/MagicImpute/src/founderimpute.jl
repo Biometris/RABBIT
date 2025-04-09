@@ -1,4 +1,5 @@
 
+
 function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
     popmakeup::AbstractDict, priorprocess::AbstractDict, fhaplosetpp::AbstractVector;
     findexlist::AbstractVector,    
@@ -13,8 +14,9 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     snporder::AbstractVector,
     israndallele::Bool,     
     issnpGT::AbstractVector,
+    reversechr::Bool, 
     upbyhalf::Bool,    
-    alwaysaccept::Bool, 
+    alwaysaccept::Bool,     
     isallowmissing::Bool=true,
     imputetempfile::AbstractString)    
     nsnp = size(chrfhaplo,1)
@@ -36,24 +38,24 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     newchrfhaplo = deepcopy(chrfhaplo)
     snpincl = snporder[first(values(priorprocess)).markerincl]				    
     if upbyhalf                    
-        for findex in findexlist                    
-            reversechrls = [false, true] 
-            for reversechr in reversechrls
-                # fixing phasing on one half of the chromosome                      
-                nhalf = nsnp ÷ 2                
-                fhaplosetpp2 = deepcopy(fhaplosetpp)                
-                snpls = reversechr ? snporder[1:nhalf] : snporder[nhalf+1:nsnp]
-                for p in eachindex(fhaplosetpp2)                    
-                    if isfounderinbred
-                        for j in snpls
-                            fhaplosetpp2[p][j] = [newchrfhaplo[j,p]]                        
-                        end
-                    else
-                        for j in snpls
-                            fhaplosetpp2[p][j] = [newchrfhaplo[j,[2p-1,2p]]]                        
-                        end
+        reversechrls = reversechr ? [true, false] : [false, true]                 
+        for reversechr in reversechrls
+            # fixing phasing on one half of the chromosome                      
+            nhalf = nsnp ÷ 2                
+            fhaplosetpp2 = deepcopy(fhaplosetpp)                
+            snpls = reversechr ? snporder[1:nhalf] : snporder[nhalf+1:nsnp]
+            for p in eachindex(fhaplosetpp2)                    
+                if isfounderinbred
+                    for j in snpls
+                        fhaplosetpp2[p][j] = [newchrfhaplo[j,p]]                        
                     end
-                end                
+                else
+                    for j in snpls
+                        fhaplosetpp2[p][j] = [newchrfhaplo[j,[2p-1,2p]]]                        
+                    end
+                end
+            end                
+            for findex in findexlist                                            
                 founderforwardbackward!(findex,
                     newchrfhaplo,chroffgeno,
                     popmakeup,priorprocess,fhaplosetpp2; 
@@ -66,8 +68,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
             end 
         end
     else    
-        for findex in findexlist                 
-            reversechr =  rand([false,true])   
+        for findex in findexlist                             
             founderforwardbackward!(findex,newchrfhaplo,chroffgeno,
                 popmakeup,priorprocess,fhaplosetpp; 
                 epsf,epso,epso_perind, seqerror,
@@ -219,7 +220,8 @@ function founderbackwardsample(fwphaseprob::AbstractVector,chroffgeno::AbstractM
     popidls::AbstractVector, offspringexcl::AbstractVector, popmakeup::AbstractDict,
     priorprocess::AbstractDict,
     snporder::AbstractVector,
-    forwardtempfile::AbstractString)
+    forwardtempfile::AbstractString, 
+    isrand::Bool=false)
     nsnp= size(chroffgeno,1)    
     fphaseprob=Vector{Vector{Float64}}(undef,nsnp)
     fphase = zeros(Int, nsnp)
@@ -230,10 +232,13 @@ function founderbackwardsample(fwphaseprob::AbstractVector,chroffgeno::AbstractM
         snp = snporder[tseq[end]]
         fworigprob = read(file,string(snp))        
         fphaseprob[snp]= normalize(fwphaseprob[snp],1)
-        fphase[snp] = posmax(fphaseprob[snp])
-        orig = posmax.(fworigprob[fphase[snp]])
-        # fphase[snp] = rand(Categorical(fphaseprob[snp]))
-        # orig = [rand(Categorical(i)) for i in fworigprob[fphase[snp]]]                    
+        if isrand
+            fphase[snp] = rand(Categorical(fphaseprob[snp]))
+            orig = [rand(Categorical(i)) for i in fworigprob[fphase[snp]]]                    
+        else
+            fphase[snp] = posmax(fphaseprob[snp])
+            orig = posmax.(fworigprob[fphase[snp]])
+        end        
         noff = length(orig)
         for kk in (length(tseq)-1):-1:1        
             tranprob = gettranprob(tseq[kk],popmakeup, priorprocess,popidls,offspringexcl)            
@@ -244,10 +249,13 @@ function founderbackwardsample(fwphaseprob::AbstractVector,chroffgeno::AbstractM
             ww .-= max(ww...)        
             fphaseprob[snp]=normalize(fwphaseprob[snp] .* exp.(ww),1)            
             # println("kk=",kk, ",ww=", ww,",fphaseprob[snp]=",fphaseprob[snp])            
-            fphase[snp] = posmax(fphaseprob[snp])            
-            orig = posmax.(fworigprob[fphase[snp]])
-            # fphase[snp] = rand(Categorical(fphaseprob[snp]))
-            # orig = [rand(Categorical(i)) for i in fworigprob[fphase[snp]]]            
+            if isrand
+                fphase[snp] = rand(Categorical(fphaseprob[snp]))
+                orig = [rand(Categorical(i)) for i in fworigprob[fphase[snp]]]            
+            else
+                fphase[snp] = posmax(fphaseprob[snp])            
+                orig = posmax.(fworigprob[fphase[snp]])
+            end            
         end
     end    
     fphaseprob,fphase

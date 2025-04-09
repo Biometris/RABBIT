@@ -856,8 +856,8 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		", logl=", round(sum(loglikels),digits=1),		
 		", #marker=", nsnp, 
 		", #marker_incl=", nsnpincl,
-		", #miss_f=", nmissallele,
-		iscorrectfounder ? string(", #correct_f=", ncorrect) : "",			
+		", #missf=", nmissallele,
+		iscorrectfounder ? string(", #correctf=", ncorrect) : "",			
 		", l=", round(chrlen,digits=1), "cM",		
 		", fmiss=", join(round.(fmissls_after,digits=4),"|"), 	
 		", t=", round(Int, time()-chrstartt), "s",			
@@ -988,32 +988,21 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	miditeration = 5
     if isimputefounder 
         startt = time()		
-		if alwaysaccept
-			if isempty(ndiffls)
-				alwaysaccept = true
-			elseif ndiffls[end] == 0
+		if alwaysaccept			
+			if !isempty(ndiffls) && ndiffls[end] == 0
 				alwaysaccept = false
-			elseif upbyhalf 
-				if ndiffls[end] < 0.01*length(chrfhaplo)
-					alwaysaccept = false
-				elseif length(ndiffls) > 2*miditeration && sum(ndiffls .<= ndiffls[end]) >= 4
+			elseif upbyhalf && iteration > miditeration
+				if  ndiffls[end]/length(chrfhaplo) < 0.01
+					alwaysaccept = false		
+				elseif sum(ndiffls .<= ndiffls[end]) >= 4
 					alwaysaccept = false			
-				elseif iscorrectfounder && length(ncorrectls) >= 4 && all(ndiffls[end-2:end] .== ncorrectls[end-3:end-1])
-					# founderimpute and foundercorrect are stuck with each other
-					alwaysaccept = false			
+				elseif allequal(ndiffls[end-2:end])					
+					alwaysaccept = false		
 				end
 			end
 			if alwaysaccept 
-				if !upbyhalf 
-					if iteration == 1
-						upbyhalf = false
-					elseif length(findexlist) == 1
-						upbyhalf = iteration >= 2		
-					elseif ndiffls[end] == 0
-						upbyhalf = true
-					else 
-						upbyhalf = iteration >= 4 && ndiffls[end] >= ndiffls[end-1]
-					end
+				if !upbyhalf 										
+					upbyhalf = iteration >= 4
 				end
 			else
 				upbyhalf = false
@@ -1022,11 +1011,11 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			if !upbyhalf
 				upbyhalf = imputestuck >= 2
 			end
-		end
-		# if isallowmissing = true, imputation might get worse in case of small size (e.g. 8ril of size20)
+		end		
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., offspringexcl, snporder, 
-			isallowmissing, alwaysaccept, upbyhalf, israndallele,issnpGT,imputetempfile)				
+			reversechr = iseven(iteration), isallowmissing, alwaysaccept, 
+			upbyhalf, israndallele,issnpGT,imputetempfile)				
         push!(ndiffls,ndiff)		
 		if alwaysaccept 			
 			imputestuck = -1
@@ -1040,12 +1029,12 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		end
 		if upbyhalf	&& imputestuck >= 4
 			isimputefounder = false							
-		end
+		end	
         msg *= string(", #diff=",ndiff, ", Δlogl=",round(deltloglike,digits=1))
 		msg *= string(", stuck=",imputestuck==-1 ? -Inf : imputestuck, ", byhalf=",upbyhalf)
 		snpincl = snporder[first(values(priorprocess)).markerincl]		
 		nmissallele = sum(chrfhaplo[snpincl, :] .== "N")
-		msg *= string(", #miss_f=",nmissallele)
+		msg *= string(", #missf=",nmissallele)
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))		
     end	
@@ -1068,7 +1057,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			correctdf[:,:newg] .= "N"			
 			iscorrectfounder = false			
 		end
-		msg *= string(", #correct_f=",ncorrect)
+		msg *= string(", #correctf=",ncorrect)
 		step_verbose && println(msg)
 		push!(tused,string(round(Int,time()-startt)))
 	else
