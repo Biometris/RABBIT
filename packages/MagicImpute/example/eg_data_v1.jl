@@ -17,9 +17,9 @@ nsnpchr = 200
 )
 
 # designcode = "2star-self1"
-designcode = "2ril-self6"
+designcode = "2ril-self1"
 designinfo = MagicBase.parsedesign(designcode)
-magicped = formmagicped(designinfo,10)
+magicped = formmagicped(designinfo,50)
 
 # magicped = MagicBase.generate_magicped(;
 #     designcodes = ["bc2-self1","P2/P3=>DH","P4/3/P2/P3//P5/P6=>2","2ril-self1"],

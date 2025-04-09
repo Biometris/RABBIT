@@ -19,22 +19,16 @@ outstem = dataid*"_output"
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
 missingcode = isfounderinbred ? "N" : "NN"
-# for chr in eachindex(magicgeno.markermap)
-#     # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
-#     magicgeno.foundergeno[chr] .= missingcode
-# end
+for chr in eachindex(magicgeno.markermap)
+    # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
+    magicgeno.foundergeno[chr] .= missingcode
+end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
     # target = "founder",           
-    # model = "depmodel",
-    # model = ["depmodel","jointmodel"], 
-    # byfounder = 8, 
-    # isallowmissing = true, 
-    isrepeatimpute = false,    
-    nrepeatmin = 6,
-    nrepeatmax = 6,    
-    # isparallel = true, 
-    # isparallelfounder = true,       
+    # model = "depmodel",    
+    byfounder = 2, 
+    # isallowmissing = true,     
     outstem, 
 );
 
@@ -49,9 +43,10 @@ println(acc)
 show(facc)
 show(offacc)
 
+
 # clear up
 
-# cd(@__DIR__)
-# dataid = "sim"
-# rm.(filter(x->occursin(dataid, x), readdir()))
+cd(@__DIR__)
+dataid = "sim"
+rm.(filter(x->occursin(dataid, x), readdir()))
 

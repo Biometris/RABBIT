@@ -424,7 +424,7 @@ function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat
 	msg *= "\tΔlogl      ≡ increase of log-likelihood due to proposal imputing\n"
 	msg *= "\tstuck      ≡ measure of imputation being stuck\n"
 	msg *= "\tbyhalf     ≡ if true, obtain proposal for one-half-chr and the other\n"
-	msg *= "\t#missf     ≡ #missing founder alleles\n"
+	msg *= "\t#missf     ≡ #missing founder genotypes\n"
 	msg *= "\t#correctf  ≡ #corrected founder genotypes (and set obsgeno missing)\n"
 	msg *= "\t#mono      ≡ #monomorphic markers\n"
 	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"

@@ -733,7 +733,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		# modify chrfhaplo, priorprocess,chrlenls, ndiffls,ncorrectls, merrorlsls, actionlsls, offspringexcl
 		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order,alwaysaccept, upbyhalf,imputestuck, = impute_refine_chr_it!(chrfhaplo,chroffgeno,
 			popmakeup,priorprocess, priorspace, fhaplosetpp;
-			israndallele, ismalexls, founder2progeny,findexlist, 
+			isfounderinbred, israndallele, ismalexls, founder2progeny,findexlist, 
 			likeerrortuple, snporder, issnpGT, 
 			threshlikeparameters, priorlikeparameters, liketargetls, tukeyfence,minoutlier, offspringexcl, 											
 			temperature, reversechr,isallowmissing, 
@@ -842,10 +842,11 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	ncorrect = size(correctdf,1)
 	pri1=first(values(priorprocess))
 	snpincl = snporder[pri1.markerincl]			
-	nmissallele = sum(chrfhaplo[snpincl, :] .== "N")
+	nmissallele = sum(chrfhaplo[snpincl, :] .== "N")	
 	fmissls_after = mean(chrfhaplo[snpincl,:] .== "N",dims=1)[1,:]
 	if !isfounderinbred
 		fmissls_after = mean.(Iterators.partition(fmissls_after,2))
+		nmissallele = div(nmissallele, 2)
 	end
 	nsnpincl = sum(pri1.markerincl)		
 	chrlen = 100*sum(pri1.markerdeltd[pri1.markerincl][1:end-1])
@@ -936,6 +937,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     popmakeup::AbstractDict,
     priorprocess::AbstractDict, priorspace::AbstractDict,
     fhaplosetpp::AbstractVector;    	
+	isfounderinbred::Bool, 
     ismalexls::AbstractVector,
     founder2progeny::AbstractVector,
     findexlist::AbstractVector, 	
@@ -1011,7 +1013,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			if !upbyhalf
 				upbyhalf = imputestuck >= 2
 			end
-		end		
+		end				
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., offspringexcl, snporder, 
 			reversechr = iseven(iteration), isallowmissing, alwaysaccept, 
@@ -1034,6 +1036,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		msg *= string(", stuck=",imputestuck==-1 ? -Inf : imputestuck, ", byhalf=",upbyhalf)
 		snpincl = snporder[first(values(priorprocess)).markerincl]		
 		nmissallele = sum(chrfhaplo[snpincl, :] .== "N")
+		isfounderinbred || (nmissallele = div(nmissallele, 2))
 		msg *= string(", #missf=",nmissallele)
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))		

@@ -23,7 +23,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     if nsnp == 1
         @warn string("TODO: nsnp=",nsnp)
     end
-    nsnp <=1 && return (chrfhaplo, 0, 0)
+    nsnp <=1 && return (0, 0)
     nsnp == length(snporder) || @error "dimension mismatch!"
     loglikels = MagicReconstruct.hmm_loglikels(chrfhaplo,chroffgeno,
         popmakeup,priorprocess;
