@@ -47,6 +47,8 @@ function magicimpute(genofile::AbstractString,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,                
     byfounder::Integer=0,
+    startbyhalf::Union{Nothing,Integer}=nothing,     
+    threshproposal::Real=0.7,
     isallowmissing::Bool=true,
     isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
@@ -152,7 +154,8 @@ function magicimpute(genofile::AbstractString,
     magicimpute!(magicgeno;
         target, threshimpute, model, 
         likeparameters, threshlikeparameters, priorlikeparameters,
-        chrsubset, snpsubset,isparallel, isparallelfounder, byfounder,isallowmissing,
+        chrsubset, snpsubset,isparallel, isparallelfounder, 
+        byfounder,startbyhalf, threshproposal, isallowmissing,
         isrepeatimpute, nrepeatmin, nrepeatmax, 
         isdelmarker, delsiglevel,
         israndallele, isfounderinbred, 
@@ -241,6 +244,8 @@ genotype imputation from magicgeno.
 `byfounder::Integer=0`: alternatively impute each blocks of founders. The founders are partitioned such that the size of each block <= byfounder. 
   If byfounder=-1, impute all founders simulteneously. 
   If byfounder=0, reset to the maximum subpopulation size, and the partition is based on the fouders of each sub-population.
+
+`startbyhalf::Union{Nothing, Integer}=Nothing`: start iteration of obtaining prpoposal founder imputation conditional on the other half of chromosomes. 
 
 `inputneighbor::Union{Nothing,AbstractDict}=nothing`: nearest neighbors for each markers, which is required for neighbor-based marker order refinement. 
   If it is nothing and isordermarker = true, perform only random marker order refinement. 
@@ -331,6 +336,8 @@ function magicimpute!(magicgeno::MagicGeno;
     target::AbstractString = "all",        
     threshimpute::Real=0.9,        
     byfounder::Integer=0,
+    startbyhalf::Union{Nothing,Integer}=nothing,     
+    threshproposal::Real=0.7,
     isallowmissing::Bool=true,
     isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
@@ -405,8 +412,9 @@ function magicimpute!(magicgeno::MagicGeno;
             magicimpute_founder!(represent_magicgeno;
                 model = model_founderimpute,         
                 likeparameters, threshlikeparameters, priorlikeparameters, 
-                israndallele, isfounderinbred,byfounder, isrepeatimpute, nrepeatmin, nrepeatmax,
-                isdelmarker, delsiglevel, iscorrectfounder, isallowmissing, 
+                israndallele, isfounderinbred,byfounder, startbyhalf, 
+                isrepeatimpute, nrepeatmin, nrepeatmax,
+                isdelmarker, delsiglevel, iscorrectfounder, threshproposal, isallowmissing,
                 isinferjunc, isinfererror, tukeyfence, minoutlier,                 
                 inputneighbor=represent_neighbor, 
                 isspacemarker, trimcm, trimfraction, skeletonsize = binriffle < 0 ? skeletonsize : 10^6,
@@ -452,11 +460,12 @@ function magicimpute!(magicgeno::MagicGeno;
             magicimpute_founder!(magicgeno;
                 model = model_founderimpute,
                 likeparameters, threshlikeparameters,priorlikeparameters,
-                israndallele, isfounderinbred,byfounder,
+                israndallele, isfounderinbred,byfounder,startbyhalf,
                 isrepeatimpute = isbinning ? false : isrepeatimpute, 
                 nrepeatmin, nrepeatmax, 
                 isdelmarker, delsiglevel, 
-                isinferjunc, iscorrectfounder, isallowmissing, isinfererror, tukeyfence, minoutlier,             
+                isinferjunc, iscorrectfounder, threshproposal, isallowmissing,
+                isinfererror, tukeyfence, minoutlier,             
                 inputneighbor = isbinning ? nothing : inputneighbor,  # if isbinning, neighbor-based order refinement is not performed
                 isordermarker = isbinning ? isordermarker && (binriffle > 1) : isordermarker, 
                 slidewin = isbinning ? binriffle : slidewin,                 

@@ -4,9 +4,11 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	israndallele::Bool,
 	isfounderinbred::Bool=true,	        	
 	byfounder::Integer=0, 
+	startbyhalf::Integer,
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool, 
+	threshproposal::Real,
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -69,8 +71,8 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 					loglikels, fmissls, fhaplodf = impute_refine_chr!(magicgenofilels[runit]; 
 						magicprior,
 						model,israndallele, isfounderinbred,
-						byfounder,
-						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, 
+						byfounder,startbyhalf, 
+						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, threshproposal,
 						isdelmarker, delsiglevel,
 						isspacemarker, trimcm, trimfraction,skeletonsize,
 						isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
@@ -404,9 +406,11 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	israndallele::Bool,
 	isfounderinbred::Bool=true,	        
 	byfounder::Integer, 
+	startbyhalf::Integer,
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool,
+	threshproposal::Real, 
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -454,9 +458,9 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			", mem=",join([mem1,mem2],"|")))						
 		loglikels,fmissls,fmissls_after = impute_refine_chr!(magicgeno,chr;		
 			magicprior, model, isfounderinbred, 
-			israndallele, inputneighbor, byfounder,			
+			israndallele, inputneighbor, byfounder,	startbyhalf,		
 			likeparameters, threshlikeparameters, priorlikeparameters, 
-			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, 
+			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal,
 			isinfererror, isdelmarker, isspacemarker, isordermarker, 
 			tukeyfence, minoutlier, 
 			inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
@@ -487,6 +491,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	israndallele::Bool,
 	isfounderinbred::Bool=true,	    	
     byfounder::Integer,     
+	startbyhalf::Integer,
 	likeparameters::LikeParameters,
 	threshlikeparameters::ThreshLikeParameters,
 	priorlikeparameters::PriorLikeParameters,	
@@ -494,6 +499,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	iscorrectfounder::Bool, 
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool,
+	threshproposal::Real,
 	isinfererror::Bool, 
 	isdelmarker::Bool, 
 	isspacemarker::Bool,
@@ -557,9 +563,9 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	# modfied: priorprocess
 	loglikels, chrfhaplo, snporder, offexcl, likeerrortuple,correctdf,fmissls,fmissls_after = impute_refine_chr!(magicgeno.magicped, chroffgeno, chrneighbor,
 		popmakeup, priorprocess, fhaplosetpp;
-		isfounderinbred, isfounderphased, byfounder, israndallele, issnpGT,issnpAD,  
-		chrid,  			
-		iscorrectfounder, isimputefounder, isallowmissing, isinfererror, isdelmarker, isspacemarker,isordermarker,
+		isfounderinbred, isfounderphased, byfounder, startbyhalf,
+		israndallele, issnpGT,issnpAD,  chrid,  			
+		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmarker, isspacemarker,isordermarker,
 		liketargetls, likeerrortuple, threshlikeparameters, priorlikeparameters, tukeyfence,minoutlier, 
 		inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 		skeletonsize, slidewin, slidewin_neighbor,
@@ -579,11 +585,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 		oldmagicgeno = readmagicgeno(magicgenofile)
 		magicgeno.offspringgeno[chr] = oldmagicgeno.offspringgeno[chr]			
 	end
-	MagicReconstruct.setmagicgeno!(magicgeno, chr, priorprocess,snporder)  # delete and order markers 
-	# fhaplosetpp2 = calfhaploprior(magicgeno,chr)		
-	# fmissls2 = get_fmissls(fhaplosetpp2) 	
-	# msg = string("chr=", chrid, msg_repeatrun,", fmissls=", round.(fmissls2,digits=4), " after imputing")
-	# printconsole(io,verbose,msg)		
+	MagicReconstruct.setmagicgeno!(magicgeno, chr, priorprocess,snporder)  # delete and order markers 	
 	loglikels,fmissls,fmissls_after
 end
 
@@ -596,6 +598,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	isfounderinbred::Bool,
 	isfounderphased::Bool, 
 	byfounder::Integer, 
+	startbyhalf::Integer,
 	chrid::AbstractString,         	    
     israndallele::Bool=true,     
 	issnpGT::AbstractVector, 
@@ -606,6 +609,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	priorlikeparameters::PriorLikeParameters,	
 	isimputefounder::Union{Nothing, Bool},
 	isallowmissing::Bool, 
+	threshproposal::Real,
 	iscorrectfounder::Bool, 
 	isinfererror::Bool, 
 	isdelmarker::Bool, 
@@ -635,19 +639,20 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	more_verbose::Bool=false)	
 	chrstartt = time()
 	# founder partition and initialization	
-	chrfhaplo,fmissls, isimputefounder = MagicImpute.get_initfhaplo(fhaplosetpp; minfmiss=1e-4, isimputefounder)	    
+	minfmiss = isallowmissing ? 1e-4 : 0.0
+	chrfhaplo,fmissls, isimputefounder = MagicImpute.get_initfhaplo(fhaplosetpp; minfmiss, isimputefounder)	    
 	avgfmiss = mean(fmissls)
-	defaultby = MagicBase.get_partition_defaultby(popmakeup, isfounderinbred,isfounderphased)
-	findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss=1e-4)			
+	defaultby = MagicBase.get_partition_defaultby(isfounderinbred,isfounderphased)	
+	findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss)			
 	msg_repeatrun = isnothing(repeatrun) ? "" : string(", run=", repeatrun)
 	msg = string("chr=", chrid, msg_repeatrun)
 	if isimputefounder		
 		# avgfmissblock = [mean(fmissls[findex]) for findex in findexlist]					
-		msg *= string(", blocksize=",join(length.(findexlist),"|"))		
+		msg *= string(", partition=", join.(findexlist,"|"))		
 		# 	", fmiss_blocks=", round.(avgfmissblock,digits=4))
-		msg *= string(", avgfmiss=", round(mean(fmissls),digits=4), ", fmiss=", round.(fmissls,digits=4))		
+		msg *= string(", avgfmiss=", round(avgfmiss,digits=4), ", fmiss=", round.(fmissls,digits=4))		
 	else
-		msg *= string(", avgfmiss=", round(mean(fmissls),digits=4),	", fmiss=", round.(fmissls,digits=4), ", skip imputing founders")
+		msg *= string(", avgfmiss=", round(avgfmiss,digits=4),	", fmiss=", round.(fmissls,digits=4), ", skip imputing founders")
 	end	
 	printconsole(io,verbose,msg)		
 	
@@ -721,27 +726,28 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	oldmapexpansion = mapexpansion			
 	correctdf = DataFrame()	
 	upbyhalf = false
-	alwaysaccept = true 
-	imputestuck = -1
+	alwaysacceptls = [true,true]
+	imputestuckls = [-1,-1]
 	for it in 1:maxiter						
 		slidewinsize = truncated(Poisson(max(2, winsizels[it])),2,maxwinsize)
 		reversechr = iseven(it)
-		if first(last(actionlsls))	
-			# byfounder2 = last(ndiffls)/length(chrfhaplo) < 0.05 ? ceil(Int, byfounder/2) : byfounder			
-			findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss=1e-4)			
-		end
+		# re-randomize findexlist reults in worse imputation for large byfounder and large #missingparnts
+		# if first(last(actionlsls))	
+		# 	# byfounder2 = last(ndiffls)/length(chrfhaplo) < 0.05 ? ceil(Int, byfounder/2) : byfounder			
+		# 	findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss)			
+		# end
 		# modify chrfhaplo, priorprocess,chrlenls, ndiffls,ncorrectls, merrorlsls, actionlsls, offspringexcl
-		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order,alwaysaccept, upbyhalf,imputestuck, = impute_refine_chr_it!(chrfhaplo,chroffgeno,
+		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order, upbyhalf = impute_refine_chr_it!(chrfhaplo,chroffgeno,
 			popmakeup,priorprocess, priorspace, fhaplosetpp;
 			isfounderinbred, israndallele, ismalexls, founder2progeny,findexlist, 
 			likeerrortuple, snporder, issnpGT, 
 			threshlikeparameters, priorlikeparameters, liketargetls, tukeyfence,minoutlier, offspringexcl, 											
-			temperature, reversechr,isallowmissing, 
+			temperature, reversechr,isallowmissing, threshproposal, startbyhalf, 
 			delsiglevel, priorlength, trimcm, trimfraction, 
 			chrneighbor, minaccept,nbrmaxwin, slidewinsize, maxwinsize, orderactions,orderactions_neighbor, 
 			chrlenls, ndiffls, ncorrectls, merrorlsls, actionlsls, 
-			alwaysaccept, upbyhalf, imputestuck, iteration=it, miniteration_order, 
-			imputetempfile, spacebyviterbi, step_verbose)			
+			alwaysacceptls, imputestuckls, upbyhalf, 
+			iteration=it, miniteration_order, imputetempfile, spacebyviterbi, step_verbose)			
 		if isinferjunc
 			startt_junc = time()
 			juncdist = infer_juncdist(chrfhaplo,chroffgeno,popmakeup,priorprocess,priorspace;
@@ -843,10 +849,10 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	pri1=first(values(priorprocess))
 	snpincl = snporder[pri1.markerincl]			
 	nmissallele = sum(chrfhaplo[snpincl, :] .== "N")	
+	# !isfounderinbred || (nmissallele = div(nmissallele, 2))
 	fmissls_after = mean(chrfhaplo[snpincl,:] .== "N",dims=1)[1,:]
 	if !isfounderinbred
-		fmissls_after = mean.(Iterators.partition(fmissls_after,2))
-		nmissallele = div(nmissallele, 2)
+		fmissls_after = mean.(Iterators.partition(fmissls_after,2))	
 	end
 	nsnpincl = sum(pri1.markerincl)		
 	chrlen = 100*sum(pri1.markerdeltd[pri1.markerincl][1:end-1])
@@ -969,18 +975,19 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     ncorrectls::AbstractVector,
     merrorlsls::AbstractVector, 
 	actionlsls::AbstractVector,		
+	imputestuckls::AbstractVector, 
+	alwaysacceptls::AbstractVector, 
 	upbyhalf::Bool, 	
-	alwaysaccept::Bool, 
-	imputestuck::Integer, 
 	isallowmissing::Bool,
+	threshproposal::Real,
 	iteration::Integer,	
 	miniteration_order::Integer,
+	startbyhalf::Integer, 
     imputetempfile::AbstractString,
 	spacebyviterbi::Bool,
 	step_verbose::Bool=false)
 	# deletion after infereps step since small inital eps results in too many deletions
-	# correction after 2 iterations of deletion since  correction may change mis-groupped markers.
-	# temperature only affects marker-ordering
+	# correction after 2 iterations of deletion since  correction may change mis-groupped markers.	
     isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker, isordermarker = last(actionlsls)	
 	(;epsfls, epsols, epsols_perind, seqerrorls,allelebalancemeanls,allelebalancedispersels, alleledropoutls) = likeerrortuple
     tused =[]
@@ -989,37 +996,26 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		allelebalancedisperse=allelebalancedispersels, alleledropout = alleledropoutls)		
 	miditeration = 5
     if isimputefounder 
-        startt = time()		
-		if alwaysaccept			
-			if !isempty(ndiffls) && ndiffls[end] == 0
-				alwaysaccept = false
-			elseif upbyhalf && iteration > miditeration
-				if  ndiffls[end]/length(chrfhaplo) < 0.01
-					alwaysaccept = false		
-				elseif sum(ndiffls .<= ndiffls[end]) >= 4
-					alwaysaccept = false			
-				elseif allequal(ndiffls[end-2:end])					
-					alwaysaccept = false		
-				end
-			end
-			if alwaysaccept 
-				if !upbyhalf 										
-					upbyhalf = iteration >= 4
-				end
-			else
-				upbyhalf = false
-			end
+        startt = time()			
+		alwaysaccept = alwaysacceptls[end]
+		imputestuck = imputestuckls[end]
+		if upbyhalf	&& imputestuck >= 3
+			isimputefounder = false							
+		end	
+		if !isallowmissing && !isimputefounder # last iteration to impute all missing founder genotypes			
+			threshproposal2 = -1
+			alwaysaccept2 = true			
 		else
-			if !upbyhalf
-				upbyhalf = imputestuck >= 2
-			end
-		end				
+			threshproposal2 = threshproposal
+			alwaysaccept2 = alwaysaccept			
+		end
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., offspringexcl, snporder, 
-			reversechr = iseven(iteration), isallowmissing, alwaysaccept, 
-			upbyhalf, israndallele,issnpGT,imputetempfile)				
+			reversechr = iseven(iteration), 
+			alwaysaccept = alwaysaccept2, upbyhalf, threshproposal = threshproposal2, 
+			israndallele,issnpGT,imputetempfile)							
         push!(ndiffls,ndiff)		
-		if alwaysaccept 			
+		if alwaysaccept2		
 			imputestuck = -1
 		else
 			if deltloglike > 0 && ndiff > 0
@@ -1029,36 +1025,61 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 				imputestuck =  max(0, imputestuck) + deltstuck				
 			end			
 		end
-		if upbyhalf	&& imputestuck >= 4
-			isimputefounder = false							
-		end	
+		push!(imputestuckls,imputestuck)
         msg *= string(", #diff=",ndiff, ", Δlogl=",round(deltloglike,digits=1))
-		msg *= string(", stuck=",imputestuck==-1 ? -Inf : imputestuck, ", byhalf=",upbyhalf)
+		msg *= string(", stuck=",imputestuck==-1 ? -Inf : imputestuck, ", byhalf=",upbyhalf)		
 		snpincl = snporder[first(values(priorprocess)).markerincl]		
 		nmissallele = sum(chrfhaplo[snpincl, :] .== "N")
-		isfounderinbred || (nmissallele = div(nmissallele, 2))
-		msg *= string(", #missf=",nmissallele)
+		# isfounderinbred || (nmissallele = div(nmissallele, 2))
+		msg *= string(", #missf=",nmissallele)		
         step_verbose && println(msg)
         push!(tused,string(round(Int,time()-startt)))		
+
+		# update alwaysaccept and upbyhalf
+		if alwaysaccept					
+			if (iteration >= (startbyhalf-1) || isallowmissing) 				
+				if ndiffls[end] == 0
+					alwaysaccept = false
+				elseif upbyhalf && iteration >= miditeration
+					if  ndiffls[end]/length(chrfhaplo) < 0.001
+						alwaysaccept = false							
+					elseif length(ndiffls) >=3 && allequal(ndiffls[end-2:end])					
+						alwaysaccept = false		
+					elseif length(ndiffls) >= (startbyhalf+3) && sum(ndiffls[startbyhalf:end] .<= ndiffls[end]) >= 4										
+						alwaysaccept = false			
+					end
+				end
+				if alwaysaccept 
+					upbyhalf = iteration >= (startbyhalf - 1)
+				else
+					upbyhalf = true				
+				end			
+			end
+		else
+			upbyhalf = true
+		end		
+		push!(alwaysacceptls,alwaysaccept)
     end	
-	if iscorrectfounder && (iteration >= 2 || !isimputefounder)			
-		startt = time()
-		oldchrfhaplo = copy(chrfhaplo)		
+
+	if iscorrectfounder && (iteration >= 2 || !isimputefounder)		
+		startt = time()				
 		correctdf = foundercorrect_chr!(chrfhaplo, chroffgeno,            
 			popmakeup,priorprocess,priorspace, fhaplosetpp;
 			errortuples..., offspringexcl, snporder, 
 			decodetempfile = imputetempfile,
 			inclmissingallele = false,  # if true, most of them will be missing in the following iterations
-			ismalexls,founder2progeny,israndallele, issnpGT)
+			ismalexls,founder2progeny,israndallele, issnpGT, step_verbose)
 		ncorrect =  isempty(correctdf) ? 0 : size(correctdf,1)
-		push!(ncorrectls,ncorrect)						
-		if ncorrect == 0 
-			iscorrectfounder = false        			
-		elseif isallowmissing && !isimputefounder 
-			bdiff = oldchrfhaplo .!= chrfhaplo  
-			chrfhaplo[bdiff] .= "N"
-			correctdf[:,:newg] .= "N"			
-			iscorrectfounder = false			
+		push!(ncorrectls,ncorrect)		
+		if (isimputefounder && iteration >= startbyhalf) || !isimputefounder
+			if ncorrect == 0 
+				iscorrectfounder = false        			
+			elseif length(ncorrectls) >= 3 && allequal(ncorrectls[end-2:end]) 
+				iscorrectfounder = false        			
+			elseif  isimputefounder && length(ncorrectls) >= 4 && all(ndiffls[end-2:end] .== ncorrectls[end-3:end-1])
+				# imputation and correction are locked with each other
+				iscorrectfounder = false        							
+			end		
 		end
 		msg *= string(", #correctf=",ncorrect)
 		step_verbose && println(msg)
@@ -1085,7 +1106,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			MagicReconstruct.setpriorprocess!(priorprocess, snporder,monosnps)			
 		end		        
 	end
-	if isinfererror && (iteration >= 2 || !isimputefounder)
+	if isinfererror && (iteration >= 2 || !isimputefounder)		
 		merrorls = zeros(7)
 		absthreshls = [1e-3,1e-3,1e-3,1e-3,1e-2,5e-3,1e-3]
         startt = time()				 
@@ -1231,7 +1252,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
         push!(tused,string(round(Int,time()-startt)))    		
 		push!(merrorlsls,merrorls)
     end	
-	if isa(epsols_perind, AbstractVector) && (iteration >= 2 || !isimputefounder) 
+	if isa(epsols_perind, AbstractVector) 
 		offspringexcl = MagicReconstruct.del_error_indices(epsols_perind; tukeyfence,
 			minoutlier=minoutlier,max_error=threshlikeparameters.peroffspringerror)						
 		if !isempty(offspringexcl) 
@@ -1300,7 +1321,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	else
 		logbook_order = nothing
 	end
-    if isspacemarker && (iteration >= 2 || !isimputefounder)
+    if isspacemarker && (iteration >= 2 || !isimputefounder) 
         startt = time()
 		markerspace_fun = spacebyviterbi ? markerspace_chr_viterbi! : markerspace_chr!				
 		markerspace_fun(chrfhaplo,chroffgeno, popmakeup,priorprocess;
@@ -1333,7 +1354,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	push!(actionlsls, [isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker,isordermarker])
 	likeerrortuple = (epsfls=epsfls,epsols=epsols, epsols_perind=epsols_perind, seqerrorls=seqerrorls, 
 		allelebalancemeanls = allelebalancemeanls, allelebalancedispersels = allelebalancedispersels, alleledropoutls = alleledropoutls)	
-	likeerrortuple, offspringexcl, correctdf, tused, msg, logbook_order, alwaysaccept, upbyhalf,imputestuck
+	likeerrortuple, offspringexcl, correctdf, tused, msg, logbook_order, upbyhalf
 end
 
 

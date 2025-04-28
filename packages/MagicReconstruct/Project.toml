@@ -25,7 +25,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [compat]
 HMM = "1.0.0"
-MagicBase = "1.1.0"
+MagicBase = "1.2.0"
 MagicPrior = "1.0.0"
 Pedigrees = "1.0.0"
 

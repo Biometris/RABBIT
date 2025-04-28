@@ -358,3 +358,4 @@ function metroplis1d(loglfun::Function;
     end
     chain
 end
+

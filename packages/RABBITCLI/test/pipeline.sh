@@ -5,7 +5,7 @@
 WORKDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo $WORKDIR
 cd $WORKDIR
-RABBITDIR="${WORKDIR}/../src/"
+RABBITDIR="${WORKDIR}/../../../../RABBIT/packages/RABBITCLI/src/"
 OUTSTEM="sim"
 
 julia "${RABBITDIR}rabbit_simfhaplo.jl" --nsnp 500 --nparent 3 \

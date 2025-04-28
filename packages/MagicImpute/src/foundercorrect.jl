@@ -15,13 +15,14 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     ismalexls::AbstractVector,    
     israndallele::Bool,     
     offspringexcl::AbstractVector, 
-    issnpGT::AbstractVector)
+    issnpGT::AbstractVector,
+    step_verbose::Bool=false)
     isfounderinbred = length(founder2progeny) == size(chrfhaplo,2)	    
     rescorrect = []
     newchrfhaplo = deepcopy(chrfhaplo)
-    itmax = 3
-    minnerrdiff = 2
-    for it in 1:itmax
+    minnerrdiffls = [4,3,2]
+    for it in eachindex(minnerrdiffls)
+        minnerrdiff = minnerrdiffls[it]
         calledchroffgeno = singlesite_genocall(chrfhaplo,chroffgeno; ismalexls, popmakeup,
             epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,alleledropout, 
             israndallele,issnpGT,callthreshold = 0.7,tempjld2file = decodetempfile)
@@ -29,26 +30,30 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
             founder2progeny, popmakeup,priorprocess,priorspace;
             epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
             snporder, decodetempfile,offspringexcl, issnpGT,israndallele, minnerrdiff)
-        loglikels[offspringexcl] .= 0.0 
-        if isempty(correctdf)                 
-            break
-        else
-            setcorrectdf!(newchrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
-            newloglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
-                epsf,epso,epso_perind, seqerror,
-                allelebalancemean,allelebalancedisperse,alleledropout, 
-                decodetempfile, israndallele,issnpGT,snporder
-            )	
-            newloglikels[offspringexcl] .= 0.0 
-            isaccept = sum(newloglikels) - sum(loglikels) > 0
-            if isaccept
-                chrfhaplo .= newchrfhaplo      
-                push!(rescorrect,correctdf)
-            else
-                # newchrfhaplo .= chrfhaplo
-                break
-            end                        
+        loglikels[offspringexcl] .= 0.0      
+        isempty(correctdf) && continue
+        setcorrectdf!(newchrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
+        # must viterbi alg: keep consistent the loglikels of foundererror_chr, 
+        newloglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
+            epsf,epso,epso_perind, seqerror,hmmalg="viterbi",
+            allelebalancemean,allelebalancedisperse,alleledropout, 
+            decodetempfile, israndallele,issnpGT,snporder
+        )	
+        newloglikels[offspringexcl] .= 0.0 
+        deltlogl = sum(newloglikels) - sum(loglikels)
+        isaccept = deltlogl >= 0.0
+        if step_verbose 
+            msg = string("foundercorrect it= ", it, ", minnerrdiff=", minnerrdiff, 
+                ", Δlogl=", round(deltlogl,digits=4), ", isaccept=",isaccept)
+            @info msg correctdf
         end
+        if isaccept
+            chrfhaplo .= newchrfhaplo      
+            push!(rescorrect,correctdf)
+        else
+            # newchrfhaplo .= chrfhaplo                
+            break
+        end                      
     end
     res = isempty(rescorrect) ? rescorrect : reduce(vcat, rescorrect)
     res
@@ -299,7 +304,8 @@ function setchrpostprob!(chrpostprob::AbstractVector,delsnps::AbstractVector)
     end
 end
 
-function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplosetpp::AbstractVector; isfounderinbred::Bool,inclmissingallele)
+function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplosetpp::AbstractVector; 
+    isfounderinbred::Bool,inclmissingallele)
     for i=1:size(correctdf,1)
         snp, p, newg = correctdf[i,[1,2,4]]        
         if isfounderinbred        
@@ -308,8 +314,7 @@ function setcorrectdf!(chrfhaplo::AbstractMatrix, correctdf::DataFrame, fhaplose
                 fhaplosetpp[p][snp] = ["1", "2","N"]            
             else
                 fhaplosetpp[p][snp] = ["1", "2"]
-            end
-            
+            end            
         else
             chrfhaplo[snp,[2*p-1, 2*p]] .= newg            
             if inclmissingallele

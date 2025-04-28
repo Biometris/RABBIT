@@ -19,5 +19,5 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-MagicBase = "1.1.0"
+MagicBase = "1.2.0"
 Pedigrees = "1.0.0"

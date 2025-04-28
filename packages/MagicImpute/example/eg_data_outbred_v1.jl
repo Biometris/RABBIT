@@ -24,12 +24,12 @@ nparent = 2
 
 epsf = 0.01
 epso = 0.01
-missf = 0.1
-misso = 0.1
+missf = 0.05
+misso = 0.05
 # pedcode = string(nparent, "star-self0")
 pedcode = string(nparent, "ril-self0")
 @time magicsimulate(fhaplofile,pedcode;
-    popsize=50,
+    popsize=5,
     isfounderinbred,    
     foundererror = Beta(2, 2/epsf-2.0),
     offspringerror = Beta(2, 2/epso-2.0),

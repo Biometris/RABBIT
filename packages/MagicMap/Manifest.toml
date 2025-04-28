@@ -2,7 +2,7 @@
 
 julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "cb173979e55ba76d01873e9ba1dfb4896c7ff116"
+project_hash = "a4c6b79327648d0e3468e0746e62193adf73b23f"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -399,9 +399,9 @@ version = "1.11.0"
 
 [[deps.Dbus_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "fc173b380865f70627d7dd1190dc2fce6cc105af"
+git-tree-sha1 = "473e9afc9cf30814eb67ffa5f2db7df82c3ad9fd"
 uuid = "ee1fde0b-3d02-5ea6-8484-8dfef6360eab"
-version = "1.14.10+0"
+version = "1.16.2+0"
 
 [[deps.DefineSingletons]]
 git-tree-sha1 = "0fba8b706d0178b4dc7fd44a96a92382c9065c2c"
@@ -583,9 +583,9 @@ version = "1.3.7"
 
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
-git-tree-sha1 = "a2df1b776752e3f344e5116c06d75a10436ab853"
+git-tree-sha1 = "910febccb28d493032495b7009dce7d7f7aee554"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.10.38"
+version = "1.0.1"
 weakdeps = ["StaticArrays"]
 
     [deps.ForwardDiff.extensions]
@@ -599,9 +599,9 @@ version = "2.13.4+0"
 
 [[deps.FriBidi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "846f7026a9decf3679419122b49f8a1fdb48d2d5"
+git-tree-sha1 = "7a214fdac5ed5f59a22c2d9a885a16da1c74bbc7"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
-version = "1.0.16+0"
+version = "1.0.17+0"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -710,7 +710,7 @@ version = "1.0.2"
 
 [[deps.HMM]]
 deps = ["Distributions"]
-git-tree-sha1 = "5271f3bd2e7f70a2c85498d8554afbcaf511eee2"
+git-tree-sha1 = "ef87ad93e9b4b98c1405ed534c6677d5aca5b882"
 repo-rev = "main"
 repo-subdir = "packages/HMM"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -719,9 +719,9 @@ version = "1.0.0"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "PrecompileTools", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "c67b33b085f6e2faf8bf79a61962e7339a81129c"
+git-tree-sha1 = "f93655dc73d7a0b4a368e3c0bce296ae035ad76e"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.10.15"
+version = "1.10.16"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll"]
@@ -1068,9 +1068,9 @@ version = "1.4.0"
 
 [[deps.Latexify]]
 deps = ["Format", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "OrderedCollections", "Requires"]
-git-tree-sha1 = "cd714447457c660382fe634710fb56eb255ee42e"
+git-tree-sha1 = "cd10d2cc78d34c0e2a3a36420ab607b611debfbb"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.16.6"
+version = "0.16.7"
 
     [deps.Latexify.extensions]
     DataFramesExt = "DataFrames"
@@ -1242,43 +1242,43 @@ version = "0.5.15"
 
 [[deps.MagicBase]]
 deps = ["CSV", "CodecZlib", "Combinatorics", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributions", "GZip", "Graphs", "Images", "InlineStrings", "Interpolations", "JLD2", "LinearAlgebra", "Pedigrees", "Pkg", "Plots", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Tar", "ThreadsX"]
-git-tree-sha1 = "a1148481bc63777c16d3c5024924407e8954fc9c"
+git-tree-sha1 = "9c286befcd7482861eb267bf7be7d33a59c04d5d"
 repo-rev = "main"
 repo-subdir = "packages/MagicBase"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
-version = "1.1.0"
+version = "1.2.0"
 
 [[deps.MagicImpute]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "MagicReconstruct", "Pedigrees", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "403522905a01900f4bae3f2897ade7e110cd70e3"
+git-tree-sha1 = "fa93b97af711deee075261ef1db3c8307234f8d2"
 repo-rev = "main"
 repo-subdir = "packages/MagicImpute"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "d6bde97e-f571-11e8-0752-dd2c38cea685"
-version = "1.1.3"
+version = "1.2.2"
 
 [[deps.MagicLD]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "MagicBase", "Pedigrees", "Pkg", "ProgressMeter", "SparseArrays"]
-git-tree-sha1 = "01d1ba4324f3f510e8467ab999a6aa304c2b2d11"
+git-tree-sha1 = "e90312d9f39b6284071e348b65ec288cf120c2ca"
 repo-rev = "main"
 repo-subdir = "packages/MagicLD"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "0c97556f-f1e7-4237-8a80-7e7d9b59bb26"
-version = "1.0.0"
+version = "1.1.0"
 
 [[deps.MagicLinkage]]
 deps = ["CSV", "DataFrames", "Dates", "Distributed", "Distributions", "GZip", "HMM", "LRUCache", "LinearAlgebra", "MagicBase", "MagicImpute", "MagicLD", "MagicPrior", "MagicReconstruct", "Pedigrees", "Pkg", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "2d37a618442afe8b1c24eeda8ffa4264f1bf55e6"
+git-tree-sha1 = "1eae8f0a20f9746359051cb950309b9010211d2f"
 repo-rev = "main"
 repo-subdir = "packages/MagicLinkage"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "7e46d71e-e3ca-4f00-8e51-0df20d7851f3"
-version = "1.0.0"
+version = "1.1.0"
 
 [[deps.MagicPrior]]
 deps = ["LinearAlgebra", "Pedigrees", "SparseArrays", "Statistics"]
-git-tree-sha1 = "06e40d7ca213f9390abdd83647db86e92cb7909e"
+git-tree-sha1 = "c5987c159c08487cec135a88bca8bf5ba73c5aa9"
 repo-rev = "main"
 repo-subdir = "packages/MagicPrior"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1287,7 +1287,7 @@ version = "1.0.0"
 
 [[deps.MagicReconstruct]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "Pedigrees", "ProgressMeter", "SparseArrays", "SpecialFunctions", "Statistics", "StatsPlots"]
-git-tree-sha1 = "56cd3576df8708815357fefc37496b2ae3647f10"
+git-tree-sha1 = "532e37ca83dc2771970b41ac07bb9938a2ea1f94"
 repo-rev = "main"
 repo-subdir = "packages/MagicReconstruct"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1311,9 +1311,9 @@ version = "1.11.0"
 
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON3", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test"]
-git-tree-sha1 = "6723502b2135aa492a65be9633e694482a340ee7"
+git-tree-sha1 = "c2514ede436071529470010540bc3a1441e8140c"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.38.0"
+version = "1.39.0"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
@@ -1503,9 +1503,9 @@ version = "10.42.0+1"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "48566789a6d5f6492688279e22445002d171cf76"
+git-tree-sha1 = "0e1340b5d98971513bddaa6bbed470670cebbbfe"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.33"
+version = "0.11.34"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
@@ -1539,7 +1539,7 @@ version = "2.8.1"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "d64d96c7380cbdb77f9850e7524c05c4f7d0daf0"
+git-tree-sha1 = "1410f3b95d536ff65db67b50ddb4deaa04c12bd8"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1658,9 +1658,9 @@ version = "1.11.0"
 
 [[deps.ProgressMeter]]
 deps = ["Distributed", "Printf"]
-git-tree-sha1 = "8f6bc219586aef8baf0ff9a5fe16ee9c70cb65e4"
+git-tree-sha1 = "13c5103482a8ed1536a54c08d0e742ae3dca2d42"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
-version = "1.10.2"
+version = "1.10.4"
 
 [[deps.PtrArrays]]
 git-tree-sha1 = "1d36ef11a9aaf1e8b74dacc6a731dd1de8fd493d"
@@ -1895,7 +1895,7 @@ weakdeps = ["ChainRulesCore"]
 
 [[deps.SpectralEmbedding]]
 deps = ["Arpack", "Clustering", "DataFrames", "Distances", "Distributed", "LightGraphs", "LinearAlgebra", "Plots", "Random", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "4cdccb08e40b0cada3c7632ff024daf612c88c1e"
+git-tree-sha1 = "65ee5ecd474faefde68cf2bea4ea77aecfcfab1d"
 repo-rev = "main"
 repo-subdir = "packages/SpectralEmbedding"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -2058,9 +2058,9 @@ version = "1.11.0"
 
 [[deps.ThreadingUtilities]]
 deps = ["ManualMemory"]
-git-tree-sha1 = "eda08f7e9818eb53661b3deb74e3159460dfbc27"
+git-tree-sha1 = "18ad3613e129312fe67789a71720c3747e598a61"
 uuid = "8290d209-cae3-49c0-8002-c8c24d57dab5"
-version = "0.5.2"
+version = "0.5.3"
 
 [[deps.ThreadsX]]
 deps = ["Accessors", "ArgCheck", "BangBang", "ConstructionBase", "InitialValues", "MicroCollections", "Referenceables", "SplittablesBase", "Transducers"]
@@ -2203,9 +2203,9 @@ version = "1.6.1"
 
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Zlib_jll"]
-git-tree-sha1 = "b8b243e47228b4a3877f1dd6aee0c5d56db7fcf4"
+git-tree-sha1 = "9380cd28f093c901600ab70e0201fb18bae226de"
 uuid = "02c8fc9c-b97f-50b9-bbe4-9be30ff0a78a"
-version = "2.13.6+1"
+version = "2.14.1+0"
 
 [[deps.XSLT_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgcrypt_jll", "Libgpg_error_jll", "Libiconv_jll", "XML2_jll", "Zlib_jll"]
@@ -2221,9 +2221,9 @@ version = "1.8.6+3"
 
 [[deps.Xorg_libXau_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "e9216fdcd8514b7072b43653874fd688e4c6c003"
+git-tree-sha1 = "aa1261ebbac3ccc8d16558ae6799524c450ed16b"
 uuid = "0c0b7dd1-d40b-584c-a123-a41640f87eec"
-version = "1.0.12+0"
+version = "1.0.13+0"
 
 [[deps.Xorg_libXcursor_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXfixes_jll", "Xorg_libXrender_jll"]
@@ -2233,9 +2233,9 @@ version = "1.2.3+0"
 
 [[deps.Xorg_libXdmcp_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "89799ae67c17caa5b3b5a19b8469eeee474377db"
+git-tree-sha1 = "52858d64353db33a56e13c341d7bf44cd0d7b309"
 uuid = "a3789734-cfe1-5b06-b2d0-1dd0d9d62d05"
-version = "1.1.5+0"
+version = "1.1.6+0"
 
 [[deps.Xorg_libXext_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
@@ -2275,9 +2275,9 @@ version = "0.9.11+1"
 
 [[deps.Xorg_libpthread_stubs_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "c57201109a9e4c0585b208bb408bc41d205ac4e9"
+git-tree-sha1 = "0f2bcb1a5d605a30b903e35c181cd2266ab66ba0"
 uuid = "14d82f49-176c-5ed1-bb49-ad3f5cbd8c74"
-version = "0.1.2+0"
+version = "0.5.0+0"
 
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XSLT_jll", "Xorg_libXau_jll", "Xorg_libXdmcp_jll", "Xorg_libpthread_stubs_jll"]

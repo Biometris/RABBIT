@@ -8,27 +8,28 @@ using MagicBase, MagicReconstruct, MagicImpute
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = true
+isfounderinbred = false
 
 
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
-outstem = dataid*"_output"
+outstem = dataid*"_output2"
 
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
 missingcode = isfounderinbred ? "N" : "NN"
-for chr in eachindex(magicgeno.markermap)    
-    magicgeno.foundergeno[chr] .= missingcode
+for chr in eachindex(magicgeno.markermap)
+    # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
+    magicgeno.foundergeno[chr].= missingcode
 end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
     # target = "founder",           
-    model = "depmodel",    
-    byfounder = 8, 
-    threshproposal = 0.0, 
-    isallowmissing = false,     
+    # model = "depmodel",    
+    # byfounder = 2, 
+    # threshproposal = 0.55, 
+    # isallowmissing = true,     
     # isrepeatimpute = true, 
     # startbyhalf = 2,     
     outstem, 
@@ -46,17 +47,9 @@ show(facc)
 show(offacc)
 
 
-b = magicgeno.foundergeno[1] .!= truegeno.foundergeno[1]
-b2 = findall(b)
-ls = [b2 magicgeno.foundergeno[1][b2] truegeno.foundergeno[1][b2]]
-@info "" ls
-
-sum(ls[:,2] .== "N")
-
-
 # clear up
 
-cd(@__DIR__)
-dataid = "sim"
-rm.(filter(x->occursin(dataid, x), readdir()))
+# cd(@__DIR__)
+# dataid = "sim"
+# rm.(filter(x->occursin(dataid, x), readdir()))
 

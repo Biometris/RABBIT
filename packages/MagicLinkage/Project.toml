@@ -26,9 +26,9 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 HMM = "1.0.0"
-MagicBase = "1.1.0"
-MagicImpute = "1.1.3"
-MagicLD = "1.0.0"
+MagicBase = "1.2.0"
+MagicImpute = "1.2.2"
+MagicLD = "1.1.0"
 MagicPrior = "1.0.0"
 MagicReconstruct = "1.0.0"
 Pedigrees = "1.0.0"

@@ -17,9 +17,9 @@ nsnpchr = 200
 )
 
 # designcode = "2star-self1"
-designcode = "2ril-self1"
+designcode = "16ril-self6"
 designinfo = MagicBase.parsedesign(designcode)
-magicped = formmagicped(designinfo,50)
+magicped = formmagicped(designinfo,100)
 
 # magicped = MagicBase.generate_magicped(;
 #     designcodes = ["bc2-self1","P2/P3=>DH","P4/3/P2/P3//P5/P6=>2","2ril-self1"],
@@ -32,12 +32,13 @@ savemagicped(pedfile,magicped)
 
 epsf = 0.01
 epso = 0.01
-fmiss = 0.999
+fmiss = 0.1
 @time magicsimulate(fhaplofile,pedfile;    
     foundererror = Beta(1, 2/epsf-1.0),
     offspringerror = Beta(1, 2/epso-1.0),
     foundermiss = Beta(2,2/fmiss-2),
-    offspringmiss = Beta(1,99),    
+    offspringmiss = Beta(1,9),    
+    error_randallele = 0, 
     seqfrac = 0.0,    
     allelebalancemean = Beta(3,3),
     allelebalancedisperse = Exponential(0.2),

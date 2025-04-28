@@ -22,7 +22,7 @@ nsnpchr = 200
 
 magicped = MagicBase.generate_magicped(;
     designcodes = ["P1/P2=>DH","P1/P3=>2","P2/P3=>1","P4/P5//P6/P7=>1"],    
-    subpopsizes = 2*ones(Int, 4));
+    subpopsizes = 10*ones(Int, 4));
 plotmagicped(magicped)
 
 pedfile = dataid*"_ped.csv"

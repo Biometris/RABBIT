@@ -16,13 +16,11 @@ function getfindexlist(byfounder::Integer,fmissls::AbstractVector,
 end
 
 
-function get_partition_defaultby(popmakeup::AbstractDict, isfounderinbred::Bool, isfounderphased::Bool)
-    nfls = [length(i["founder"]) for i=values(popmakeup)]
-    maxnf = maximum(nfls)
+function get_partition_defaultby(isfounderinbred::Bool, isfounderphased::Bool)    
     if isfounderinbred         
-        defautby = maxnf <= 9 ? 8 : 4
+        defautby = 8
     else
-        defautby = isfounderphased ? 4 : 2        
+        defautby = isfounderphased ? 4 : 2
     end    
 end
 
@@ -38,7 +36,7 @@ function get_founder_partition(byfounder::Integer,fmissls::AbstractVector,
     res = Vector{Vector{Int}}()    
     isempty(popls) && return res
     while true             
-        fblock = get_fblock(byfounder, popls, fprogenyls; defaultby)    
+        fblock = get_fblock(byfounder, fmissls, popls, fprogenyls; defaultby)    
         push!(res,fblock)        
         for pop in popls
             setdiff!(pop,fblock)
@@ -62,7 +60,7 @@ function get_fprogenyls(popmakeup::AbstractDict)
     fprogenyls
 end
 
-function get_fblock(byfounder::Integer, popls::AbstractVector,     
+function get_fblock(byfounder::Integer, fmissls::AbstractVector, popls::AbstractVector,     
     fprogenyls::AbstractVector;
     defaultby::Integer=4)        
     nprogenies = [length(reduce(union,fprogenyls[i])) for i in popls]
@@ -74,13 +72,16 @@ function get_fblock(byfounder::Integer, popls::AbstractVector,
     if length(subpop) <= byfounder+1
         fblock = subpop
     else        
-        fblock = sample_fblock(subpop,byfounder)
+        fblock = sample_fblock(subpop,fmissls,byfounder)
     end        
     sort(fblock)
 end
 
-function sample_fblock(subpop::AbstractVector,blocksize::Integer)
-    sample(subpop, blocksize;replace=false)            
+function sample_fblock(subpop::AbstractVector,fmissls::AbstractVector, blocksize::Integer)
+    ls = fmissls[subpop]
+    ls[ls .≈ 1.0] .= 1000.0
+    w = ProbabilityWeights(ls)
+    sample(subpop, w, blocksize;replace=false)            
 end
 
 

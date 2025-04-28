@@ -1,7 +1,7 @@
 name = "MagicImpute"
 uuid = "d6bde97e-f571-11e8-0752-dd2c38cea685"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.2.2"
+version = "1.2.3"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -25,7 +25,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 HMM = "1.0.0"
-MagicBase = "1.1.0"
+MagicBase = "1.2.0"
 MagicPrior = "1.0.0"
 MagicReconstruct = "1.0.0"
 Pedigrees = "1.0.0"

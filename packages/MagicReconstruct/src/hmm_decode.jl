@@ -181,12 +181,13 @@ function hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     alleledropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     decodetempfile::AbstractString,    
+    hmmalg::AbstractString="calloglike",
     israndallele::Bool,    
     issnpGT::AbstractVector)
     isnothing(snporder) && (snporder = collect(1:size(chroffgeno,1)))    
     loglikels = first(MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
         epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
-        hmmalg="calloglike", decodetempfile, israndallele,issnpGT,snporder))
+        hmmalg, decodetempfile, israndallele,issnpGT,snporder))
     loglikels
 end
 
