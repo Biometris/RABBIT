@@ -18,7 +18,7 @@ end
 
 function get_partition_defaultby(isfounderinbred::Bool, isfounderphased::Bool)    
     if isfounderinbred         
-        defautby = 8
+        defautby = 4
     else
         defautby = isfounderphased ? 4 : 2
     end    
@@ -84,41 +84,3 @@ function sample_fblock(subpop::AbstractVector,fmissls::AbstractVector, blocksize
     sample(subpop, w, blocksize;replace=false)            
 end
 
-
-# function get_fblock(byfounder::Integer, popls::AbstractVector, 
-#     fmissls::AbstractVector,
-#     fprogenyls::AbstractVector;
-#     defaultby::Integer=4)
-#     fls = unique(reduce(vcat,popls))    
-#     f = fls[argmax(fmissls[fls])]    
-#     subpops = popls[[f in i for i in popls]]
-#     nprogenies = [length(reduce(union,fprogenyls[i])) for i in subpops]
-#     subpop = sort(subpops[argmax(nprogenies)])        
-#     subpop = subpop[sortperm(fmissls[subpop],rev=true)]    
-#     if byfounder == 0   
-#         byfounder = defaultby             
-#     end
-#     if length(subpop) <= byfounder+iseven(byfounder)
-#         fblock = subpop
-#     else        
-#         fblock = sample_fblock(subpop,byfounder)
-#     end        
-#     sort(fblock)
-# end
-
-# function sample_fblock(subpop::AbstractVector,fmiss_subpop::AbstractVector,blocksize::Integer)
-#     islargemiss = fmiss_subpop .> 0.9
-#     nlargemiss = sum(islargemiss)
-#     if nlargemiss == 0 || nlargemiss == length(subpop)            
-#         weights = ProbabilityWeights(fmiss_subpop .+ 1e-5)
-#         fblock = sample(subpop, blocksize;replace=false)            
-#     elseif nlargemiss >= blocksize                
-#         fblock = sample(subpop[islargemiss], weights, blocksize;replace=false)            
-#     else
-#         0 < nlargemiss < blocksize || @error string("unexpected nlargemiss=",nlargemiss, ", blocksize=",blocksize)
-#         b = .!islargemiss
-#         weights = ProbabilityWeights(fmiss_subpop[b] .+ 1e-5)
-#         fblock = vcat(subpop[islargemiss], sample(subpop[b], weights, blocksize-nlargemiss;replace=false))
-#     end
-#     fblock
-# end
