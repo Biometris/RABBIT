@@ -42,7 +42,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	try	
 		chrid = last(split(first(splitext(basename(imputetempfile))),"_"))		
 		tempdirectory = dirname(imputetempfile)
-		tempid = tempname(tempdirectory,cleanup=false)		
+		tempid = tempname(tempdirectory,cleanup=true)		
 		runtempfile = string(tempid, "_impute_founder_adptrepeat_",chrid, ".temp") 
 		magicgenofilels = get_magicgenofilels(magicgenofile,nrepeatmax)
 		for i in eachindex(magicgenofilels)
@@ -994,7 +994,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     msg = ""		
 	errortuples = (epsf=epsfls,epso=epsols,  epso_perind = epsols_perind, seqerror = seqerrorls, allelebalancemean=allelebalancemeanls, 
 		allelebalancedisperse=allelebalancedispersels, alleledropout = alleledropoutls)		
-	miditeration = 5
+	miditeration = max(5, startbyhalf)
     if isimputefounder 
         startt = time()			
 		alwaysaccept = alwaysacceptls[end]

@@ -65,9 +65,9 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	# jldopen permissiond denied if tempdir() is in network drive    	
 	nchr = length(magicgeno.markermap)
 	jltempdir = mktempdir(tempdirectory; prefix="jl_magicimpute_offspring_", cleanup=true)
-	tempid = tempname(jltempdir,cleanup=false)
+	tempid = tempname(jltempdir,cleanup=true)
     tempfilels = [string(tempid, "_impute_offspring_chr",chr,".tmp") for chr in 1:nchr]		
-	tempid = tempname(jltempdir,cleanup=false)
+	tempid = tempname(jltempdir,cleanup=true)
 	tused = @elapsed genofilels = MagicBase.saveby_chromosome(magicgeno; nworker = nworkers(),
 		workdir=jltempdir, outstem=tempid)
 	mem1 = round(Int, memoryuse()/10^6)
@@ -83,7 +83,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	startt = time()
 	try
 	    if isparallel && nprocs()>1
-			tempid = tempname(jltempdir,cleanup=false)
+			tempid = tempname(jltempdir,cleanup=true)
 			logfilels = [string(tempid, "_chr",chr,".log") for chr in 1:nchr]				
 			try
 		        pmap((x,y,z)->impute_offspring_chr!(x, model,magicprior; likeparameters, threshimpute,

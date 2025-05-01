@@ -167,7 +167,7 @@ function tomarker_major_order!(decodetempfile::AbstractString)
 end
 
 function tomarker_major_order2!(decodetempfile::AbstractString)    
-    tempid = tempname(dirname(decodetempfile),cleanup=false)
+    tempid = tempname(dirname(decodetempfile),cleanup=true)
     outtempfile = string(tempid, "_", basename(decodetempfile))
     try 
         jldopen(decodetempfile, "r") do file

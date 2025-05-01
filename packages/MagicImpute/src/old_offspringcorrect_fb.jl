@@ -16,7 +16,7 @@ function offspringcorrect!(magicgeno::MagicGeno;
     magicprior=MagicReconstruct.calmagicprior(magicgeno,model; isfounderinbred)
     nchr = length(magicgeno.markermap)
     jltempdir = mktempdir(tempdirectory; prefix="jl_MagicImpute_", cleanup=true)
-    tempid = tempname(jltempdir,cleanup=false)
+    tempid = tempname(jltempdir,cleanup=true)
     refinetempfilels = [string(tempid,"_offspringcorrect_chr",chr,".jld2")
         for chr in 1:nchr]
     try

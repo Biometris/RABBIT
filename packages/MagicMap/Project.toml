@@ -33,7 +33,7 @@ ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 [compat]
 HMM = "1.0.0"
 MagicBase = "1.2.0"
-MagicImpute = "1.2.2"
+MagicImpute = "1.2.3"
 MagicLD = "1.1.0"
 MagicLinkage = "1.1.0"
 MagicPrior = "1.0.0"

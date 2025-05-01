@@ -19,7 +19,7 @@ function readgenodf(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
         lastcomment -= 1 # vcf last comment line: #CHROM, ..., is the headrow of dataframe
     end
     commentlines = read_headlines(genofile2, lastcomment)    
-    outstem = tempname(workdir,cleanup=false)
+    outstem = tempname(workdir,cleanup=true)
     outext = ".csv.gz"
     tempgenofile = outstem*outext
     try 

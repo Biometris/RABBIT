@@ -1,4 +1,4 @@
-pwd()
+
 try    
     using Pkg
     pnls = [
@@ -19,9 +19,7 @@ try
     @time for pn in pnls        
         println("-------------test ",pn, "-------------")
         @time Pkg.test(pn)             
-    end
-    using RABBITCLI
-    @info rabbitversion()
+    end    
     0
 catch err
     rethrow(err)

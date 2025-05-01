@@ -112,12 +112,12 @@ function parse_commandline()
         default = "nothing"
         "--knncluster"
         help = "number of nearest neighbors for clustering. If -1, it is set to the nearest integer of 0.1*#markers"
-        arg_type = Int
-        default = -1
+        arg_type = AbstractString
+        default = "nothing"
         "--knnorder"
         help = "number of nearest neighbors for ordering. If -1, it is set to the nearest integer of sqrt(#markers)"
-        arg_type = Int
-        default = -1
+        arg_type = AbstractString
+        default = "nothing"
         "--nworker"
         help = "number of parallel workers for computing"
         arg_type = Int
@@ -174,6 +174,10 @@ function reset_priority!(parsed_args)
     # markerthin exists in magicmap
 end
 
+function parse_knn(knn::AbstractString)
+    eval(Meta.parse(knn))
+end
+
 function main(args::Vector{String})
     parsed_args = parse_commandline()
     verbose = parsed_args[:verbose]
@@ -211,10 +215,8 @@ function main(args::Vector{String})
     delete!(parsed_args, :minncluster)
     delete!(parsed_args, :maxncluster)
     # reset knn
-    knnccluster0 = parsed_args[:knncluster]
-    knnorder0 = parsed_args[:knnorder]
-    knncluster = knnccluster0 <= 0 ? nothing : (x->x = knnccluster0)
-    knnorder = knnorder0 <= 0 ? nothing : (x->x = knnorder0)
+    knncluster = parse_knn(parsed_args[:knncluster])
+    knnorder = parse_knn(parsed_args[:knnorder])
     delete!(parsed_args, :knncluster)
     delete!(parsed_args, :knnorder)
     # setup parallel

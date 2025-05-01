@@ -625,14 +625,14 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	# jldopen permissiond denied if tempdir() is in network drive    
 	chridls = [i[1,:linkagegroup] for i in magicgeno.markermap]		
 	jltempdir = mktempdir(tempdirectory; prefix="jl_magicimpute_founder_", cleanup=true)
-	tempid = tempname(jltempdir,cleanup=false)		
+	tempid = tempname(jltempdir,cleanup=true)		
 	imputetempfilels = [string(tempid, "_impute_founder_",chrid, ".tmp") for chrid in chridls]
 	nsnpls = [size(i,1) for i in magicgeno.markermap]
 	chroo = MagicBase.get_chroo(nsnpls)	
 	msg = string("chrid=>#marker: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
 	printconsole(io,verbose,msg)	
 	jltempdir = mktempdir(tempdirectory; prefix="jl_magicimpute_founder_", cleanup=true)
-	tempid = tempname(jltempdir,cleanup=false)	
+	tempid = tempname(jltempdir,cleanup=true)	
 	tused = @elapsed magicgenofilels = MagicBase.saveby_chromosome(magicgeno; 
 		nworker=nworkers(), outstem = tempid)			
 	mem1 = round(Int, memoryuse()/10^6)
@@ -648,7 +648,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	startt = time()	
     try
         if isparallel && nprocs()>1         
-			tempid = tempname(jltempdir,cleanup=false)
+			tempid = tempname(jltempdir,cleanup=true)
 			logfilels = [string(tempid, "_",chrid,"_run",run,".log") for chrid in chridls]
 			try
 		        pmap((x,y,z)->impute_refine_repeat_chr!(x,nrepeatimpute;
@@ -787,7 +787,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	# jldopen permissiond denied if tempdir() is in network drive    
 	chridls = [i[1,:linkagegroup] for i in magicgeno.markermap]
 	jltempdir = mktempdir(tempdirectory; prefix="jl_magicimpute_founder_", cleanup=true)
-	tempid = tempname(jltempdir,cleanup=false)		
+	tempid = tempname(jltempdir,cleanup=true)		
 	imputetempfilemtx = [begin 
 		runstr=nrepeatimpute > 1 ? string("_run",run) : "_run"; 
 		string(tempid, "_impute_founder_",chrid, runstr, ".tmp") 
@@ -796,7 +796,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	chroo = MagicBase.get_chroo(nsnpls)	
 	msg = string("chrid=>#marker: ",join([string(chridls[i],"=>",nsnpls[i]) for i in chroo],"|"))
 	printconsole(io,verbose,msg)	
-	tempid = tempname(jltempdir,cleanup=false)	
+	tempid = tempname(jltempdir,cleanup=true)	
 	tused = @elapsed magicgenofilels = MagicBase.saveby_chromosome(magicgeno; 
 		nworker=nworkers(), outstem = tempid)	
 	magicgenofilemtx = get_magicgenofilemtx(magicgenofilels,nrepeatimpute)	
@@ -825,7 +825,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	end
     try
         if isparallel && nprocs()>1         
-			tempid = tempname(jltempdir,cleanup=false)
+			tempid = tempname(jltempdir,cleanup=true)
 			logfilemtx = [string(tempid, "_",chrid,"_run",run,".log") for chrid in chridls,run in 1:nrepeatimpute]							
 			try
 		        res = pmap((x,y,z,w)->impute_refine_chr!(x;

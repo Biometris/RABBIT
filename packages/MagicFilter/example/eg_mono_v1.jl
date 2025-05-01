@@ -10,8 +10,8 @@ cd(@__DIR__)
 pwd()
 using CSV, DataFrames
 
-genofile = "sim_geno.vcf.gz"
-pedfile = "sim_ped.csv"
+genofile = "sim_magicsimulate_geno.vcf.gz"
+pedfile = "sim_magicsimulate_ped.csv"
 magicgeno = formmagicgeno(genofile,pedfile);
 
 @time MagicFilter.filter_marker!(magicgeno;

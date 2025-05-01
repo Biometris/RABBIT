@@ -34,7 +34,7 @@ function simfhaplo(;
     myopen = fileext == ".csv.gz" ? GZip.open : open
     if isvcf
         # temp csv file will be transformed into output vcf file
-        outfile2 = tempname(workdir;cleanup=false)*".csv"
+        outfile2 = tempname(workdir;cleanup=true)*".csv"
     else
         outfile2 = MagicBase.getabsfile(workdir,outfile)
     end

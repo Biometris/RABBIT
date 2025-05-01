@@ -12,7 +12,8 @@ function construct(linkagefile::AbstractString;
     maxrf::Union{Nothing,Real} = nothing,
     isrfbinning::Union{Nothing,Bool}=nothing, 
     alwayskeep::Real=0.99,        
-    maxminlodcluster::Union{Nothing,Real} = nothing,     
+    minminlodcluster::Union{Nothing,Real} = nothing,     
+    maxminlodcluster::Union{Nothing,Real} = nothing,         
     maxminlodorder::Union{Nothing,Real} = nothing,
     minlodcluster::Union{Nothing,Real} = nothing,
     minlodorder::Union{Nothing,Real} = nothing,
@@ -41,7 +42,8 @@ function construct(linkagefile::AbstractString;
         "maxrf(scaled from 0 to 1)= ", maxrf, "\n",
         "isrfbinning = ", isrfbinning, "\n",
         "alwayskeep = ", alwayskeep, "\n",           
-        "maxminlodcluster = ", maxminlodcluster, "\n",     
+        "minminlodcluster = ", minminlodcluster, "\n",     
+        "maxminlodcluster = ", maxminlodcluster, "\n",             
         "maxminlodorder = ", maxminlodorder, "\n",     
         "minlodcluster = ", minlodcluster, "\n",
         "minlodorder = ", minlodorder, "\n",        
@@ -174,7 +176,13 @@ function construct(linkagefile::AbstractString;
     msg = string("minlodsave=",minlodsave)
     printconsole(logio,verbose,msg)
     inputmincomponentsize = mincomponentsize
-    minminlodcluster = round(Int,minlodsave)    
+    if isnothing(minminlodcluster)
+        minminlodcluster = round(Int,minlodsave)    
+        msg = string("set minminlodcluster = ",minminlodcluster)
+        printconsole(logio,verbose,msg)
+    else
+        minminlodcluster = max(round(Int,minlodsave), minminlodcluster)        
+    end    
     if isnothing(mincomponentsize)        
         mincomponentsize = min(20,5+round(Int, length(markers)/5000)) 
         minlod = length(markers) < 1e4 ? minminlodcluster : max(5,minminlodcluster)        

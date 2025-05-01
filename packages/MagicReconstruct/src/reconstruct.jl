@@ -25,10 +25,10 @@ function reconstruct!(magicgeno::MagicGeno;
 	nsnpls = [size(i,1) for i in magicgeno.markermap]
 	chroo = MagicBase.get_chroo(nsnpls)		
     jltempdir = mktempdir(tempdirectory; prefix="jl_magicreconstruct_", cleanup=true)
-	tempid = tempname(jltempdir,cleanup=false)
+	tempid = tempname(jltempdir,cleanup=true)
     decodefilels = [string(tempid, "_reconstruct_chr",chr,".tmp") for chr in 1:nchr]	
 	# split and save geno by chromosome
-	tempid = tempname(jltempdir,cleanup=false)
+	tempid = tempname(jltempdir,cleanup=true)
 	tused = @elapsed genofilels = MagicBase.saveby_chromosome(magicgeno; nworker = nworkers(),
 		workdir=jltempdir, outstem=tempid*"_submagicgeno")
 	mem1 = round(Int, memoryuse()/10^6)
@@ -49,7 +49,7 @@ function reconstruct!(magicgeno::MagicGeno;
 	end for chr in 1:nchr]	
     try
         if isparallel && nprocs()>1			
-			tempid = tempname(jltempdir,cleanup=false)
+			tempid = tempname(jltempdir,cleanup=true)
 			logfilels = [string(tempid, "_chr",chr,".log") for chr in 1:nchr]	            			
 			try
 				pmap((x,y,z,w)->reconstructfun(x, model,magicprior;
