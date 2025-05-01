@@ -111,11 +111,11 @@ function parse_commandline()
         arg_type = AbstractString
         default = "nothing"
         "--knncluster"
-        help = "number of nearest neighbors for clustering. If -1, it is set to the nearest integer of 0.1*#markers"
+        help = "function speccifying #nearest neighbors for clustering. By default, knncluster = M -> 0.1*M where M = #markers"
         arg_type = AbstractString
         default = "nothing"
         "--knnorder"
-        help = "number of nearest neighbors for ordering. If -1, it is set to the nearest integer of sqrt(#markers)"
+        help = "function specifying #nearest neighbors for ordering. By default, knnorder = M -> M^(9/14) where M = #markers in a linkage group"
         arg_type = AbstractString
         default = "nothing"
         "--nworker"
