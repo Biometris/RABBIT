@@ -50,7 +50,7 @@ try
     end
     0
 catch err
-    rethrow(err)
+    @error err
     -1
 finally
     Pkg.activate()
