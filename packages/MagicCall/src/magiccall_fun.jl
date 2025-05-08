@@ -34,9 +34,9 @@ single marker genotype call from genofile and pedinfo.
 
 `isdelmonomorphic::Bool=true`: if true, delete monomorphic markers. 
 
-`minmaf::Real = 0.05`: delete makrs with minor allele frequency (MAF) < 0.05. 
+`minmaf::Real = 0.05`: delete markers with minor allele frequency < minmaf. 
 
-`maxmiss::Real = 0.99`: delete makrs with genotype missing frequency > 0.99. 
+`maxmiss::Real = 0.99`: delete markers with genotype missing frequency > maxmiss. 
 
 `israwcall::Bool= false`: if true, perform raw genotype calling. 
 

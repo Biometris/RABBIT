@@ -81,6 +81,14 @@ function parse_commandline()
         help = "if true, perform raw genotype calling"
         arg_type = Bool
         default = false
+        "--minmaf"
+        help = "delete markers with minor allele frequency > minmaf"
+        arg_type = Float64
+        default = 0.05
+        "--maxomiss"
+        help = "delete markers with genotype missing frequency > maxmiss"
+        arg_type = Float64
+        default = 0.99
         "--isinfererror"
         help = "if true, infer marker specific error rates. If it is nothing, isinfererror = !israwcall"
         arg_type = AbstractString
