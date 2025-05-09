@@ -589,9 +589,9 @@ version = "1.4.1"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
-git-tree-sha1 = "31dc5dad1ede44c2f417ee7a2320b1966700c512"
+git-tree-sha1 = "2670cf32dcf0229c9893b895a9afe725edb23545"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.5.8"
+version = "0.5.9"
 
 [[deps.GeometryTypes]]
 deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "StaticArrays"]
@@ -1118,7 +1118,7 @@ version = "0.5.16"
 
 [[deps.MagicBase]]
 deps = ["CSV", "CodecZlib", "Combinatorics", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributions", "GZip", "Graphs", "Images", "InlineStrings", "Interpolations", "JLD2", "LinearAlgebra", "Pedigrees", "Pkg", "Plots", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Tar", "ThreadsX"]
-git-tree-sha1 = "a7c940bc0052445b5b85b119c8e14dffa8a72f36"
+git-tree-sha1 = "16e6f6cf2f426e4696f7a7e15528623e00571e41"
 repo-rev = "main"
 repo-subdir = "packages/MagicBase"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1335,7 +1335,7 @@ version = "2.8.3"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "5a8aea1975874d0a86a4d89f6c10f38545ad225e"
+git-tree-sha1 = "525deffd558b53a06705e0b0611b3ee4a8c526de"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"

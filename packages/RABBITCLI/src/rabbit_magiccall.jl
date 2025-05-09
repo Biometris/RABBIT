@@ -85,7 +85,7 @@ function parse_commandline()
         help = "delete markers with minor allele frequency > minmaf"
         arg_type = Float64
         default = 0.05
-        "--maxomiss"
+        "--maxmiss"
         help = "delete markers with genotype missing frequency > maxmiss"
         arg_type = Float64
         default = 0.99
