@@ -46,14 +46,6 @@ show(facc)
 show(offacc)
 
 
-b = magicgeno.foundergeno[1] .!= truegeno.foundergeno[1]
-b2 = findall(b)
-ls = [b2 magicgeno.foundergeno[1][b2] truegeno.foundergeno[1][b2]]
-@info "" ls
-
-sum(ls[:,2] .== "N")
-
-
 # clear up
 
 cd(@__DIR__)

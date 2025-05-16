@@ -26,6 +26,7 @@ using InlineStrings
 
 export
     
+    exportall, 
     # for pedinfo
     JuncDist, MateScheme, DesignInfo, MagicPed, 
     parsedesign,
@@ -64,8 +65,13 @@ export
     loadtarplot, 
     info_argnames,
     # other related functions
-    rawgenocall!,rawgenoprob!
+    rawgenocall!,rawgenoprob!    
 
+
+function __init__()    
+    ENV["GKSwstype"]="nul"
+    # @info string("MagicBase init: ENV[\"GKSwstype\"]=",ENV["GKSwstype"])
+end    
 
 include("base/localbrent.jl")
 include("base/pathformat.jl")

@@ -11,24 +11,24 @@ using MagicCall
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = true
+isfounderinbred = false
 dataid = "sim"
-genofile=string(dataid,"_magicfilter_geno.vcf.gz")
-pedinfo = string(dataid, "_ped.csv")
+genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
+pedinfo = string(dataid, "_magicsimulate_ped.csv")
 
 @time magiccall(genofile,pedinfo;     
     isfounderinbred,
-    likeparameters = LikeParameters(0.005, 0.04, 0.0, nothing, nothing, nothing, 0.0),
-    model = "depmodel", 
+    # israwcall = true, 
+    likeparameters = LikeParameters(0.005, 0.005, 0.0, nothing, nothing, nothing, 0.0),
+    # model = "depmodel", 
 )
-
 
 calledgenofile = "outstem_magiccall_geno.vcf.gz"
 magicgeno = formmagicgeno(calledgenofile,pedinfo;
     isfounderinbred, 
     formatpriority = ["GT"],
 );
-truefile = "sim_truegeno.csv.gz"
+truefile = "sim_magicsimulate_truegeno.csv.gz"
 truegeno = formmagicgeno(truefile,pedinfo;isfounderinbred);
 
 acc = magicaccuracy!(truegeno, magicgeno; isfounderinbred)
@@ -60,4 +60,12 @@ fig = plot(gls...,layout=(length(gls),1),
     leftmargin = 5Plots.mm
 )
 display(fig)
+
+
+# clear up
+
+# cd(@__DIR__)
+# dataid = "sim"
+# rm.(filter(x->occursin(dataid, x), readdir()))
+# rm.(filter(x->occursin("outstem", x), readdir()))
 

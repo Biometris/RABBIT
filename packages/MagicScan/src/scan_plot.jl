@@ -17,7 +17,6 @@ function plot_manhattan(profile::DataFrame;
     ymax = max(profile[!,col]...)
     ymax = isnothing(thresholds) ? 1.05*ymax : 1.05*max(ymax,thresholds...)
     chridls=[i[1,:linkagegroup] for i in res]
-    @info chridls
     fig = plot(ylims = [0,ymax])
     if !isnothing(thresholds) 
         for threshold in thresholds

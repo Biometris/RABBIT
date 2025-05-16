@@ -349,7 +349,7 @@ function saveprobplot(
         iiout = []
     end
     iinonout = setdiff(offls, iiout)
-    outstem2 = isnothing(outstem) ? "" : outstem
+    outstem2 = isnothing(outstem) ? "" : outstem    
     for k = 1:2
         ii = k == 1 ? iiout : iinonout
         outid = k == 1 ? probtype*"_plot_outlier_" : probtype*"_plot_"

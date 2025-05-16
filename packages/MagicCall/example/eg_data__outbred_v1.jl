@@ -18,21 +18,25 @@ nsnpchr = 250
     outfile=fhaplofile
 )
 
-designcode = "6star-self1"
+designcode = "3star-self1"
 designinfo = MagicBase.parsedesign(designcode)
-magicped = formmagicped(designinfo,400)
+magicped = formmagicped(designinfo,200)
 pedfile = dataid*"_ped.csv"
 savemagicped(pedfile,magicped)
 
 epsf = epso = 0.01
 @time magicsimulate(fhaplofile,pedfile;
     isfounderinbred = false,
-    # seqfrac = 0.5,
+    seqfrac = 1.0,
     foundererror = Uniform(epsf,epsf+0.001),
     offspringerror = Uniform(epso,epso+0.001),
     foundermiss = Beta(1,4),
     offspringmiss = Beta(1,4),
-    outstem= dataid,
+    allelebalancemean = Beta(5,5),
+    allelebalancedisperse = Exponential(0.05),
+    # alleledropout = Beta(2,18),
+    seqdepth = Gamma(2,5),
+    outstem= dataid,    
 )
 
 #  clear up

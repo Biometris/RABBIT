@@ -27,3 +27,4 @@
 
 * magicfilter CLI:  add options minmaf and maxmiss 
 * magicmap CLI: set type of knncluster and knnorder to abstractstring (parsed to function as a number of #markers)
+* magiccall: revise wdict in priorfhaplo_singlesite

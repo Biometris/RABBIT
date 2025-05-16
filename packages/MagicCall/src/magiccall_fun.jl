@@ -735,28 +735,30 @@ end
 
 function priorfhaplo_singlesite(fgeno::AbstractVector, fformat::AbstractString,
     fixedfounderes::AbstractVector;     
-    genoerror::Real = 0.05,
+    genoerror::Real = 0.005,
+    misserror::Real = 0.1,
     allowmissing::Bool=true,
     allowcorrect::Bool=true)
-    # random genotype error model
+    # random allelic error model
+    a = genoerror
+    m = misserror
     if fformat=="GT_haplo"
         if allowcorrect
             if allowmissing
-                dict = Dict(["1"=>["1","2","N"],"2"=>["1","2","N"], "N"=>["1","2","N"]])        
-                wdict =Dict(["1"=>[1-genoerror,genoerror/2, genoerror/2],
-                    "2"=>[genoerror/2, 1-genoerror, genoerror/2], 
-                    "N"=>[0.5-genoerror/2, 0.5-genoerror/2, genoerror]])         
+                dict = Dict(["1"=>["1","2","N"],"2"=>["1","2","N"], "N"=>["1","2","N"]])      
+                wdict =Dict(["1"=>[(1-a)*(1-m),a*(1-m), m],
+                    "2"=>[a*(1-m), (1-a)*(1-m), m], 
+                    "N"=>[(1-m)/2, (1-m)/2, m]])        
             else
                 dict = Dict(["1"=>["1","2"],"2"=>["1","2"], "N"=>["1","2"]])        
-                wdict =Dict(["1"=>[1-genoerror, genoerror],"2"=>[genoerror,1-genoerror], "N"=>[0.5,0.5]])         
+                wdict =Dict(["1"=>[1-a, a],"2"=>[a,1-a], "N"=>[0.5,0.5]])         
             end
         else
             if allowmissing
                 dict = Dict(["1"=>["1","N"],"2"=>["2","N"], "N"=>["1","2","N"]])       
-                # genoerror denotes prob of missing 
-                wdict =Dict(["1"=>[1-genoerror,genoerror],
-                    "2"=>[1-genoerror, genoerror], 
-                    "N"=>[0.5-genoerror/2, 0.5-genoerror/2, genoerror]])         
+                wdict =Dict(["1"=>[1-m,m],
+                    "2"=>[1-m, m], 
+                    "N"=>[(1-m)/2, (1-m)/2, m]])        
             else
                 dict = Dict(["1"=>["1"],"2"=>["2"], "N"=>["1","2"]])        
                 wdict =Dict(["1"=>[1],"2"=>[1], "N"=>[0.5,0.5]])         
@@ -766,36 +768,34 @@ function priorfhaplo_singlesite(fgeno::AbstractVector, fformat::AbstractString,
         if allowcorrect
             if allowmissing
                 # At most one allelic error, and at most one becomes missing
-                dict = Dict(["11"=>[["1","1"],["1","2"],["1","N"]],
-                    "12"=>[["1","2"],["1","1"],["2","2"],["1","N"],["2","N"]],
-                    "22"=>[["2","2"],["1","2"],["2","N"]],
-                    "NN"=>[["1","1"],["1","2"],["2","2"],["1","N"],["2","N"],["N","N"]]])            
-                wdict = Dict(["11"=>[1-genoerror,genoerror/2, genoerror/2],
-                    "12"=>[1-genoerror, genoerror/4, genoerror/4, genoerror/4, genoerror/4],
-                    "22"=>[1-genoerror, genoerror/2, genoerror/2],
-                    "NN"=>[0.25-genoerror/3,0.5-genoerror/3,0.25-genoerror/3,genoerror/3,genoerror/3,genoerror/3]])
+                hiddenset = [["1","1"],["1","2"],["2","2"],["1","N"],["2","N"],["N","N"]]
+                dict = Dict(["11"=>hiddenset, "12"=>hiddenset, "22"=>hiddenset, "NN"=>hiddenset])            
+                wdict = Dict(["11"=>[(1-a)^2*(1-m)^2, 2a*(1-a)*(1-m)^2, a^2*(1-m)^2, 2(1-a)*m*(1-m),2a*m*(1-m),m^2]
+                            "12"=>[a*(1-a)*(1-m)^2, (a^2+(1-a)^2)*(1-m)^2, a*(1-a)*(1-m)^2, m*(1-m), m*(1-m), m^2]
+                            "22"=>[a^2*(1-m)^2, 2a*(1-a)*(1-m)^2, (1-a)^2*(1-m)^2, 2a*m*(1-m),2(1-a)*m*(1-m),m^2]
+                            "NN"=>[0.25(1-m)^2, 0.5(1-m)^2, 0.25(1-m)^2,m*(1-m), m*(1-m), m*m]])
             else
                 # At most one allelic error; unphased/unordered genotypes for single site analysis
                 dict = Dict(["11"=>[["1","1"],["1","2"]],
                     "12"=>[["1","2"],["1","1"],["2","2"]],
                     "22"=>[["2","2"],["1","2"]],
                     "NN"=>[["1","1"],["1","2"],["2","2"]]])            
-                wdict = Dict(["11"=>[1-genoerror,genoerror],
-                    "12"=>[1-genoerror, genoerror/2, genoerror/2],
-                    "22"=>[1-genoerror, genoerror],
+                wdict = Dict(["11"=>[1-a,a],
+                    "12"=>[1-a, a/2, a/2],
+                    "22"=>[1-a, a],
                     "NN"=>[0.25,0.5,0.25]])
             end
         else
             if allowmissing                
-                # genoerror denotes prob of missing 
+                # a denotes prob of missing 
                 dict = Dict(["11"=>[["1","1"],["1","N"]],
                     "12"=>[["1","2"],["1","N"],["2","N"]],
                     "22"=>[["2","2"],["2","N"]],
                     "NN"=>[["1","1"],["1","2"],["2","2"],["1","N"],["2","N"],["N","N"]]])            
-                wdict = Dict(["11"=>[1-genoerror,genoerror],
-                    "12"=>[1-genoerror, genoerror/2, genoerror/2],
-                    "22"=>[1-genoerror, genoerror],
-                    "NN"=>[0.25-genoerror/3,0.5-genoerror/3,0.25-genoerror/3,genoerror/3,genoerror/3,genoerror/3]])
+                wdict = Dict(["11"=>[1-m,m],
+                    "12"=>[1-m, m/2, m/2],
+                    "22"=>[1-m, m],
+                    "NN"=>[0.25*(1-m), 0.5*(1-m), 0.25*(1-m), m*(1-m)/2, m*(1-m)/2, m*m]])
             else                
                 dict = Dict(["11"=>[["1","1"]],
                     "12"=>[["1","2"]],
@@ -813,17 +813,20 @@ function priorfhaplo_singlesite(fgeno::AbstractVector, fformat::AbstractString,
             if allowmissing
                 dict2 = Dict(["1N"=>[["1","1"],["1","2"],["2","2"],["1","N"],["2","N"],["N","N"]], 
                     "2N"=>[["1","1"],["1","2"],["2","2"],["1","N"],["2","N"],["N","N"]]])
-                pls1N = [0.5-genoerror/2,0.5-genoerror/2,genoerror/4,genoerror/4,genoerror/4,genoerror/4]
-                pls2N = [genoerror/4,0.5-genoerror/2,0.5-genoerror/2,genoerror/4,genoerror/4,genoerror/4]
+                pls1N = [0.5(1-a)*(1-m)^2,  0.5(1-m)^2,  0.5a*(1-m)^2, (1.5-a)*(1-m)*m, (0.5+a)*(1-m)*m, m^2]
+                pls2N = [0.5a*(1-m)^2,  0.5(1-m)^2,  0.5(1-a)*(1-m)^2, (0.5+a)*(1-m)*m, (1.5-a)*(1-m)*m, m^2]
                 wdict2 = Dict(["1N"=>pls1N,"2N"=>pls2N])
             else
                 dict2 = Dict(["1N"=>[["1","1"],["1","2"],["2","2"]],
                     "2N"=>[["1","1"],["1","2"],["2","2"]]])
-                wdict2 = Dict(["1N"=>[1-genoerror,genoerror/2,genoerror/2],
-                    "2N"=>[genoerror/2, genoerror/2, 1-genoerror]])
+                wdict2 = Dict(["1N"=>[(1-a)/2,1/2,a/2],
+                    "2N"=>[a/2, 1/2, (1-a)/2]])
             end
             merge!(dict,dict2)
             merge!(wdict,wdict2)
+            if !all(sum.(values(wdict)) .≈ 1.0)
+                @error string("unnormalized wdict=",wdict)
+            end
             d = setdiff(gset, keys(dict))
             isempty(d) || @error string("unexpected genotypes: ",d)
             filter!(x->in(x.first,gset),dict)
@@ -1021,19 +1024,19 @@ function infer_singlesite(fgeno::AbstractVector, fixedfounders::AbstractVector,
     isinfererror::Bool,
     byfounder::Integer,     
     likeparameters::LikeParameters,        
-    priorlikeparameters::PriorLikeParameters)    
+    priorlikeparameters::PriorLikeParameters)        
+    liketargetls, epsf, epso, pereoffspringerror, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		    
     fformat = isfounderinbred ? "GT_haplo" : "GT_unphased"        
     fhaploset,fhaploweight = priorfhaplo_singlesite(fgeno,fformat,fixedfounders; 
-        genoerror=0.05,allowmissing=true,allowcorrect=true)        
+        genoerror=epsf,misserror=0.1, allowmissing=true,allowcorrect=true)        
     fhaplo = map((x,y)->x[rand(Categorical(y))], fhaploset, fhaploweight)    
-    liketargetls, epsf, epso, pereoffspringerror, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		    
     setdiff!(liketargetls, ["peroffspringerror"])
     if occursin(r"^GT",offspringformat)
         setdiff!(liketargetls,["seqerror","allelebalancemean","allelebalancedisperse","alleledropout"])
     end
     if model == "depmodel"
         setdiff!(liketargetls,["allelebalancemean","allelebalancedisperse","alleledropout"])
-    end
+    end    
     isinfererror2 = isinfererror && !isempty(liketargetls) 
     findexlist = calfindexlist(byfounder,fhaploset, popmakeup)    
     oldfhaplo = deepcopy(fhaplo)    
