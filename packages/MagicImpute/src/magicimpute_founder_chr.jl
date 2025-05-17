@@ -1037,7 +1037,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 
 		# update alwaysaccept and upbyhalf
 		if alwaysaccept					
-			if (iteration >= (startbyhalf-1) || isallowmissing) 				
+			if isallowmissing		
 				if ndiffls[end] == 0
 					alwaysaccept = false
 				elseif upbyhalf && iteration >= miditeration
@@ -1045,11 +1045,11 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 						alwaysaccept = false							
 					elseif length(ndiffls) >=3 && allequal(ndiffls[end-2:end])					
 						alwaysaccept = false		
-					elseif length(ndiffls) >= (startbyhalf+3) && sum(ndiffls[startbyhalf:end] .<= ndiffls[end]) >= 4										
+					elseif length(ndiffls) >= 4 && sum(ndiffls .<= ndiffls[end]) >= 4										
 						alwaysaccept = false			
 					end
 				end
-				if alwaysaccept 
+				if alwaysaccept && !upbyhalf 					
 					upbyhalf = iteration >= (startbyhalf - 1)
 				else
 					upbyhalf = true				
@@ -1071,7 +1071,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			ismalexls,founder2progeny,israndallele, issnpGT, step_verbose)
 		ncorrect =  isempty(correctdf) ? 0 : size(correctdf,1)
 		push!(ncorrectls,ncorrect)		
-		if (isimputefounder && iteration >= startbyhalf) || !isimputefounder
+		if (isimputefounder && upbyhalf) || !isimputefounder
 			if ncorrect == 0 
 				iscorrectfounder = false        			
 			elseif length(ncorrectls) >= 3 && allequal(ncorrectls[end-2:end]) 

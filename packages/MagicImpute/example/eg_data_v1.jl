@@ -8,7 +8,7 @@ using Distributions
 dataid="sim"
 
 fhaplofile = dataid*"_fhaplo.vcf"
-ncluster = 1
+ncluster = 5
 nsnpchr = 200
 @time simfhaplo(
     nsnp=ncluster*nsnpchr, nparent=32,
@@ -17,9 +17,9 @@ nsnpchr = 200
 )
 
 # designcode = "2star-self1"
-designcode = "16ril-self6"
+designcode = "8ril-self6"
 designinfo = MagicBase.parsedesign(designcode)
-magicped = formmagicped(designinfo,100)
+magicped = formmagicped(designinfo,200)
 
 # magicped = MagicBase.generate_magicped(;
 #     designcodes = ["bc2-self1","P2/P3=>DH","P4/3/P2/P3//P5/P6=>2","2ril-self1"],

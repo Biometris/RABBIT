@@ -1,7 +1,7 @@
-# using Distributed
-# nprocs() < 7 && addprocs(7-nprocs())
-# @info string("nprocs=", nprocs())
-# @everywhere  using MagicReconstruct, MagicImpute
+using Distributed
+nprocs() < 6 && addprocs(6-nprocs())
+@info string("nprocs=", nprocs())
+@everywhere  using MagicReconstruct, MagicImpute
 
 using Revise
 using MagicBase, MagicReconstruct, MagicImpute
@@ -14,20 +14,21 @@ isfounderinbred = true
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
-outstem = dataid*"_output_byfounder4"
+outstem = dataid*"_output"
 
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
 missingcode = isfounderinbred ? "N" : "NN"
 for chr in eachindex(magicgeno.markermap)
-    # nmiss = min(13, size(magicgeno.magicped.founderinfo,1))
-    magicgeno.foundergeno[chr][:,1:10] .= missingcode
+    magicgeno.foundergeno[chr] .= missingcode
+    # magicgeno.foundergeno[chr][:,1:14] .= missingcode
 end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
-    # target = "founder",           
+    # target = "founder",      
+    likeparameters = LikeParameters(peroffspringerror=0),      
     model = "depmodel",    
-    byfounder = 4, 
+    # byfounder = 4, 
     # threshproposal = 0.9, 
     # isallowmissing = true,     
     # isrepeatimpute = true, 
@@ -45,7 +46,13 @@ acc = magicaccuracy!(truegeno, magicgeno;alignfounder=true,isfounderinbred)
 println(acc)
 show(facc)
 show(offacc)
+0
 
+for i in eachindex(magicgeno.markermap)
+    acc = magicaccuracy!(truegeno, magicgeno; alignfounder=true,chrsubset=[i])    
+    println("chr=", i, ";", acc["founder"])
+end
+0
 
 # clear up
 

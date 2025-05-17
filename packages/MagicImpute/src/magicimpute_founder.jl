@@ -187,25 +187,21 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	if isnothing(iscorrectfounder) 		
 		iscorrectfounder = !in("AD", offspringformat) || (model == "depmodel") 
 		printconsole(io,verbose, string("reset iscorrectfounder=",iscorrectfounder))
-	# else
-	# 	if iscorrectfounder && in("AD", offspringformat) && model != "depmodel" && !isinfererror 
-	# 		msg = string("founder correction might not work well for sequence data without inferring allelic bias")
-	# 		@warn msg
-	# 		printconsole(io,false, "Warning: "*msg)
-	# 	end
 	end	
-	if isnothing(startbyhalf)
+	if isnothing(startbyhalf)  
 		if byfounder == -1
 			startbyhalf = 2
 		elseif any([iscorrectfounder, isinfererror, isspacemarker,isordermarker])
 			startbyhalf = 5
 		else
-			nsubpop = length(unique(magicgeno.magicped.offspringinfo[!,:member]))
+			memls = magicgeno.magicped.offspringinfo[!,:member]
+			nsubpop = length(unique(memls))
+			noff = length(memls)
 			nfounder = length(magicgeno.magicped.founderinfo[!,:individual])
 			if nsubpop == 1 && byfounder >= nfounder
 				startbyhalf = 2
-			else
-				startbyhalf = 5
+			else				
+				startbyhalf = noff/nfounder < 20 ? 7 : 5			
 			end
 		end
 		printconsole(io,verbose, string("reset startbyhalf=",startbyhalf))
@@ -569,7 +565,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,		
-	startbyhalf::Union{Nothing,Integer}=nothing,
+	startbyhalf::Integer,
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
@@ -729,7 +725,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
-	startbyhalf::Union{Nothing,Integer}=nothing,
+	startbyhalf::Integer,
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
