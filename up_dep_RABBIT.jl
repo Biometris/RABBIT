@@ -24,14 +24,15 @@ try
     filedir = abspath(dirname(@__FILE__))
     @time for (pkg,deps) in pkgdeps
         println("-------------update dependencies of ",pkg, "-------------")        
-        Pkg.activate(abspath(filedir, "packages",pkg))                       
-        for i in deps
-            try 
-                Pkg.rm(i)   
-            catch err            
-                @error err
-            end
-        end   
+        Pkg.activate(abspath(filedir, "packages",pkg))    
+        # breading run of this script might result in errors in the future installation. 
+        # for i in deps
+        #     try 
+        #         Pkg.rm(i)   
+        #     catch err            
+        #         @error err
+        #     end
+        # end   
         for i in deps
             @info string("-------------add ",i, " for ", pkg, "----------------")
             Pkg.add(PackageSpec(path=filedir,subdir=string("packages","/",i)))

@@ -90,9 +90,9 @@ version = "3.5.1+1"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra"]
-git-tree-sha1 = "bebb10cd3f0796dd1429ba61e43990ba391186e9"
+git-tree-sha1 = "9606d7832795cbef89e06a550475be300364a8aa"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "7.18.1"
+version = "7.19.0"
 
     [deps.ArrayInterface.extensions]
     ArrayInterfaceBandedMatricesExt = "BandedMatrices"
@@ -444,9 +444,9 @@ version = "1.11.0"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "6d8b535fd38293bc54b88455465a1386f8ac1c3c"
+git-tree-sha1 = "3e6d038b77f22791b8e3472b7c633acea1ecac06"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.119"
+version = "0.25.120"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -493,9 +493,9 @@ uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.6.5+0"
 
 [[deps.Extents]]
-git-tree-sha1 = "063512a13dbe9c40d999c439268539aa552d1ae6"
+git-tree-sha1 = "b309b36a9e02fe7be71270dd8c0fd873625332b4"
 uuid = "411431e0-e8b7-467b-b5e0-f676ba4f2910"
-version = "0.1.5"
+version = "0.1.6"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -838,9 +838,9 @@ version = "0.3.7"
 
 [[deps.ImageSegmentation]]
 deps = ["Clustering", "DataStructures", "Distances", "Graphs", "ImageCore", "ImageFiltering", "ImageMorphology", "LinearAlgebra", "MetaGraphs", "RegionTrees", "SimpleWeightedGraphs", "StaticArrays", "Statistics"]
-git-tree-sha1 = "3db3bb9f7014e86f13692581fa2feb6460bdee7e"
+git-tree-sha1 = "7196039573b6f312864547eb7a74360d6c0ab8e6"
 uuid = "80713f31-8817-5129-9cf8-209ff8fb23e1"
-version = "1.8.4"
+version = "1.9.0"
 
 [[deps.ImageShow]]
 deps = ["Base64", "ColorSchemes", "FileIO", "ImageBase", "ImageCore", "OffsetArrays", "StackViews"]
@@ -1234,7 +1234,7 @@ version = "0.5.16"
 
 [[deps.MagicBase]]
 deps = ["CSV", "CodecZlib", "Combinatorics", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributions", "GZip", "Graphs", "Images", "InlineStrings", "Interpolations", "JLD2", "LinearAlgebra", "Pedigrees", "Pkg", "Plots", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Tar", "ThreadsX"]
-git-tree-sha1 = "415085c443de37663226666391396c8da160d550"
+git-tree-sha1 = "d089e1a0c6eb49d526eb02728e0f913cd64fb056"
 repo-rev = "main"
 repo-subdir = "packages/MagicBase"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1243,16 +1243,16 @@ version = "1.2.0"
 
 [[deps.MagicImpute]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "MagicReconstruct", "Pedigrees", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "3172b573788ee61ecc36ccd9c57820455e4156e7"
+git-tree-sha1 = "69f626e11ac654f0bcdbd476c0f54e8120916481"
 repo-rev = "main"
 repo-subdir = "packages/MagicImpute"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "d6bde97e-f571-11e8-0752-dd2c38cea685"
-version = "1.2.3"
+version = "1.2.4"
 
 [[deps.MagicLD]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "MagicBase", "Pedigrees", "Pkg", "ProgressMeter", "SparseArrays"]
-git-tree-sha1 = "6feff8217740adba7300c8263dcd9fe8a3ca8f4e"
+git-tree-sha1 = "860ee99a9ea9edf671a437ce6a723fcc12b5fd69"
 repo-rev = "main"
 repo-subdir = "packages/MagicLD"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1261,7 +1261,7 @@ version = "1.1.0"
 
 [[deps.MagicLinkage]]
 deps = ["CSV", "DataFrames", "Dates", "Distributed", "Distributions", "GZip", "HMM", "LRUCache", "LinearAlgebra", "MagicBase", "MagicImpute", "MagicLD", "MagicPrior", "MagicReconstruct", "Pedigrees", "Pkg", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "470b97806dcc04522bb5a56ebfa3630999533328"
+git-tree-sha1 = "907f623504869f42de7000700c829f6859a03d81"
 repo-rev = "main"
 repo-subdir = "packages/MagicLinkage"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1270,7 +1270,7 @@ version = "1.1.0"
 
 [[deps.MagicPrior]]
 deps = ["LinearAlgebra", "Pedigrees", "SparseArrays", "Statistics"]
-git-tree-sha1 = "b4738d2504c5af327ffe73c487901c3fa1dac76c"
+git-tree-sha1 = "2624ed21ffe5c559cd858df77e06798b2ee00159"
 repo-rev = "main"
 repo-subdir = "packages/MagicPrior"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1279,7 +1279,7 @@ version = "1.0.0"
 
 [[deps.MagicReconstruct]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "Pedigrees", "ProgressMeter", "SparseArrays", "SpecialFunctions", "Statistics", "StatsPlots"]
-git-tree-sha1 = "00e7448943d75413aa68a4bc0bd6e8ea2dfa7325"
+git-tree-sha1 = "98e16803840bdc5c5ab77875e4525d7441c02e01"
 repo-rev = "main"
 repo-subdir = "packages/MagicReconstruct"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1495,9 +1495,9 @@ version = "10.42.0+1"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "0e1340b5d98971513bddaa6bbed470670cebbbfe"
+git-tree-sha1 = "f07c06228a1c670ae4c87d1276b92c7c597fdda0"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.34"
+version = "0.11.35"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
@@ -1531,7 +1531,7 @@ version = "2.8.3"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "dc83d0cb38b37ed9442f19c8cb493b1883bfcd6d"
+git-tree-sha1 = "38ceccc88d380f336ff397dfab46a58243a4616f"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1887,7 +1887,7 @@ weakdeps = ["ChainRulesCore"]
 
 [[deps.SpectralEmbedding]]
 deps = ["Arpack", "Clustering", "DataFrames", "Distances", "Distributed", "LightGraphs", "LinearAlgebra", "Plots", "Random", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "36eac4e9384caa744f4069aabb804591e53631b1"
+git-tree-sha1 = "68ff8d53d6a9c7589b7074d066a083be83d2052f"
 repo-rev = "main"
 repo-subdir = "packages/SpectralEmbedding"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -2126,9 +2126,9 @@ version = "0.4.1"
 
 [[deps.Unitful]]
 deps = ["Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "c0667a8e676c53d390a09dc6870b3d8d6650e2bf"
+git-tree-sha1 = "d62610ec45e4efeabf7032d67de2ffdea8344bed"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.22.0"
+version = "1.22.1"
 weakdeps = ["ConstructionBase", "InverseFunctions"]
 
     [deps.Unitful.extensions]

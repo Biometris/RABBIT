@@ -191,8 +191,6 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	if isnothing(startbyhalf)  
 		if byfounder == -1
 			startbyhalf = 2
-		elseif any([iscorrectfounder, isinfererror, isspacemarker,isordermarker])
-			startbyhalf = 5
 		else
 			memls = magicgeno.magicped.offspringinfo[!,:member]
 			nsubpop = length(unique(memls))
