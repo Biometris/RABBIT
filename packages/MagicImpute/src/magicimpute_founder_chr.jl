@@ -1036,25 +1036,25 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
         push!(tused,string(round(Int,time()-startt)))		
 
 		# update alwaysaccept and upbyhalf
-		if alwaysaccept					
-			if isallowmissing		
-				if ndiffls[end] == 0
-					alwaysaccept = false
-				elseif upbyhalf && iteration >= miditeration
-					if  ndiffls[end]/length(chrfhaplo) < 0.001
-						alwaysaccept = false							
-					elseif length(ndiffls) >=3 && allequal(ndiffls[end-2:end])					
-						alwaysaccept = false		
-					elseif length(ndiffls) >= 4 && sum(ndiffls .<= ndiffls[end]) >= 4										
-						alwaysaccept = false			
-					end
+		if alwaysaccept							
+			if ndiffls[end] == 0
+				alwaysaccept = false
+			elseif upbyhalf && iteration >= miditeration
+				if  ndiffls[end]/length(chrfhaplo) < 0.001
+					alwaysaccept = false							
+				elseif length(ndiffls) >=3 && allequal(ndiffls[end-2:end])					
+					alwaysaccept = false		
+				elseif length(ndiffls) >= 4 && sum(ndiffls .<= ndiffls[end]) >= 4										
+					alwaysaccept = false			
 				end
-				if alwaysaccept && !upbyhalf 					
-					upbyhalf = iteration >= (startbyhalf - 1)
-				else
-					upbyhalf = true				
-				end			
 			end
+			if alwaysaccept
+				if !upbyhalf 					
+					upbyhalf = iteration >= (startbyhalf - 1)
+				end
+			else
+				upbyhalf = true				
+			end						
 		else
 			upbyhalf = true
 		end		
