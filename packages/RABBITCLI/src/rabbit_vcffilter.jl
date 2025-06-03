@@ -65,7 +65,7 @@ function parse_commandline()
         help = "delete markers with only one allele"
         arg_type = Bool
         default = true        
-        "--seqstrech"
+        "--seqstretch"
         help = "delete non-initial markers in a sequence stretch of length <= seqstretch (in bp), assuming marker are ordered by physical positions. If it is not positive, no filtering for short streches."
         arg_type = Int
         default = 0
