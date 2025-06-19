@@ -382,7 +382,7 @@ function get_outerlier_indices(ls::AbstractVector;
 	side::String="both")		
     q1,q3=quantile(ls,[0.25,0.75])
 	if side in ["lower","both"]
-		lowbound= q3-tukeyfence*(q3-q1)
+		lowbound= q1-tukeyfence*(q3-q1)
 		res = findall(ls .< lowbound)
 	else
 		res = Int[]
