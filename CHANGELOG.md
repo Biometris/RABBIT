@@ -28,3 +28,10 @@
 * magicfilter CLI:  add options minmaf and maxmiss 
 * magicmap CLI: set type of knncluster and knnorder to abstractstring (parsed to function as a number of #markers)
 * magiccall: revise wdict in priorfhaplo_singlesite
+
+## RABBIT v1.3.2
+
+* magiccall: impute founder genotypes by posterior sampling; becomes much slower but results in more accuate imputation/correction  
+* magicimpute: reset default behavior of startbyhalf (5 or 7); reset default isallowmissing = true
+* magicbase/parsebreedped:  allow intermediate parents: create duplicated "id_virtualoffspring" for intermeidate parent "id"
+* magicimpute: when impute "id_virtualoffspring", its observed genotypes are reset to the corresondng "id" that is imputed in the 1st step of founder imputation. 
