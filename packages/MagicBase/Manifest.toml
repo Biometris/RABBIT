@@ -1351,7 +1351,7 @@ version = "2.8.3"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "41089bf68c6dc058dd7943b5f4edf05d6c10c7c5"
+git-tree-sha1 = "a8382a491d10f9443aefbdc9102c71a6c94fe974"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"

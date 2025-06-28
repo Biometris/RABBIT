@@ -710,7 +710,7 @@ version = "1.0.2"
 
 [[deps.HMM]]
 deps = ["Distributions"]
-git-tree-sha1 = "e664cadfa51c2359739f84aeb3f511cb8145c2d8"
+git-tree-sha1 = "d4ef5bc701e75f54d4915df90f23509cb9f6b915"
 repo-rev = "main"
 repo-subdir = "packages/HMM"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1241,25 +1241,25 @@ version = "0.5.16"
 
 [[deps.MagicBase]]
 deps = ["CSV", "CodecZlib", "Combinatorics", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributions", "GZip", "Graphs", "Images", "InlineStrings", "Interpolations", "JLD2", "LinearAlgebra", "Pedigrees", "Pkg", "Plots", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Tar", "ThreadsX"]
-git-tree-sha1 = "13d7f469b37d98ce74cdfb882c6feaa16928edc6"
+git-tree-sha1 = "f7848491853c50e23410245e0e30241c66afe188"
 repo-rev = "main"
 repo-subdir = "packages/MagicBase"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "6ad26e1e-5512-4da8-b5d5-c225deef5fa2"
-version = "1.2.0"
+version = "1.3.0"
 
 [[deps.MagicImpute]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "MagicReconstruct", "Pedigrees", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "c0a77b1b94405d94ecf19f88be280f5f4ecd331b"
+git-tree-sha1 = "f43eb58320f036dce12a2b662d1550c2bec73a23"
 repo-rev = "main"
 repo-subdir = "packages/MagicImpute"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
 uuid = "d6bde97e-f571-11e8-0752-dd2c38cea685"
-version = "1.2.4"
+version = "1.3.2"
 
 [[deps.MagicLD]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "Distributions", "GZip", "MagicBase", "Pedigrees", "Pkg", "ProgressMeter", "SparseArrays"]
-git-tree-sha1 = "0ae9a3102b1363434d0e6ddad1279ddd28605d02"
+git-tree-sha1 = "20a5031f202e01ef65495e1eefc575e9d24bbcba"
 repo-rev = "main"
 repo-subdir = "packages/MagicLD"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1268,7 +1268,7 @@ version = "1.1.0"
 
 [[deps.MagicLinkage]]
 deps = ["CSV", "DataFrames", "Dates", "Distributed", "Distributions", "GZip", "HMM", "LRUCache", "LinearAlgebra", "MagicBase", "MagicImpute", "MagicLD", "MagicPrior", "MagicReconstruct", "Pedigrees", "Pkg", "ProgressMeter", "Random", "SparseArrays"]
-git-tree-sha1 = "21371fcf93531d91c40cc71342f29711390e3028"
+git-tree-sha1 = "d8cea6ea9959991ca3a06795a7944d556ef66530"
 repo-rev = "main"
 repo-subdir = "packages/MagicLinkage"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1277,7 +1277,7 @@ version = "1.1.0"
 
 [[deps.MagicPrior]]
 deps = ["LinearAlgebra", "Pedigrees", "SparseArrays", "Statistics"]
-git-tree-sha1 = "5c3434c94f5a893d74baf262bc2f36b58de573f7"
+git-tree-sha1 = "880d42f30b224d7d4d7302aab1a387b57123771b"
 repo-rev = "main"
 repo-subdir = "packages/MagicPrior"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1286,7 +1286,7 @@ version = "1.0.0"
 
 [[deps.MagicReconstruct]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DelimitedFiles", "Distributed", "GZip", "HMM", "JLD2", "LinearAlgebra", "MagicBase", "MagicPrior", "Pedigrees", "ProgressMeter", "SparseArrays", "SpecialFunctions", "Statistics", "StatsPlots"]
-git-tree-sha1 = "2a13401b219f7b73974a77300b48abffd52b2664"
+git-tree-sha1 = "fc43a35000564fad35873d43c2b4c20cd37dd5d0"
 repo-rev = "main"
 repo-subdir = "packages/MagicReconstruct"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1538,7 +1538,7 @@ version = "2.8.3"
 
 [[deps.Pedigrees]]
 deps = ["CSV", "DataFrames", "GraphRecipes", "Plots", "Random"]
-git-tree-sha1 = "41089bf68c6dc058dd7943b5f4edf05d6c10c7c5"
+git-tree-sha1 = "a8382a491d10f9443aefbdc9102c71a6c94fe974"
 repo-rev = "main"
 repo-subdir = "packages/Pedigrees"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
@@ -1918,7 +1918,7 @@ weakdeps = ["ChainRulesCore"]
 
 [[deps.SpectralEmbedding]]
 deps = ["Arpack", "Clustering", "DataFrames", "Distances", "Distributed", "LightGraphs", "LinearAlgebra", "Plots", "Random", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "23d03652889defd99195ac0af404bb5cc8f85397"
+git-tree-sha1 = "7033a9e307304ff9e1ddf3de07bbfa76398f0bf6"
 repo-rev = "main"
 repo-subdir = "packages/SpectralEmbedding"
 repo-url = "C:\\Users\\zheng026\\OneDrive - Wageningen University & Research\\Chaozhi\\Workspace\\JuliaWorkspace\\Workspace_RABBIT\\RABBIT"
