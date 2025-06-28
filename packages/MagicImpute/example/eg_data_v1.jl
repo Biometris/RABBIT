@@ -8,7 +8,7 @@ using Distributions
 dataid="sim"
 
 fhaplofile = dataid*"_fhaplo.vcf"
-ncluster = 5
+ncluster = 2
 nsnpchr = 200
 @time simfhaplo(
     nsnp=ncluster*nsnpchr, nparent=32,

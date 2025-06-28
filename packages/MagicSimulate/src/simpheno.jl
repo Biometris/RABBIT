@@ -3,11 +3,16 @@
 function simpheno(contfgl::MagicGeno,magicfgl::MagicGeno;
     pheno_nqtl::Integer=10,    
     pheno_h2::Real= 0.5)
+    fgldf = magicfgl.misc["fgl"]
+    fglls = Vector.(eachrow(fgldf[!,2:3]))
+    finfo = contfgl.magicped.founderinfo
+    finfo[!,1] == fgldf[!,1] || @error "inconsistent founders"
+    nfgl = length(unique(reduce(vcat,unique.(fglls))))
     chrlen = [i[end,:poscm] for i in contfgl.markermap]
-    nf = size(contfgl.magicped.founderinfo,1)
+
     # TODO: add dom for sim_trait
     pheno_dominance = 0.0
-    sim_trait = TraitQtl(nf, chrlen, pheno_nqtl,pheno_dominance)
+    sim_trait = TraitQtl(nfgl, chrlen, pheno_nqtl,pheno_dominance)
     nchr = length(contfgl.markermap)
     # fgl_qtl,geno_qtl,dose_qtl
     fgl_qtl = [begin
@@ -45,7 +50,7 @@ function simpheno(contfgl::MagicGeno,magicfgl::MagicGeno;
     # map_qtl
     chridls = [i[1,:linkagegroup] for i in contfgl.markermap]
     founderls = contfgl.magicped.founderinfo[!,:individual]
-    map_qtl = get_map_qtl(sim_trait,chridls,founderls)
+    map_qtl = get_map_qtl(sim_trait,chridls,founderls,fglls)
     map_qtl[!,:allele2_effect] .*= genetic_scale
     var_qtl = reduce(vcat,var.(gadd_qtl[.!isnothing.(gadd_qtl)],dims=2))[:,1]
     insertcols!(map_qtl, 5,:var_qtl=>var_qtl)
@@ -60,7 +65,8 @@ function simpheno(contfgl::MagicGeno,magicfgl::MagicGeno;
         map_qtl=map_qtl,pheno_df=pheno_df)
 end
 
-function get_map_qtl(sim_trait::TraitQtl,chridls::AbstractVector,founderls::AbstractVector)
+function get_map_qtl(sim_trait::TraitQtl,chridls::AbstractVector,
+    founderls::AbstractVector,fglls::AbstractVector)
     linkagegroup = reduce(vcat,[repeat([chridls[i]],length(sim_trait.qtl[i])) for i in eachindex(chridls)])
     marker = [string("qtl",i) for i in 1:length(linkagegroup)]
     position = reduce(vcat, sim_trait.qtl)
@@ -68,7 +74,8 @@ function get_map_qtl(sim_trait::TraitQtl,chridls::AbstractVector,founderls::Abst
     df = DataFrame(marker=marker, linkagegroup=linkagegroup,
         poscm=position,allele2_effect=allele2_effect)
     fhaplo = reduce(vcat, sim_trait.founder_haplo) .+ 1
-    df= hcat(df,DataFrame(fhaplo,Symbol.(founderls)))
+    fgeno = [join.(eachrow(fhaplo[:,fgl]),"|") for fgl in fglls]
+    df= hcat(df,DataFrame(fgeno,Symbol.(founderls)))
     df
 end
 

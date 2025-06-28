@@ -536,7 +536,7 @@ function test_monomorphic_chr!(magicgeno::MagicGeno, chr::Integer,
                     # change offspring genotypes in monomorphic subpopulations
                     # offchanges[i] = [chrid, snpid, subpop]
                     if !isnothing(mono2miss)
-                        offchanges = change_offspring!(offgeno,calledgeno,fchangedf,offformatls,pop2offindices,mono2miss)                                                 
+                        offchanges = change_offspring!(offgeno,calledgeno,fchangedf,offformatls,pop2offindices,mono2miss)                                                                         
                         if mono2miss                                        
                             for  changes in offchanges
                                 pop = changes[3] 

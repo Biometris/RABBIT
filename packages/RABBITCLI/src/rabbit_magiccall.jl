@@ -60,7 +60,7 @@ function parse_commandline()
         "--likeparameters"
         help = "parameters for genotypic data model. If isinfererror = true, parameters with values being nothing will be inferred. "
         arg_type = AbstractString
-        default = "LikeParameters(peroffspringerror=0.0)"   
+        default = "LikeParameters(offspringerror=0.005, peroffspringerror=0.0)"   
         "--threshlikeparameters"
         help = "markers with inferred likeparameters values > threshlikeparameters values will be deleted"
         arg_type = AbstractString
@@ -68,15 +68,23 @@ function parse_commandline()
         "--priorlikeparameters"
         help = "priors for likelihood parameters"
         arg_type = AbstractString
-        default = "PriorLikeParameters(offspringerror=Beta(1.05,9),seqerror=Beta(1.05,9))"   
+        default = "PriorLikeParameters(offspringerror=Beta(1,19),seqerror=Beta(1,99))"   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
-        default = true                
-        "--threshcall"
-        help = "genotye call if maximum posterior probability > threshcall"
+        default = true 
+        "--threshfounder"
+        help = "founder genotypes are called if maximum posterior probability > threshfounder"
         arg_type = AbstractString
         default = "nothing"
+        "--threshoffspring"
+        help = "offspring genotypes are called if maximum posterior probability > threshoffspring"
+        arg_type = Float64
+        default = 0.95        
+        "--iscalloffspring"
+        help = "if true, offspring genotypes are called"
+        arg_type = Bool
+        default = true
         "--israwcall"
         help = "if true, perform raw genotype calling"
         arg_type = Bool
@@ -178,11 +186,10 @@ function main(args::Vector{String})
     delete!(parsed_args, :threshlikeparameters)
     priorlike = parsed_args[:priorlikeparameters]
     priorlikeparameters = MagicCall.parse_priorlikeparameters(priorlike)
-    delete!(parsed_args, :priorlikeparameters)
-    
-    reset_kwarg_nothing!(parsed_args,:threshcall,Float64)    
-    if isnothing(parsed_args[:threshcall])
-        parsed_args[:threshcall] = parsed_args[:model] == "depmodel" ? 0.95 : 0.9
+    delete!(parsed_args, :priorlikeparameters)    
+    reset_kwarg_nothing!(parsed_args,:threshfounder,Float64)    
+    if isnothing(parsed_args[:threshfounder])
+        delete!(parsed_args, :threshfounder)
     end
     reset_kwarg_nothing!(parsed_args,:isinfererror,Bool)    
     if isnothing(parsed_args[:isinfererror]) 

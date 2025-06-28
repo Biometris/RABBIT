@@ -4,7 +4,7 @@
 
 keyword-based struct for the parameters of likelihood function. 
 
-LikeParameters() is equivalent to LikeParameters(foundererror=0.005, offspringerror=nothing, peroffspringerror=nothing, 
+LikeParameters() is equivalent to LikeParameters(foundererror=0.005, offspringerror=nothing, peroffspringerror=0.0, 
 seqerror=nothing, allelebalancemean=nothing, allelebalancedisperse=nothing, alleledropout=0.0). 
 The `peroffspringerror` refers to error rate per offspring, and the other parameters refer to error rate per marker. 
 
@@ -21,7 +21,7 @@ seqerror=0.001, allelebalancemean=0.5, allelebalancedisperse=0.0, alleledropout=
 Base.@kwdef struct LikeParameters    
     foundererror::Union{Nothing,Float64} = 0.005    
     offspringerror::Union{Nothing,Float64} = nothing    
-    peroffspringerror::Union{Nothing,Float64} = nothing    
+    peroffspringerror::Union{Nothing,Float64} = 0.0    
     seqerror::Union{Nothing,Float64} = nothing    
     allelebalancemean::Union{Nothing,Float64} = nothing    
     allelebalancedisperse::Union{Nothing,Float64} = nothing    

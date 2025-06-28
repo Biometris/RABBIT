@@ -26,7 +26,7 @@ using InlineStrings
 
 export
     
-    exportall, 
+    exportall, logit, 
     # for pedinfo
     JuncDist, MateScheme, DesignInfo, MagicPed, 
     parsedesign,

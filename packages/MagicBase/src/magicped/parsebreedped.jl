@@ -49,20 +49,20 @@ function parsebreedped(pedfile::AbstractString;
     dfls = map((x,y)->parsebreedcode(string(x,"=>", y); fixed_nself),pedcode,ngeration)
     founderls = unique(reduce(vcat, [d[d[!,:mother] .== "0",:member] for d in dfls]))
     offls = string.(peddf[:,1])
-    indexls = findall([in(i, founderls) for i in offls])
-    midpls = offls[indexls]
-    if !isempty(midpls)         
-        msg = string(length(midpls), " intermediate individuals that act as parents and offspring: ", midpls)
-        msg *= "\nWhen an intermediate individual acts as a parent, keep its id. "
-        msg *= "\nWhen an intermediate individual acts as a sampled offspring, rename its id into id_rabbitdupe. "
+    interls = intersect(founderls, offls)
+    if !isempty(interls)         
+        msg = string(length(interls), " intermediate individuals that act as founders and offspring: ", join(interls,", "))
+        # msg *= "\nWhen an intermediate individual acts as a founder, its id is kept the same. "
+        msg *= "\nWhen an intermediate individual acts as a sampled offspring, it is duplicated with new id_virtualoffspring. "
         @warn msg
-        offls = [in(i,indexls) ? string(offls[i],"_rabbitdupe") : offls[i] for i in eachindex(offls)]        
-        # dict = Dict(midpls .=> string.(midpls,"_actf")) 
-        # for col in [:member, :mother, :father]
-        #     df[!,col] .= [haskey(dict, i) ? dict[i] : i for i in df[!,col]]
-        # end
+        offls = [in(i,interls) ? string(i,"_virtualoffspring") : i for i in offls]           
     end
     df = unique(reduce(vcat, dfls))
+    # if !isempty(founderdict)
+    #     for col = 1:3
+    #         df[!,col] .= [haskey(founderdict,i) ? founderdict[i] : i for i in df[!,col]]
+    #     end
+    # end
     member = [i[end,:member] for i in dfls]    
     designinfo = Pedigree(df)
     nf=designinfo.nfounder

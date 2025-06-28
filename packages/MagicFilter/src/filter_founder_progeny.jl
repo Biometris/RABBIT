@@ -44,8 +44,10 @@ function filter_founder_progeny!(magicgeno::MagicGeno;
         end
     end
     indls = magicgeno.magicped.offspringinfo[!,:individual]
-    offkeep = findall(.![i in del_off for i in indls])
+    # offkeep = findall([!in(i, del_off) || occursin(r"_virtualoffspring$",indls[i]) for i in eachindex(indls)])
+    offkeep = setdiff(eachindex(indls), del_off) 
     del_offspring!(magicgeno,offkeep;io=logio,verbose)
+
     # export
     fls = collect(keys(f2off))
     newf2off = MagicBase.get_founder2offspring(magicgeno.magicped)

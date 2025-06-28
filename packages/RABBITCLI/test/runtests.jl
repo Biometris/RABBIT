@@ -28,4 +28,3 @@ finally
     rm.(filter(x->occursin("sim_", x), readdir()))
     rm.(filter(x->occursin(r"^jl_", x), readdir()))
 end
-

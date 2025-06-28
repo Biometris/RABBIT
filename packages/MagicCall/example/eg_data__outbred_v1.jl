@@ -7,7 +7,7 @@ using MagicSimulate
 using Distributions
 dataid="sim"
 fhaplofile = "sim_fhaplo.vcf.gz"
-ncluster = 5
+ncluster = 1
 nsnpchr = 250
 
 @time simfhaplo(
@@ -20,11 +20,11 @@ nsnpchr = 250
 
 designcode = "3star-self1"
 designinfo = MagicBase.parsedesign(designcode)
-magicped = formmagicped(designinfo,200)
+magicped = formmagicped(designinfo,100)
 pedfile = dataid*"_ped.csv"
 savemagicped(pedfile,magicped)
 
-epsf = epso = 0.01
+epsf = epso = 0.05
 @time magicsimulate(fhaplofile,pedfile;
     isfounderinbred = false,
     seqfrac = 1.0,

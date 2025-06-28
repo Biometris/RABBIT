@@ -42,7 +42,7 @@ function filter_offspring_missing!(magicgeno::MagicGeno;
     end
     missfrac = mean(MagicBase.getismissing(calledgeno, formatls),dims=1)[1,:]    
     indls = magicgeno.magicped.offspringinfo[!,:individual]
-    offkeep = missfrac .<= offspring_maxmiss
+    offkeep = [missfrac[i] <= offspring_maxmiss || occursin(r"_virtualoffspring$",indls[i]) for i in eachindex(indls,missfrac)]
     any(offkeep) || @error "All offspring are deleted!"
     res = vcat(res, DataFrame(individual=indls,missfrac=missfrac,isfounder=false,keep=offkeep))
     outfile = outstem*"_ind_missing.csv"
@@ -65,6 +65,7 @@ function filter_offspring_missing!(magicgeno::MagicGeno;
         @warn string("Could not plot missing fractions for each offspring")
     end
     del_offspring!(magicgeno,findall(offkeep);io=logio,verbose)
+
     MagicBase.info_missing(magicgeno;io=logio,verbose)
     tused = round(time()-starttime,digits=1)
     MagicBase.set_logfile_end(logfile, logio, tused,"purify_missing"; verbose)
@@ -79,7 +80,14 @@ function del_offspring!(magicgeno::MagicGeno,keep_offindices::AbstractVector;
     if isempty(deloffls)
         MagicBase.printconsole(io,verbose,"no offspring deleted")
         return magicgeno
-    else
+    else        
+        # b = occursin(r"_virtualoffspring$",deloffls)
+        # if any(b)
+        #     founder_progeny = MagicBase.get_founder2offspring(magicgeno.magicped)
+        #     delfls = replace.(deloffls[b], r"_virtualoffspring$"=>"")
+        #     new_deloffls = reduce(vcat, [founder_progeny[i] for i in delfls]
+        #     append!(deloffls, new_deloffls)
+        # end
         msg = string("delete ", length(deloffls)," offspring: ",deloffls)
         MagicBase.printconsole(io,verbose,msg)
     end

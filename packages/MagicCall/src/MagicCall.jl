@@ -10,7 +10,7 @@ using GZip
 using Distributed
 using Distributions
 using LinearAlgebra, SparseArrays
-using Dates
+using Dates, ThreadsX
 using MagicBase
 using HMM, Pedigrees, MagicPrior, MagicReconstruct
 

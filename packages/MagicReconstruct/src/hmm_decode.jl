@@ -11,6 +11,7 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     hmmalg::AbstractString,
     posteriordigits::Integer = 4, 
     decodetempfile::Union{Nothing,AbstractString},    
+    resetvirtual::Bool=false,
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
     israndallele::Bool, 
@@ -44,6 +45,7 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
             # startt = time()            
             ishaploidsub = popmakeup[popid]["ishaploid"]
             offls = popmakeup[popid]["offspring"]            
+            virtualdict = popmakeup[popid]["virtualdict"]            
             # nzstate: the set of indices with states being acessible in the subpopulation
             nzstate = popmakeup[popid]["nzstate"]         
             nzcol = get_nzcol(nstate,popmakeup,popid)           
@@ -56,14 +58,29 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
             end            
             for off in offls
                 if hmmalg in ["forwardbackward","logforward","logbackward"]                    
-                    off_decode= length(nzcol)/nstate > 0.5 ? zeros(nsnp,nstate) : spzeros(nsnp,nstate)
+                    off_decode = length(nzcol)/nstate > 0.5 ? zeros(nsnp,nstate) : spzeros(nsnp,nstate)
                 else
                     # hmmalg == "viterbi"
-                    off_decode=zeros(Int,nsnp)
+                    off_decode = zeros(Int,nsnp)
                 end
-                obsseq = offcode[:,off]
-                caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
-                    fderive,nzstate,isoffphased,israndallele, issnpGT,ishaploidsub)
+                if resetvirtual && haskey(virtualdict, off) 
+                    # copy founders'geno to virtual offspring for intermeidate parents 
+                    virtual_f = virtualdict[off]
+                    if isfounderinbred 
+                        newgeno = chrfhaplo[:,virtual_f] .^ 2
+                    else
+                        newgeno = join.(eachrow(chrfhaplo[:,[2*virtual_f-1,2*virtual_f]]))
+                    end
+                    isoffphased2 = false
+                    issnpGT2 = trues(length(issnpGT))
+                    obsseq = caloffcode(newgeno; ishaploid=ishaploidsub, isoffphased=isoffphased2)                    
+                    caldataprobseq!(dataprobseq, obsseq,epsf,0.005,0.0, 0.001, 0.5, 0.0, 0.0, 
+                        fderive,nzstate,isoffphased2,israndallele, issnpGT2,ishaploidsub)
+                else
+                    obsseq = offcode[:,off]
+                    caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
+                        fderive,nzstate,isoffphased,israndallele, issnpGT,ishaploidsub)
+                end
                 dataprobseq2 = view(dataprobseq, snporder[markerincl])    
                 if hmmalg == "forwardbackward"                    
                     loglike[off],prob=HMM.posteriordecode(initprob,tranprobseq,dataprobseq2; digits=posteriordigits) # larger digits  results in more memoryuse!!

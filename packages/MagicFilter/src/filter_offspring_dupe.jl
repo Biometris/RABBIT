@@ -133,12 +133,17 @@ function filter_offspring_dupe!(magicgeno::MagicGeno;
 			end
 			union!(offdells)
 	        offkeep = collect(1:length(offidls))
-	        isempty(offdells) || setdiff!(offkeep,reduce(vcat,offdells))
+	        if !isempty(offdells) 
+                dells = reduce(vcat,offdells)
+                # b = [occursin(r"_virtualoffspring$", offidls[i]) for i in dells]
+                # deleteat!(dells,b)
+                setdiff!(offkeep,dells)
+            end
 		end
 		if nsnpmiss > 0
 			MagicBase.merge_missprogeny!(magicgeno,missgeno)
 		end
-        if offspring_maxcorr < 1.0
+        if offspring_maxcorr < 1.0            
 			del_offspring!(magicgeno,offkeep;io=logio,verbose)
 		end
     end

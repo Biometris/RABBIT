@@ -366,3 +366,7 @@ function exportall(mod)
         end
     end
 end
+
+function logit(x)
+    log(x/(1-x))
+end

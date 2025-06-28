@@ -167,6 +167,9 @@ function founderforward(chroffgeno::AbstractMatrix, popidls::AbstractVector,
     fwphaseprob = Vector{Vector{Float64}}(undef,nsnp)
     fwphaseindex = Vector{Vector{Int}}(undef,nsnp)
     startprob = getstartprob(popmakeup, priorprocess,popidls,offspringexcl)    
+    if isempty(startprob)
+        error("no non-execluded offspring")
+    end
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
     seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
@@ -200,7 +203,7 @@ function founderforward(chroffgeno::AbstractMatrix, popidls::AbstractVector,
             #     "len_dataprobls = ", length(dataprobls))    
             prob = sum(fwphaseprob[snppre] .* fworigprob_pre)            
             prob2=[(prob[i]' * tranprob[i])[1,:] for i=1:noff]
-            origprob =  [[prob2[i] .* dataprob[i] for i=1:noff] for dataprob in dataprobls]                                    
+            origprob =  [[prob2[i] .* dataprob[i] for i=1:noff] for dataprob in dataprobls]  
             fwphaseindex[snp], fwphaseprob[snp],fworigprob_pre= calfwphaseprob(origprob)
             write(file, string(snp), fworigprob_pre)
         end

@@ -236,7 +236,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 			MagicReconstruct.reconstruct_chr!(magicgeno,chr, model,magicprior;
 				likeparameters,israndallele, isfounderinbred, 
 				usepermarkererror = true, # using inferred error rate in magicgeno.markermap 
-				hmmalg="forwardbackward",
+				hmmalg="forwardbackward", resetvirtual=true, 
 				decodetempfile=chrdecodefile,logio=io,verbose
 			)		
 			if isfounderinbred
@@ -259,44 +259,11 @@ function impute_offspring_chr!(genofile::AbstractString,
 			if phasealg == "viterbi"				
 				tviterbi = @elapsed MagicReconstruct.reconstruct_chr!(magicgeno,chr, model,magicprior;
 					likeparameters,israndallele, isfounderinbred, 
-					usepermarkererror = true, hmmalg="viterbi",
+					usepermarkererror = true, hmmalg="viterbi", resetvirtual=true, 
 					decodetempfile=chrdecodefile,logio=nothing,verbose = false
 				)	
 				printconsole(io,verbose,string("chr=", chrid, ", viterbi, tused=", round(tviterbi,digits=1),"s"))								
 				viterbi2calledgeno!(magicgeno.offspringgeno[chr], chrdecodefile, chrfhaplo, chrepsf, popmakeup; threshimpute)				 
-				# apply missing of forward-backward results to viterbi results
-				# res = similar(magicgeno.offspringgeno[chr])
-				# callfrompostprob!(res,tempfile, threshimpute)						
-				# chroffgeno = magicgeno.offspringgeno[chr]
-				# for i in eachindex(res, chroffgeno)
-				# 	if res[i] == ["1","N"]
-				# 		if chroffgeno[i] == ["1","1"] 
-				# 			chroffgeno[i] = ["1","N"] 
-				# 		elseif in("2",chroffgeno[i])
-				# 			chroffgeno[i] = ["N","N"] 
-				# 		end
-				# 	elseif res[i] == ["N","1"]
-				# 		if chroffgeno[i] == ["1","1"] 
-				# 			chroffgeno[i] = ["N","1"] 
-				# 		elseif in("2",chroffgeno[i])
-				# 			chroffgeno[i] = ["N","N"] 
-				# 		end
-				# 	elseif res[i] == ["2","N"]
-				# 		if chroffgeno[i] == ["2","2"] 
-				# 			chroffgeno[i] = ["2","N"] 
-				# 		elseif in("1",chroffgeno[i])
-				# 			chroffgeno[i] = ["N","N"] 
-				# 		end
-				# 	elseif res[i] == ["N","2"]
-				# 		if chroffgeno[i] == ["2","2"] 
-				# 			chroffgeno[i] = ["N","2"] 
-				# 		elseif in("1",chroffgeno[i])
-				# 			chroffgeno[i] = ["N","N"] 
-				# 		end
-				# 	elseif res[i] == ["N","N"]
-				# 		chroffgeno[i] = ["N","N"] 
-				# 	end
-				# end
 			else				
 				callfrompostprob!(magicgeno.offspringgeno[chr],tempfile, threshimpute)				
 			end

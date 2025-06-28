@@ -176,12 +176,6 @@ function calfderive(fhaplo::AbstractMatrix;
         state = MagicBase.prior_diploindex(nfgl)
         isnothing(nzstate) && (nzstate = 1:length(state))
         state = state[nzstate]
-        # try 
-        #     state = state[nzstate]
-        # catch err
-        #     println("nfgl=",nfgl,",state=",state,",nzstate=",nzstate)
-        #     @info string(err)
-        # end
         derrule=Dict(["NN", "N1", "1N", "N2", "2N", "11", "12", "21", "22"] .=> Int8.(1:9))
         # fderive=Matrix{Union{Missing,Int}}(missing,nsnp,nfgl^2)
         fderive=spzeros(Int8,nsnp,nfgl^2)        
@@ -273,3 +267,16 @@ function callinelikesnp!(dataprobls::AbstractVector,
         end 
     end    
 end
+
+function haplolike_GT(genols::AbstractVector, epso::Real)
+    condlike = haplolike(epso)
+    sitecode = MagicReconstruct.caloffcode(genols; ishaploid=true,isoffphased=false)
+    condlike[sitecode,:]
+end
+
+function diplolike_GT(genols::AbstractVector, epso::Real;  israndallele::Bool=true)
+    condlike = diplolike(epso; isoffphased=false,israndallele)  
+    sitecode = MagicReconstruct.caloffcode(genols; ishaploid=false,isoffphased=false)
+    condlike[sitecode,:]
+end
+

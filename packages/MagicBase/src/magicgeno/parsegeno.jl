@@ -184,13 +184,12 @@ function splitgenodf(genodf::DataFrame,founderid::AbstractVector,
         offgenodf = nothing
     else
         cols = [get(coldict,i,nothing) for i=offspringid]
-        missind = offspringid[isnothing.(cols)]
-        if !isempty(missind)
-            msg = string(length(missind), " offspring in pedfile but not in genofile: ",missind)
-            @warn msg
-            b = .!isnothing.(cols)
-            cols = cols[b]
-            newoffspringid = offspringid[b]
+        b = isnothing.(cols)        
+        if any(b)
+            msg = string(sum(b), " offspring in pedfile but not in genofile: ",offspringid[b])
+            @warn msg            
+            cols = cols[.!b]
+            newoffspringid = offspringid[.!b]
         end
         offgenodf = genodf[!, cols]
     end    

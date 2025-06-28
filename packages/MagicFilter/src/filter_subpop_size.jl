@@ -58,6 +58,9 @@ function filter_subpop_size!(magicgeno::MagicGeno;
         printconsole(logio, verbose, msg)
     end
     offkeep = findall(.![i in del_off for i in indls])
+
+    # occursin(r"_virtualoffspring$",indls[i])
+
     del_offspring!(magicgeno,offkeep;io=logio,verbose)
     # MagicBase.info_missing(magicgeno;io=logio,verbose)
     tused = round(time()-starttime,digits=1)

@@ -87,7 +87,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
     nmultia = 0
     outdelim = keepvcf ? '\t' : ','
     startt = time()
-    while !eof(inio)
+    while !eof(inio)        
         # rem(nmarker, 1000) == 0 && (startt = time())
         nmarker += 1
         rowgeno = split(readline(inio,keep=false),"\t")
@@ -112,7 +112,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
             end
         end        
         offspringformat = parse_rowgeno!(offgeno, rowgeno[offcols],
-            formatcode, formatpriority, missingset,keepvcf)
+            formatcode, formatpriority, missingset,keepvcf)                
         # if nmarker==1
         #     println("[rowgeno[offcols],formatcode, formatpriority, missingset,keepvcf]=",
         #         [rowgeno[offcols],formatcode, formatpriority, missingset,keepvcf])
@@ -243,8 +243,6 @@ function parse_titlerow(titlerow::AbstractVector,pedinfo::Union{Integer,Abstract
     if isa(pedinfo, AbstractString)
         if last(splitext(pedinfo))==".csv"
             magicped = readmagicped(pedinfo; commentstring,workdir)
-            founderid = magicped.founderinfo[!,:individual]
-            offspringid = magicped.offspringinfo[!,:individual]
         else
             designinfo = parsedesign(pedinfo)
             nf = getnfounder(designinfo)
@@ -270,23 +268,26 @@ function parse_titlerow(titlerow::AbstractVector,pedinfo::Union{Integer,Abstract
         fcols = fcols[.!b]
         founderid = founderid[.!b]
     end
-    offcols = [get(dict,i,nothing) for i in offspringid]
-    bls = findall(isnothing.(offcols))
-    if !isempty(bls)
-        bls2 = bls[.!occursin.("_rabbitdupe",offspringid[bls])]
-        if !isempty(bls2)
-            msg = string(length(bls2)," offspring in pedfile but not in genofie: ",offspringid[bls2])
-            @warn msg
-            printconsole(logio, false, "Warning: "*msg)
-        end
-        setdiff!(offcols, offcols[bls])
+    offcols = [if occursin(r"_virtualoffspring$",i)
+        i2 = replace(i, r"_virtualoffspring$" => "")
+        get(dict, i, get(dict,i2,nothing))
+    else
+        get(dict,i, nothing)
+    end for i in offspringid]
+    b = isnothing.(offcols)
+    if any(b)        
+        msg = string(sum(b)," offspring in pedfile but not in genofie: ",offspringid[b])
+        @warn msg
+        printconsole(logio, false, "Warning: "*msg)
+        offcols = offcols[.!b]
+        offspringid = offspringid[.!b]
     end
     if keepvcf
-        res = titlerow[vcat(1:9, fcols,offcols)]
+        res = vcat(titlerow[1:9], founderid, offspringid)
     else
         res = ["marker", "linkagegroup","poscm","physchrom", "physposbp", "info", "founderformat","offspringformat",
             "foundererror","offspringerror","seqerror","allelebalancemean","allelebalancedisperse","alleledropout"]
-        res = vcat(res,titlerow[vcat(fcols,offcols)])
+        res = vcat(res,founderid, offspringid)
     end
     delim = keepvcf ? '\t' : ','    
     newtitlerow = join(res,delim)
@@ -299,18 +300,42 @@ function to_GT_haplo!(geno::AbstractVector,format::AbstractString)
         ishetero = falses(length(geno))
         geno .= "N"
     elseif format == "GT_unphased"
-        ishetero =  [i in ["12","21"] for i=geno]
-        dict = Dict(["11","12","21","22","1N","N1","2N","N2","NN"] .=>
-            ["1","N","N","2","1","1","2","2","N"])
-        for i in eachindex(geno)
-            geno[i] = get(dict,geno[i],nothing)
+        ishetero = falses(length(geno))
+        for i in eachindex(geno,ishetero)
+            gg = split(geno[i],"")
+            if isempty(gg) 
+                geno[i] = "N"
+            elseif length(gg) == 1
+                geno[i] = only(gg)
+            elseif length(gg) == 2
+                if allequal(gg)
+                    geno[i] = first(gg)
+                else
+                    geno[i] = "N"
+                    ishetero[i] = true
+                end
+            else
+                @error string("unexpected genotype =",geno[i])
+            end
         end
     elseif format == "GT_phased"
-        ishetero =  [i in ["1|2","2|1"] for i=geno]
-        dict = Dict(["1|1","1|2","2|1","2|2","1|N","N|1","2|N","N|2","N|N"] .=>
-            ["1","N","N","2","1","1","2","2","N"])
-        for i in eachindex(geno)
-            geno[i] = get(dict,geno[i],nothing)
+        ishetero = falses(length(geno))
+        for i in eachindex(geno,ishetero)
+            gg = split(geno[i],"|")
+            if isempty(gg) 
+                geno[i] = "N"
+            elseif length(gg) == 1
+                geno[i] = only(gg)
+            elseif length(gg) == 2
+                if allequal(gg)
+                    geno[i] = first(gg)
+                else
+                    geno[i] = "N"
+                    ishetero[i] = true
+                end
+            else
+                @error string("unexpected genotype =",geno[i])
+            end
         end
     elseif format in ["AD","GP"]
         # geno .= parse_AD2haplo.(geno)
@@ -438,7 +463,7 @@ function parse_vcfcell(cellgeno::AbstractString,formatcode::AbstractVector,
             elseif occursin("/", g)
                 f2 = "GT_unphased"
             else
-                error(string("unknown GT geno: ",g))
+                error(string("unknown GT geno: ",g, ",cellgeno=",cellgeno))
             end
             # refenrence allele =1, alternative alelles = 2
             dict=Dict("0"=>"1","1"=>"2", "."=>"N","/"=>"","|"=>"|")

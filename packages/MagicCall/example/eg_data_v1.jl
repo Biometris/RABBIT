@@ -8,7 +8,7 @@ using Distributions
 dataid="sim"
 fhaplofile = "sim_fhaplo.vcf.gz"
 ncluster = 2
-nsnpchr = 300
+nsnpchr = 250
 
 isfounderinbred = true
 
@@ -22,7 +22,7 @@ isfounderinbred = true
 )
 
 designcode = "6star-self4"
-# designcode = "4ril-self4"
+designcode = "2ril-self1"
 designinfo = MagicBase.parsedesign(designcode)
 magicped = formmagicped(designinfo,200)
 pedfile = dataid*"_ped.csv"
@@ -40,7 +40,7 @@ epso = 0.05
     allelebalancemean = Beta(5,5),
     allelebalancedisperse = Exponential(0.05),
     alleledropout = Beta(2,18),
-    seqdepth = Gamma(2,10),
+    seqdepth = Gamma(2,5),
     outstem= dataid,
 )
 

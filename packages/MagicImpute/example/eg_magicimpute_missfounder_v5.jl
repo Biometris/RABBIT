@@ -1,7 +1,7 @@
-using Distributed
-nprocs() < 6 && addprocs(6-nprocs())
-@info string("nprocs=", nprocs())
-@everywhere  using MagicReconstruct, MagicImpute
+# using Distributed
+# nprocs() < 6 && addprocs(6-nprocs())
+# @info string("nprocs=", nprocs())
+# @everywhere  using MagicReconstruct, MagicImpute
 
 using Revise
 using MagicBase, MagicReconstruct, MagicImpute
@@ -26,8 +26,9 @@ end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
     # target = "founder",      
-    likeparameters = LikeParameters(peroffspringerror=0),      
+    # likeparameters = LikeParameters(peroffspringerror=0),      
     model = "depmodel",    
+    # isgreedy = true, 
     # byfounder = 4, 
     # threshproposal = 0.9, 
     # isallowmissing = true,     
@@ -46,8 +47,8 @@ acc = magicaccuracy!(truegeno, magicgeno;alignfounder=true,isfounderinbred)
 println(acc)
 show(facc)
 show(offacc)
-0
 
+println("")
 for i in eachindex(magicgeno.markermap)
     acc = magicaccuracy!(truegeno, magicgeno; alignfounder=true,chrsubset=[i])    
     println("chr=", i, ";", acc["founder"])

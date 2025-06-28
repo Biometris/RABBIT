@@ -1,27 +1,31 @@
 using Distributed
 nprocs() < 5 && addprocs(5-nprocs()) # 4 chromosomes
 @info string("nworkers=", nworkers())
-@everywhere using MagicFilter, MagicCall, MagicMap, MagicImpute, MagicReconstruct
+@everywhere using MagicFilter, MagicCall, MagicMap, MagicImpute, MagicReconstruct, MagicScan
 
+using Revise
 using MagicFilter, MagicCall, MagicMap, MagicImpute, MagicReconstruct
 using MagicBase, MagicSimulate, MagicScan
 cd(@__DIR__)
 outstem = "example"
-isstar = true
+# TEST scenarios: istart, isfounderinbred, seqfrac =0/1
 
+isstar = false
+isfounderinbred = !isstar
+# isfounderinbred = true 
 # S1_1 Simulate founder genotypic data
-fhaplofile = outstem*"_fhaplo.vcf.gz"    
+fhaplofile = outstem*"_fhaplo.vcf"    
 simfhaplo(;
-    isfounderinbred = true,
+    isfounderinbred,
     nsnp = 400, 
-    nparent = isstar ? 5 : 4,
+    nparent = isstar ? 3 : 4,
     chrlen = 100*ones(4),
     outfile = fhaplofile
 )
 
 # S1_2 Simulate pedigree information
 if isstar
-    magicped = formmagicped("5star-self1",400)
+    magicped = formmagicped("3star-self1",200)
 else
     magicped = generate_magicped(;
     designcodes=["P1/P2=>DH", "2ril-self1", "P4/3/P4//P2/P3=>1"],
@@ -36,6 +40,7 @@ plotmagicped(magicped)
 using Distributions
 pedfile = outstem*"_ped.csv"
 magicsimulate(fhaplofile,pedfile;    
+    isfounderinbred,
     seqfrac = 1.0,
     seqdepth = Gamma(2,5),    
     foundermiss = Beta(1,9),
@@ -56,10 +61,11 @@ magicsimulate(fhaplofile,pedfile;
 genofile = outstem*"_magicsimulate_geno.vcf.gz"
 pedfile = outstem*"_magicsimulate_ped.csv"
 magicfilter(genofile,pedfile;        
+    isfounderinbred,
     minmaf = 0.05,
     missfilter = (f,o) -> o <= 0.7,     
     offspring_maxmiss = 0.95,
-    isfilterdupe = true,  
+    # isfilterdupe = true,  
     outstem
 );
 
@@ -67,30 +73,33 @@ magicfilter(genofile,pedfile;
 # S3 genotype calling
 genofile = outstem*"_magicfilter_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
-magiccall(genofile,pedfile;               
+magiccall(genofile,pedfile;   
+    isfounderinbred,               
+    isparallel = false,     
     outstem 
 )
-
 truefile = outstem*"_magicsimulate_truegeno.csv.gz"
 calledgenofile = outstem*"_magiccall_geno.vcf.gz"
-acc = magicaccuracy(truefile,calledgenofile,pedfile)
+acc = magicaccuracy(truefile,calledgenofile,pedfile;isfounderinbred)
 println(acc)
 plotmarkererror(calledgenofile)
 
+
 # S4 map construction 
+# genofile = outstem*"_magicfilter_geno.vcf.gz"
 genofile = outstem*"_magiccall_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
 magicmap(genofile,pedfile;        
-    minncluster = 2, 
-    maxncluster = 10,                      
+    isfounderinbred,               
+    ncluster = 4,              
     outstem
 )
-
 
 # S5 genotype imputation
 genofile = outstem*"_magicfilter_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
 magicgeno = magicimpute(genofile,pedfile;
+    isfounderinbred,               
     mapfile = outstem*"_magicmap_construct_map.csv.gz",                     
     outstem         
 ); 
@@ -99,14 +108,13 @@ magicgeno = magicimpute(genofile,pedfile;
 genofile = outstem*"_magicimpute_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
 magicancestry = magicreconstruct(genofile,pedfile;         
+    isfounderinbred,               
     nplot_subpop = 1, 
-    # formatpriority = ["GT"],    
-    # thincm = 0, 
     outstem     
 );
 
-truefgl = formmagicgeno(outstem*"_magicsimulate_truefgl.csv.gz",pedfile);
-acc = magicaccuracy!(truefgl, magicancestry) 
+truefgl = formmagicgeno(outstem*"_magicsimulate_truefgl.csv.gz",pedfile;isfounderinbred);
+acc = magicaccuracy!(truefgl, magicancestry; isfounderinbred) 
 println(acc)
 fig = plotcondprob(magicancestry; truefgl,
     probtype="genoprob", 
@@ -129,7 +137,7 @@ println("trueqtl: ", truepheno["map_qtl"])
 # clean up
 # cd(@__DIR__)
 # rm.(filter(x->occursin("example_", x),readdir()))
-
 # cd(@__DIR__)
 # rm.(filter(x->occursin("sim_", x),readdir()))
+
 

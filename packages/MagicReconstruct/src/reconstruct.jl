@@ -330,7 +330,8 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 	israndallele::Bool=true, 
 	isfounderinbred::Bool=true,	
     hmmalg::AbstractString="forwardbackward",
-	posteriordigits::Integer = 4, 
+	resetvirtual::Bool=false,
+	posteriordigits::Integer = 4, 	
     logio::Union{Nothing,AbstractString,IO}=nothing,
     decodetempfile::AbstractString,
     verbose::Bool=true)
@@ -343,7 +344,7 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 			chrfhaplo = permutedims(reduce(hcat,[reduce(vcat,i) for i in eachrow(magicgeno.foundergeno[chr])]))
 		end
 		nsnp = size(chrfhaplo,1)
-	    chroffgeno = magicgeno.offspringgeno[chr]
+	    chroffgeno = magicgeno.offspringgeno[chr]		
 		issnpGT = [occursin("GT",i) for i in magicgeno.markermap[chr][!,:offspringformat]]		
 		gtls = unique(magicgeno.markermap[chr][issnpGT,:offspringformat])
 		isoffphased = gtls== ["GT_phased"]		
@@ -358,7 +359,7 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 	    tused = @elapsed res = hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
 	        epsf,epso, epso_perind,seqerror, 
 			allelebalancemean, allelebalancedisperse, alleledropout,  
-			hmmalg, posteriordigits, issnpGT, isoffphased, israndallele, decodetempfile)				
+			hmmalg, resetvirtual, posteriordigits, issnpGT, isoffphased, israndallele, decodetempfile)				
 		chrlen = round(Int,magicgeno.markermap[chr][end,:poscm] - magicgeno.markermap[chr][1,:poscm])
 		mem1 = round(Int, memoryuse()/10^6)
 		GC.gc()
@@ -396,10 +397,10 @@ end
 
 function del_error_indices(errorls::AbstractVector;
 	minoutlier=0.05,tukeyfence::Real=3,max_error::Real=0.2)	
-	ls = log.(errorls)
+	ls = logit.(errorls)
     q1,q3=quantile(ls,[0.25,0.75])
 	upbound=q3+tukeyfence*(q3-q1)	    
-	upbound=min(max(upbound,log(minoutlier)),log(max_error))
+	upbound=min(max(upbound,logit(minoutlier)),logit(max_error))
     findall(ls .> upbound)
 end
 

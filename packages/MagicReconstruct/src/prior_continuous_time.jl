@@ -30,7 +30,9 @@ function calpopmakeup(magicped::MagicPed,model::AbstractString,
     isfounderinbred::Bool=true,
     isautosome::Bool=true)
     priorspace=getpriorstatespace(magicped; isfounderinbred)            
-    isdepmodel = lowercase(model) == "depmodel"
+    isdepmodel = lowercase(model) == "depmodel"    
+    offidls = magicped.offspringinfo[!,:individual]
+    founderidls = magicped.founderinfo[!,:individual]
     popmakeup=Dict([begin
         offs=findall(magicped.offspringinfo[!,:member] .== popid)
         ishomozygous = unique(magicped.offspringinfo[offs,:ishomozygous])
@@ -55,11 +57,29 @@ function calpopmakeup(magicped::MagicPed,model::AbstractString,
         hashcode=hash([initprob,tranrate])
         founders=sort(unique(reduce(vcat,states[nzstate])))
         founders = isfounderinbred ? founders : unique(div.(founders .+ 1,2))
-        # tranrate2 = initprob2tranrate(initprob, tranrate)
-        # @. tranrate = tranrate * 0.9 + tranrate2 * 0.1
+        # calculate virtualdict
+        # maping duplicated id_virtualoffspring to original id (act as founder)
+        virtual_offls = string.(offidls[offs])
+        keepat!(virtual_offls, occursin.(r"_virtualoffspring$", virtual_offls))
+        virtual_fls = replace.(virtual_offls, r"_virtualoffspring$"=>"")
+        b = [in(i,founderidls) for i in virtual_fls]
+        keepat!(virtual_offls,b)
+        keepat!(virtual_fls,b)
+        if isempty(virtual_offls)
+            virtualdict = Dict{Int,Int}()
+        else
+            virtual_offls2 = [findfirst(==(i), offidls) for i in virtual_offls]
+            virtual_fls2 = [findfirst(==(i), founderidls) for i in virtual_fls]
+            virtualdict = Dict(virtual_offls2 .=> virtual_fls2)
+            if !issubset(virtual_offls2, offs) 
+                @error string("unexpected virtual offspring=", virtual_offls)
+            end
+        end
+        # 
         popid=>Dict(["founder"=>founders, 
             "isfounderinbred"=>isfounderinbred, "fglset"=>fglset, 
             "offspring"=>offs, "ishaploid"=>ishaploid,
+            "virtualdict"=>virtualdict,
             "nzstate"=>nzstate, "nzorigin"=>states[nzstate],
             "initprob"=>initprob,"tranrate"=>tranrate,"hashcode"=>hashcode])
     end for popid in keys(chrmagicprior)])

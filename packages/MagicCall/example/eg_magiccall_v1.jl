@@ -1,9 +1,8 @@
 
-# using Distributed
-# nprocs() < 7 && addprocs(7-nprocs())
-# @info string("nworkers=", nworkers())
-# @everywhere  using MagicCall
-
+using Distributed
+nprocs() < 6 && addprocs(6-nprocs())
+@info string("nworkers=", nworkers())
+@everywhere  using MagicCall
 
 using Revise
 using MagicBase
@@ -11,16 +10,17 @@ using MagicCall
 cd(@__DIR__)
 pwd()
 
-isfounderinbred = false
+isfounderinbred = true
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedinfo = string(dataid, "_magicsimulate_ped.csv")
 
 @time magiccall(genofile,pedinfo;     
     isfounderinbred,
-    # israwcall = true, 
-    likeparameters = LikeParameters(0.005, 0.005, 0.0, nothing, nothing, nothing, 0.0),
+    israwcall = true, 
+    # likeparameters = LikeParameters(0.005, 0.005, 0.0, nothing, nothing, nothing, 0.0),
     # model = "depmodel", 
+    # isparallel = false, 
 )
 
 calledgenofile = "outstem_magiccall_geno.vcf.gz"
@@ -28,6 +28,9 @@ magicgeno = formmagicgeno(calledgenofile,pedinfo;
     isfounderinbred, 
     formatpriority = ["GT"],
 );
+
+
+
 truefile = "sim_magicsimulate_truegeno.csv.gz"
 truegeno = formmagicgeno(truefile,pedinfo;isfounderinbred);
 
@@ -64,8 +67,8 @@ display(fig)
 
 # clear up
 
-# cd(@__DIR__)
-# dataid = "sim"
-# rm.(filter(x->occursin(dataid, x), readdir()))
-# rm.(filter(x->occursin("outstem", x), readdir()))
+cd(@__DIR__)
+dataid = "sim"
+rm.(filter(x->occursin(dataid, x), readdir()))
+rm.(filter(x->occursin("outstem", x), readdir()))
 

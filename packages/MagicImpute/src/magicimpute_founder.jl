@@ -8,6 +8,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
 	startbyhalf::Union{Nothing,Integer}=nothing, 
+	isgreedy::Bool=false,
 	isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,     
@@ -64,6 +65,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		"isfounderinbred = ", isfounderinbred,"\n",								
 		"byfounder = ", byfounder, "\n",
 		"startbyhalf = ", startbyhalf, "\n",		
+		"isgreedy = ", isgreedy, "\n",		
 		"threshproposal = ", threshproposal, "\n",
 		"isallowmissing = ", isallowmissing, "\n",
 		"isrepeatimpute = ", isrepeatimpute, "\n",	
@@ -188,21 +190,15 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		iscorrectfounder = !in("AD", offspringformat) || (model == "depmodel") 
 		printconsole(io,verbose, string("reset iscorrectfounder=",iscorrectfounder))
 	end	
-	if isnothing(startbyhalf)  
-		if byfounder == -1
-			startbyhalf = 2
+	if isnothing(startbyhalf) 
+		if isgreedy
+			startbyhalf = -1 # not used 
 		else
-			memls = magicgeno.magicped.offspringinfo[!,:member]
-			nsubpop = length(unique(memls))
-			noff = length(memls)
 			nfounder = length(magicgeno.magicped.founderinfo[!,:individual])
-			if nsubpop == 1 && byfounder >= nfounder
-				startbyhalf = 2
-			else				
-				startbyhalf = noff/nfounder < 20 ? 7 : 5			
-			end
+			noff = length(magicgeno.magicped.offspringinfo[!,:member])				
+			startbyhalf = noff/nfounder < 20 ? 7 : 5					
+			printconsole(io,verbose, string("reset startbyhalf=",startbyhalf))
 		end
-		printconsole(io,verbose, string("reset startbyhalf=",startbyhalf))
 	end	
 	if in("GT_phased",founderformat)
         if isfounderinbred
@@ -241,7 +237,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 			printconsole(io,verbose, string("\nstart founder imputation with nrepeatmin = ", nrepeatmin, " and nrepeatmax = ",nrepeatmax))						
 			magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 				model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror = false,
-				israndallele, isfounderinbred, byfounder, startbyhalf, 
+				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 				isdelmarker, isinfererror, isordermarker, isspacemarker, 
 				delsiglevel, tukeyfence,  minoutlier, trimcm, trimfraction, skeletonsize, 
@@ -263,7 +259,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				MagicBase.info_magicgeno(partmagicgeno;io,verbose)		
 				magicimpute_founder_repeat!(partmagicgeno,nrepeatimpute;
 					model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
-					israndallele, isfounderinbred, byfounder, startbyhalf, 
+					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, isinfererror, isordermarker, isspacemarker, 
 					delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
@@ -307,7 +303,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	nrepeatimpute = isrepeatimpute2 ? 1 : -1           	
 	magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 		model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
-		israndallele, isfounderinbred, byfounder, startbyhalf,
+		israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy,
 		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,	threshproposal, 
 		isdelmarker, isinfererror, isordermarker, isspacemarker, 
 		delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
@@ -564,6 +560,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,		
 	startbyhalf::Integer,
+	isgreedy::Bool, 
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
@@ -648,7 +645,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 		        pmap((x,y,z)->impute_refine_repeat_chr!(x,nrepeatimpute;
 	                magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf, 
+					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -682,7 +679,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 				impute_refine_repeat_chr!(magicgenofilels[i],nrepeatimpute;
 					magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf,
+					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -724,6 +721,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
 	startbyhalf::Integer,
+	isgreedy::Bool, 
 	isinferjunc::Bool=false,
 	iscorrectfounder::Bool=false,
 	isimputefounder::Union{Nothing,Bool}=nothing, 
@@ -825,7 +823,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 		        res = pmap((x,y,z,w)->impute_refine_chr!(x;
 	                magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder, startbyhalf,
+					byfounder, startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -837,7 +835,6 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	                magicgenofilemtx[chroo,:],imputetempfilemtx[chroo,:], logfilemtx[chroo,:],repeatrunmtx[chroo,:])				
 				loglikemtx[chroo,:] .= sum.(first.(res))				
 			catch err 				
-				printconsole(io,verbose, string("ERROR: ",err))				
 				for (exc, bt) in current_exceptions()
 					showerror(stdout, exc, bt)
 				  	showerror(io, exc, bt)
@@ -860,7 +857,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 				chrres = impute_refine_chr!(magicgenofilemtx[i];
 					magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf, 
+					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,

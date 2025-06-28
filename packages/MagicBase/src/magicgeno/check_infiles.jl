@@ -140,13 +140,13 @@ function check_infiles(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
             else
                 magicped = readmagicped(pedinfo; commentstring, workdir)
             end
-            founders = magicped.founderinfo[!,:individual]
+            founders = magicped.founderinfo[!,:individual]            
             check_allunique(founders,"founders";io, verbose)    
             d = setdiff(founders,samples)            
             if isempty(d)                     
                 msg = string("check founders: OK. All ", length(founders), " founders = ", founders, " in pedfile are also in samples in genofile")
                 printconsole(io,verbose,msg)        
-            else
+            else                
                 if length(d) == length(founders)                    
                     msg = string("check founders: FAILED. All ", length(d), " founders = ", d, " in pedfile but not in samples in genofile")
                     printconsole(io,false,"Error: "*msg)
@@ -157,12 +157,24 @@ function check_infiles(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
                     @warn msg
                 end
             end
-            offspring = magicped.offspringinfo[!,:individual]
+            offspring = magicped.offspringinfo[!,:individual]            
             check_allunique(offspring,"offspring";io, verbose)    
             if ismagicsimulate
                 0
             else
-                d = setdiff(offspring,samples)                        
+                b = occursin.(r"_virtualoffspring$", offspring)
+                if any(b)
+                    msg = string("check offspring: ", sum(b), " virtualoffspring = ", join(offspring[b],","))
+                    printconsole(io,verbose,msg)     
+                end
+                d = setdiff(offspring,samples)               
+                if !isempty(d)                
+                    b = occursin.(r"_virtualoffspring$", d)
+                    if any(b)    
+                        d[b] .= replace.(d[b], r"_virtualoffspring$"=>"")
+                        setdiff!(d, samples)
+                    end                    
+                end         
                 if isempty(d)                     
                     msg = string("check offspring: OK. All ", length(offspring), " offspring in pedfile are also in samples in genofile")
                     printconsole(io,verbose,msg)        
@@ -172,12 +184,12 @@ function check_infiles(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
                     @warn msg
                 end
             end
-            d = setdiff(samples, founders, offspring)
+            d = setdiff(samples, founders, offspring)            
             if isempty(d)                     
                 msg = string("check samples: OK. All ", length(samples), " samples in genofile are also in pedfile")
                 printconsole(io,verbose,msg)        
             else
-                msg = string("check samples: PASS. Among ", length(samples), " samples, ignore ", length(d), " samples in genofile but not in pedfile")
+                msg = string("check samples: PASS. Among ", length(samples), " samples, ignore ", length(d), " samples in genofile but not in pedfile: ", d)
                 printconsole(io,false,"Warning: "*msg)
                 @warn msg
             end
