@@ -79,14 +79,25 @@ function get_outlier_markers(markermap::MagicBase.AbstractDataFrame;
     threshlikeparam::ThreshLikeParam= ThreshLikeParam(), 
     )    
     outls = Int[]
-    colls = [:foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
-    for errname = colls
-        errls = maximum.(markermap[!,errname])
+    colls = [:foundererror,:offspringerror,:baseerror,:allelicbias, :allelicbias_2,:allelicoverdispersion,:allelicdropout]
+    for col = colls
+        if col == :allelicbias_2
+            errname = :allelicbias
+            errls = 1.0 .- maximum.(markermap[!,errname]) # remove low-outlier            
+        else
+            errname = col
+            errls = maximum.(markermap[!,errname]) # remove up-outlier
+        end
         allequal(errls) && continue 
+        softthresh = getproperty(softthreshlikeparam,errname)        
+        hardthresh = getproperty(threshlikeparam,errname)
+        if errname in [:allelicbias,:allelicbias_2]
+            softthresh = max(softthresh,1.0 - softthresh)
+            hardthresh = max(hardthresh,1.0 - hardthresh)
+        end
         delindices = del_error_indices2(errls; 
             tukeyfence, errorscale = errname == :allelicoverdispersion ? log : logit,
-            softthresh = getproperty(softthreshlikeparam,errname), 
-            hardthresh = getproperty(threshlikeparam,errname)
+            softthresh, hardthresh, 
         )				
         append!(outls,delindices)
     end

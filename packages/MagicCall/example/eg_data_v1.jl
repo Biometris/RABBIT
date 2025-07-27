@@ -10,7 +10,7 @@ fhaplofile = "sim_fhaplo.vcf.gz"
 ncluster = 2
 nsnpchr = 200
 nparent = 2
-isfounderinbred = true
+isfounderinbred = false
 
 @time simfhaplo(;
     isfounderinbred,
@@ -32,7 +32,7 @@ epsf = 0.02
 epso = 0.02
 baseerror = 0.002
 missfreq = 0.1
-depth = 20
+depth = 40
 @time magicsimulate(fhaplofile,pedfile;    
     isfounderinbred,
     foundererror = Beta(1, 1/epsf-1.0),
