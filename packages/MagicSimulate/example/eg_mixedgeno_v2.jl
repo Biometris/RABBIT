@@ -32,7 +32,7 @@ foundererror = offspringerror = Beta(1,95)
 foundermiss = offspringmiss = Beta(1,4)
 seqfrac = 0.5
 seqdepth = Gamma(2,10)
-seqerror = 0.001
+baseerror = 0.001
 select_proportion = 0.1
 select_nqtl = 50
 fhaplofile = isfounderinbred ? "sim_fgeno_haplo.csv.gz" : "sim_fgeno_phased.csv.gz"
@@ -62,7 +62,7 @@ contfgl, magicfgl = MagicSimulate.simfgl(founderhaplo,magicped;
     select_nqtl,select_proportion)
 truegeno = MagicSimulate.genedrop(magicfgl; isfounderinbred,isphased=true)
 obsgeno = MagicSimulate.simgeno(truegeno;foundererror,offspringerror,
-    foundermiss,offspringmiss,seqfrac,seqdepth,seqerror)
+    foundermiss,offspringmiss,seqfrac,seqdepth,baseerror)
 
 0
 

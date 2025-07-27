@@ -23,7 +23,7 @@ be phased.
 `popsize::Union{Nothing,Integer}=200` specifies the population size, valid only if
 the `pedinfo` is specified via a designcode or matescheme.
 
-`error_randallele::Union{Nothing,Real}=0.0` specifices genotyping error model. 
+`error_randallele::Union{Nothing,Real}=nothing` specifices genotyping error model. 
 The error model follows uniform allele model with probability error_randallele,  and it follows
 uniform genotype model with probability 1-error_randallele. If it is nothing, error_randallele 
 is given by the interally estimated non-ibd probability. 
@@ -43,14 +43,14 @@ of the fraction of missing genotypes at a marker in offspring.
 `seqfrac::Real=0.0` specifies the fraction of markers being genotyped by sequencing;
 the rest markers are genotyped by SNP array.
 
-`seqerror::Distribution = Beta(1,199)` specifies the probability diestribution of
+`baseerror::Distribution = Beta(1,199)` specifies the probability diestribution of
 sequencing error rate among markers. 
 
-`allelebalancemean::Distribution = Beta(10,10)` specifies the probability distribution of
+`allelicbias::Distribution = Beta(10,10)` specifies the probability distribution of
 the mean sequencing allelic balance among markers. 
 
-`allelebalancedisperse::Distribution = Exponential(0.05)` specifies overdispersion parameter for the probability distribution of
-allelebalancemean among individuals at a marker. 
+`allelicoverdispersion::Distribution = Exponential(0.05)` specifies overdispersion parameter for the probability distribution of
+allelicbias among individuals at a marker. 
 
 `seqdepth::Distribution = Gamma(2, 5)` specifies the probability distribution
 of the mean read depth at a marker. 
@@ -96,14 +96,14 @@ function magicsimulate(fhaplofile::AbstractString,
     popsize::Union{Nothing,Integer}=200,
     foundermiss::Distribution=Beta(1,9),
     offspringmiss::Distribution=Beta(1,9),
-    error_randallele::Union{Nothing,Real}=0.0,
+    error_randallele::Union{Nothing,Real}=nothing,
     foundererror::Distribution=Beta(1,199),
     offspringerror::Distribution=Beta(1,199),    
     seqfrac::Real=0.0,    
-    seqerror::Distribution = Beta(1,199),
-    allelebalancemean::Distribution = Beta(10,10),
-    allelebalancedisperse::Distribution = Exponential(0.05),
-    alleledropout::Distribution = Uniform(0,1e-10),
+    baseerror::Distribution = Beta(1,199),
+    allelicbias::Distribution = Beta(10,10),
+    allelicoverdispersion::Distribution = Exponential(0.05),
+    allelicdropout::Distribution = Uniform(0,1e-10),
     seqdepth::Distribution = Gamma(2, 5),
     seqdepth_overdispersion::Distribution = Gamma(1,1),
     isobligate::Bool=false,
@@ -131,7 +131,7 @@ function magicsimulate(fhaplofile::AbstractString,
     end
     MagicBase.check_infiles(fhaplofile,pedinfo; isbreedped=false, ismagicsimulate=true, io, commentstring,workdir,verbose)
     check_sim_arg(error_randallele, foundererror, offspringerror, foundermiss, offspringmiss,
-        seqfrac, seqerror, allelebalancemean, allelebalancedisperse, alleledropout, seqdepth, seqdepth_overdispersion, 
+        seqfrac, baseerror, allelicbias, allelicoverdispersion, allelicdropout, seqdepth, seqdepth_overdispersion, 
         popsize, interference, pheno_nqtl, pheno_h2,
         select_nqtl, select_dom, select_prop,outext)
     msg = string("list of args: \n",
@@ -145,10 +145,10 @@ function magicsimulate(fhaplofile::AbstractString,
         "foundermiss = ", foundermiss, "\n",
         "offspringmiss = ", offspringmiss, "\n",            
         "seqfrac = ", seqfrac,"\n",
-        "seqerror = ", seqerror, "\n",
-        "allelebalancemean = ", allelebalancemean, "\n",
-        "allelebalancedisperse = ", allelebalancedisperse, "\n",
-        "alleledropout = ", alleledropout, "\n",
+        "baseerror = ", baseerror, "\n",
+        "allelicbias = ", allelicbias, "\n",
+        "allelicoverdispersion = ", allelicoverdispersion, "\n",
+        "allelicdropout = ", allelicdropout, "\n",
         "seqdepth = ", seqdepth,"\n",
         "seqdepth_overdispersion = ", seqdepth_overdispersion,"\n",        
         "isobligate = ", isobligate, "\n",
@@ -185,7 +185,7 @@ function magicsimulate(fhaplofile::AbstractString,
         if !ispedfile(pedinfo)
             MagicBase.setfounderid!(magicped,founderhaplo.magicped.founderinfo[!,:individual])
         end
-        MagicBase.rawgenoprob!(founderhaplo; targets = ["founders"], seqerror=0.005, isfounderinbred)
+        MagicBase.rawgenoprob!(founderhaplo; targets = ["founders"], baseerror=0.005, isfounderinbred)
         MagicBase.rawgenocall!(founderhaplo; targets = ["founders"], callthreshold = 0.95, isfounderinbred)
         founderformat = unique(vcat([unique(i[!,:founderformat]) for i=founderhaplo.markermap]...))
         formatdiff = setdiff(founderformat, ["GT_haplo","GT_phased"])
@@ -208,7 +208,7 @@ function magicsimulate(fhaplofile::AbstractString,
     # @info truegeno.markermap[1]
     # 
     tused = @elapsed obsgeno = simgeno(truegeno,magicfgl;error_randallele,foundererror,offspringerror,
-        foundermiss,offspringmiss,seqfrac,seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        foundermiss,offspringmiss,seqfrac,baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         seqdepth,seqdepth_overdispersion)
     msg = string("tused=",round(tused,digits=2),"s in simulating error and missing")
     MagicBase.printconsole(io,verbose,msg)
@@ -295,10 +295,10 @@ function check_sim_arg(
     foundermiss::Distribution,
     offspringmiss::Distribution,    
     seqfrac::Real,
-    seqerror::Distribution,
-    allelebalancemean::Distribution,
-    allelebalancedisperse::Distribution, 
-    alleledropout::Distribution,
+    baseerror::Distribution,
+    allelicbias::Distribution,
+    allelicoverdispersion::Distribution, 
+    allelicdropout::Distribution,
     seqdepth::Distribution,
     seqdepth_overdispersion::Distribution,
     popsize::Integer,    
@@ -330,17 +330,17 @@ function check_sim_arg(
     if !(popsize>0)
         @error string("popsize=", popsize," is not positive")
     end
-    if !(minimum(seqerror) >=0 &&  maximum(seqerror) <=1)
-        @error string("seqerror=",seqerror, "; its support is not a subset of [0,1]")
+    if !(minimum(baseerror) >=0 &&  maximum(baseerror) <=1)
+        @error string("baseerror=",baseerror, "; its support is not a subset of [0,1]")
     end
-    if !(minimum(allelebalancemean) >=0 &&  maximum(allelebalancemean) <=1)
-        @error string("allelebalancemean=",allelebalancemean, "; its support is not a subset of [0,1]")
+    if !(minimum(allelicbias) >=0 &&  maximum(allelicbias) <=1)
+        @error string("allelicbias=",allelicbias, "; its support is not a subset of [0,1]")
     end
-    if !(minimum(allelebalancedisperse) >=0)
-        @error string("allelebalancedisperse=",allelebalancedisperse, "; its support is not a subset of [0,∞]")
+    if !(minimum(allelicoverdispersion) >=0)
+        @error string("allelicoverdispersion=",allelicoverdispersion, "; its support is not a subset of [0,∞]")
     end
-    if !(minimum(alleledropout) >=0 &&  maximum(alleledropout) <=1)
-        @error string("alleledropout=",alleledropout, "; its support is not a subset of [0,1]")
+    if !(minimum(allelicdropout) >=0 &&  maximum(allelicdropout) <=1)
+        @error string("allelicdropout=",allelicdropout, "; its support is not a subset of [0,1]")
     end
     if !(minimum(seqdepth) >= 0)
         @error string("seqdepth=", seqdepth,"; its support is not a subset of [0,∞)")

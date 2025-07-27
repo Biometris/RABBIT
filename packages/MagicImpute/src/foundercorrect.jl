@@ -4,10 +4,10 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     inclmissingallele::Bool=false, 
     decodetempfile::AbstractString,    
@@ -24,19 +24,19 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     for it in eachindex(minnerrdiffls)
         minnerrdiff = minnerrdiffls[it]
         calledchroffgeno = singlesite_genocall(chrfhaplo,chroffgeno; ismalexls, popmakeup,
-            epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,alleledropout, 
+            epsf,epso, epso_perind, baseerror, allelicbias, allelicoverdispersion,allelicdropout, 
             israndallele,issnpGT,callthreshold = 0.7,tempjld2file = decodetempfile)
         loglikels, correctdf = foundererror_chr(chrfhaplo, chroffgeno, calledchroffgeno, 
             founder2progeny, popmakeup,priorprocess,priorspace;
-            epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+            epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
             snporder, decodetempfile,offspringexcl, issnpGT,israndallele, minnerrdiff)
         loglikels[offspringexcl] .= 0.0      
         isempty(correctdf) && continue
         setcorrectdf!(newchrfhaplo,correctdf,fhaplosetpp; isfounderinbred,inclmissingallele)
         # must viterbi alg: keep consistent the loglikels of foundererror_chr, 
         newloglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
-            epsf,epso,epso_perind, seqerror,hmmalg="viterbi",
-            allelebalancemean,allelebalancedisperse,alleledropout, 
+            epsf,epso,epso_perind, baseerror,hmmalg="viterbi",
+            allelicbias,allelicoverdispersion,allelicdropout, 
             decodetempfile, israndallele,issnpGT,snporder
         )	
         newloglikels[offspringexcl] .= 0.0 
@@ -66,10 +66,10 @@ function foundererror_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     decodetempfile::AbstractString,    
     israndallele::Bool,
@@ -77,7 +77,7 @@ function foundererror_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     issnpGT::AbstractVector,
     minnerrdiff::Integer=2)
     loglike = first(MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-        epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         hmmalg="viterbi", decodetempfile, israndallele, issnpGT,snporder));
     # calculate bestgeno from viterbi path    
     nstate, nfgl = MagicReconstruct.hmm_nstate_nfgl(popmakeup)	
@@ -109,10 +109,10 @@ function singlesite_genocall(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     ismalexls::AbstractVector,
     israndallele::Bool, 
     issnpGT::AbstractVector,    
@@ -120,8 +120,8 @@ function singlesite_genocall(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     tempjld2file::AbstractString,
     )
     singlesite_genoprob(chrfhaplo,chroffgeno;  popmakeup,
-        epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,
-        alleledropout, israndallele,issnpGT,outjld2file= tempjld2file)
+        epsf,epso, epso_perind, baseerror, allelicbias, allelicoverdispersion,
+        allelicdropout, israndallele,issnpGT,outjld2file= tempjld2file)
     res = copy(chroffgeno)    
     singlesite_callfromprob!(res,tempjld2file;ismalexls,issnpGT,callthreshold)
     res
@@ -155,10 +155,10 @@ function singlesite_genoprob(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     israndallele::Bool,     
     issnpGT::AbstractVector, 
     outjld2file::AbstractString)
@@ -166,8 +166,8 @@ function singlesite_genoprob(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     nsnp,nfgl2 = size(chrfhaplo)
     nfgl == nfgl2 || @error "inconsistent nfgl"
     f(x) = isa(x,AbstractVector) ? x : x*ones(nsnp)
-    epsfls,epsols, seqerrorls = f(epsf), f(epso), f(seqerror)
-    allelebalancemeanls, allelebalancedispersels, alleledropoutls  = f(allelebalancemean), f(allelebalancedisperse), f(alleledropout)
+    epsfls,epsols, baseerrorls = f(epsf), f(epso), f(baseerror)
+    allelicbiasls, allelicoverdispersionls, allelicdropoutls  = f(allelicbias), f(allelicoverdispersion), f(allelicdropout)
     isepsf_equal = allequal(epsfls)	    
     jldopen(outjld2file,"w") do file
         write(file,"nmarker",nsnp)
@@ -204,7 +204,7 @@ function singlesite_genoprob(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
                             end
                             if eltype(first(sitegeno)) <: Integer
                                 # format = AD
-                                like = MagicReconstruct.haplolikeGBS(sitegeno,epso2,seqerrorls[snp])
+                                like = MagicReconstruct.haplolikeGBS(sitegeno,epso2,baseerrorls[snp])
                             else
                                 # format = GP
                                 like = MagicReconstruct.haplolikeGBS(sitegeno,epso2)
@@ -254,8 +254,8 @@ function singlesite_genoprob(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
                             end
                             if eltype(first(sitegeno)) <: Integer
                                 # format = AD
-                                like = MagicReconstruct.diplolikeGBS(sitegeno,epso2,seqerrorls[snp],
-                                    allelebalancemeanls[snp],allelebalancedispersels[snp],alleledropoutls[snp]; israndallele)
+                                like = MagicReconstruct.diplolikeGBS(sitegeno,epso2,baseerrorls[snp],
+                                    allelicbiasls[snp],allelicoverdispersionls[snp],allelicdropoutls[snp]; israndallele)
                             else
                                 # format = GP
                                 like = MagicReconstruct.diplolikeGBS(sitegeno,epso2;israndallele)

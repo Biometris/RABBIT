@@ -37,7 +37,7 @@ function filter_offspring_dupe!(magicgeno::MagicGeno;
     end
     # find offspring duplicate
 	tused = @elapsed  begin 
-        dosegeno = MagicBase.get_dosegeno(magicgeno; seqerror=0.001, callthreshold=threshcall, iscalling=true, isdepmodel = model=="depmodel")                    
+        dosegeno = MagicBase.get_dosegeno(magicgeno; baseerror=0.001, callthreshold=threshcall, iscalling=true, isdepmodel = model=="depmodel")                    
         mem1 = round(Int, memoryuse()/10^6)
         GC.gc()
         mem2 = round(Int, memoryuse()/10^6)        
@@ -94,7 +94,7 @@ function filter_offspring_dupe!(magicgeno::MagicGeno;
 		msg = "no offspring deleted"
 		printconsole(logio,verbose,msg)
 		if nsnpmiss > 0
-			MagicBase.merge_missprogeny!(magicgeno,missgeno)
+			MagicBase.merge_missprogeny!(magicgeno,missgeno; isspacemarker = false)
 		end
 	else		
         if length(offidls) < 2*10^4            
@@ -141,7 +141,7 @@ function filter_offspring_dupe!(magicgeno::MagicGeno;
             end
 		end
 		if nsnpmiss > 0
-			MagicBase.merge_missprogeny!(magicgeno,missgeno)
+			MagicBase.merge_missprogeny!(magicgeno,missgeno; isspacemarker=false)
 		end
         if offspring_maxcorr < 1.0            
 			del_offspring!(magicgeno,offkeep;io=logio,verbose)

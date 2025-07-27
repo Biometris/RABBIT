@@ -1,7 +1,7 @@
 
 function filter_ped_error!(magicgeno::MagicGeno;
     model::AbstractString = "jointmodel",
-    seqerror::Real = 0.001,
+    baseerror::Real = 0.001,
     isfounderinbred::Bool=true,
     mapavailable::Bool=false,
     thresh_epsf_nprogeny::Integer = 10,
@@ -17,7 +17,7 @@ function filter_ped_error!(magicgeno::MagicGeno;
     logio = MagicBase.set_logfile_begin(logfile, workdir, "filter_ped_error!"; verbose,delim="-")
     msg = string("list of options: \n",
         "model = ", model, "\n",
-        "seqerror = ", seqerror, "\n",
+        "baseerror = ", baseerror, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
         "mapavailable = ", mapavailable, "\n",
         "thresh_epsf_nprogeny = ", thresh_epsf_nprogeny, "\n",

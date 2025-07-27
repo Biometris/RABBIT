@@ -1,7 +1,7 @@
 name = "MagicCall"
 uuid = "668373cf-b572-4d35-9009-0602b8ed7892"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.3.0"
+version = "1.3.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

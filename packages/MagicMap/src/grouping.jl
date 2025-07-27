@@ -83,7 +83,7 @@ function repeat_trunc_clusters_by_silh(clusters::AbstractVector, silhs::Abstract
         minsilhouette=0.5
         clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
         printconsole(io,verbose,msg)    
-        while maxdiff > 0.2 && minsilhouette > 0.0
+        while maxdiff > 0.3 && minsilhouette > 0.0
             minsilhouette -= 0.1
             clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
             printconsole(io,verbose,msg)                
@@ -92,7 +92,7 @@ function repeat_trunc_clusters_by_silh(clusters::AbstractVector, silhs::Abstract
     else
         clusters2, maxdiff, msg = trunc_clusters_by_silh(clusters, silhs; minsilhouette)
         printconsole(io,verbose,msg)    
-        if maxdiff >= 0.2 # Kepp consistent with mapcorndel(minfreq=0.2)
+        if maxdiff >= 0.3 # Kepp consistent with mapcorndel(minfreq=0.3)
             msg = string("minsilhouette might be too large!")
             if !isnothing(minsilhouette) && minsilhouette > 0
                 msg *= string(" Suggest to set minsilhouette = 0")

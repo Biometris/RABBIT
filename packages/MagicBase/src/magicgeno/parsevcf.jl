@@ -131,7 +131,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
             # keep information of some vcf columns            
             # parse vcf info column
             info = rowgeno[8]        
-            newinfo, linkagegroup, poscm, foundererror, offspringerror, seqerror, allelebalancemean, allelebalancedisperse, alleledropout = parse_vcf_info(info)
+            newinfo, linkagegroup, poscm, foundererror, offspringerror, baseerror, allelicbias, allelicoverdispersion, allelicdropout = parse_vcf_info(info)
             idls = ["REF", "ALT", "QUAL","FILTER"]
             for i in eachindex(idls)
                 if rowgeno[3+i] != "."
@@ -142,7 +142,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
             isempty(newinfo) && (newinfo = "NA")
             physchrom,physposbp,snpid = [i== "." ? "NA" : i for i in rowgeno[1:3]]            
             res = vcat([snpid,linkagegroup,poscm,physchrom,physposbp,newinfo], [founderformat, offspringformat],
-                [foundererror, offspringerror,seqerror,allelebalancemean, allelebalancedisperse,alleledropout], fgeno, offgeno)
+                [foundererror, offspringerror,baseerror,allelicbias, allelicoverdispersion,allelicdropout], fgeno, offgeno)
             0
         end
         write(outio,join(res,outdelim),"\n")
@@ -182,10 +182,10 @@ function parse_vcf_info(info::AbstractString)
     poscm = "NA"
     foundererror = "NA"
     offspringerror = "NA"
-    seqerror = "NA"
-    allelebalancemean = "NA"            
-    allelebalancedisperse = "NA"            
-    alleledropout = "NA"
+    baseerror = "NA"
+    allelicbias = "NA"            
+    allelicoverdispersion = "NA"            
+    allelicdropout = "NA"
     if info != "."
         infols = split.(split(info,";"),"=")
         otherinfo = infols[length.(infols) .== 1]
@@ -211,20 +211,20 @@ function parse_vcf_info(info::AbstractString)
             offspringerror = infodict["OFFSPRINGERROR"]
             delete!(infodict,"OFFSPRINGERROR")
         end
-        if haskey(infodict,"SEQERROR")
-            seqerror = infodict["SEQERROR"]
-            delete!(infodict,"SEQERROR")
+        if haskey(infodict,"BASEERROR")
+            baseerror = infodict["BASEERROR"]
+            delete!(infodict,"BASEERROR")
         end
-        if haskey(infodict,"ALLELEBALANCEMEAN")
-            allelebalancemean = infodict["ALLELEBALANCEMEAN"]
-            delete!(infodict,"ALLELEBALANCEMEAN")
+        if haskey(infodict,"ALLELICBIAS")
+            allelicbias = infodict["ALLELICBIAS"]
+            delete!(infodict,"ALLELICBIAS")
         end
-        if haskey(infodict,"ALLELEBALANCEDISPERSE")
-            allelebalancedisperse = infodict["ALLELEBALANCEDISPERSE"]
-            delete!(infodict,"ALLELEBALANCEDISPERSE")
+        if haskey(infodict,"ALLELICOVERDISPERSION")
+            allelicoverdispersion = infodict["ALLELICOVERDISPERSION"]
+            delete!(infodict,"ALLELICOVERDISPERSION")
         end
         if haskey(infodict,"ALLELEDROPOUT")
-            alleledropout = infodict["ALLELEDROPOUT"]
+            allelicdropout = infodict["ALLELEDROPOUT"]
             delete!(infodict,"ALLELEDROPOUT")
         end
         if !isempty(infodict)
@@ -232,7 +232,7 @@ function parse_vcf_info(info::AbstractString)
         end
     end
     newinfo = strip(newinfo,';')    
-    [newinfo, linkagegroup, poscm, foundererror, offspringerror, seqerror, allelebalancemean, allelebalancedisperse, alleledropout]
+    [newinfo, linkagegroup, poscm, foundererror, offspringerror, baseerror, allelicbias, allelicoverdispersion, allelicdropout]
 end
 
 function parse_titlerow(titlerow::AbstractVector,pedinfo::Union{Integer,AbstractString};
@@ -286,7 +286,7 @@ function parse_titlerow(titlerow::AbstractVector,pedinfo::Union{Integer,Abstract
         res = vcat(titlerow[1:9], founderid, offspringid)
     else
         res = ["marker", "linkagegroup","poscm","physchrom", "physposbp", "info", "founderformat","offspringformat",
-            "foundererror","offspringerror","seqerror","allelebalancemean","allelebalancedisperse","alleledropout"]
+            "foundererror","offspringerror","baseerror","allelicbias","allelicoverdispersion","allelicdropout"]
         res = vcat(res,founderid, offspringid)
     end
     delim = keepvcf ? '\t' : ','    

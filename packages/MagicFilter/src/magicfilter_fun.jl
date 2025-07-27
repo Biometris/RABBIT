@@ -27,7 +27,7 @@ julia> magicfilter("geno.vcf.gz","4ril_self3")
 function magicfilter(genofile::AbstractString,    
     pedinfo::Union{Integer, MagicBase.JuncDist,AbstractString};
     model::AbstractString="jointmodel",    
-    likeparameters::LikeParameters=LikeParameters(),  
+    likeparam::LikeParam=LikeParam(),  
     isfounderinbred::Bool=true,
     formatpriority::AbstractVector=["AD","GT"],
     isphysmap::Bool=false,
@@ -79,7 +79,7 @@ function magicfilter(genofile::AbstractString,
         formatpriority, commentstring, missingstring="NA", workdir)
     msg = string("tused=", round(tused,digits=1), " seconds by formmagicgeno")
     MagicBase.printconsole(logio,verbose,msg)    
-    magicfilter!(magicgeno; model, likeparameters,
+    magicfilter!(magicgeno; model, likeparam,
         isfounderinbred,  threshcall,
         chrsubset,snpsubset,      
         minsubpop,minnprogeny,
@@ -132,7 +132,7 @@ removes bad mrkers and founders/offspring from magicgeno.
 ancestral prior process along the two homologous chromosomes within an offspring.
 It must be "depmodel", "indepmodel", or "jointmodel". 
 
-`likeparameters::LikeParameters=LikeParameters()`: specifies default genotyping error rates. 
+`likeparam::LikeParam=LikeParam()`: specifies default genotyping error rates. 
 
 `isfounderinbred::Bool=true`: specifies if fouonders are inbred
 
@@ -188,7 +188,7 @@ julia> magicfilter!(magicgeno)
 """
 function magicfilter!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
-    likeparameters::LikeParameters=LikeParameters(),   
+    likeparam::LikeParam=LikeParam(),   
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,        
@@ -213,11 +213,11 @@ function magicfilter!(magicgeno::MagicGeno;
     logio = MagicBase.set_logfile_begin(logfile, workdir, "magicfilter!"; verbose,delim="=")
     model = MagicBase.reset_model(magicgeno.magicped,model;io=logio,verbose)    
     submagicgeno!(magicgeno; chrsubset,snpsubset)    
-    epso = MagicBase.get_offspringerror(likeparameters)
-    seqerror = MagicBase.get_seqerror(likeparameters)
+    epso = MagicBase.get_likeproperty(likeparam, :offspringerror)
+    baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
     offspringformats = MagicBase.get_offspringformats(magicgeno)
     targets = model == "depmodel" ? ["founders","offspring"] : ["founders"] 
-    MagicBase.rawgenoprob!(magicgeno; targets, seqerror, isfounderinbred)
+    MagicBase.rawgenoprob!(magicgeno; targets, baseerror, isfounderinbred)
     MagicBase.rawgenocall!(magicgeno; targets = ["founders"] , callthreshold = 1.0 - 2*epso, isfounderinbred)    
     if model == "depmodel" 
         MagicBase.rawgenocall!(magicgeno; targets = ["offspring"], callthreshold = threshcall, isfounderinbred)    
@@ -303,13 +303,13 @@ function call_offgeno!(calledgeno::AbstractMatrix, formatls::AbstractVector,
             b = [i in ["AD","GP"] for i in formatls]
             subgeno =view(calledgeno, b, isoffspringinbred)
             subgeno .= MagicBase.genocallhaplo(subgeno, formatls[b];
-                seqerror = 0.001,callthreshold = 0.95) .^ 2
+                baseerror = 0.001,callthreshold = 0.95) .^ 2
         end
         if !all(isoffspringinbred)
             b = [i in ["AD","GP"] for i in formatls]
             subgeno =view(calledgeno, b, .!isoffspringinbred)
             subgeno .= MagicBase.genocalldiplo(subgeno, formatls[b];
-                seqerror = 0.001,callthreshold)
+                baseerror = 0.001,callthreshold)
         end
     end
     calledgeno

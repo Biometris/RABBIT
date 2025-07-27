@@ -57,5 +57,5 @@ isfile(pedfile)
 # # designcode = "5star-self3"
 # @time magicsimulate(fhaplofile,designcode)
 # seqdepth = Gamma(1,2)
-# seqerror = 0.001
+# baseerror = 0.001
 # foundermiss = Beta(1,9)

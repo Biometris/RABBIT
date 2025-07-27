@@ -13,7 +13,6 @@ genofile = dataid*"_magicsimulate_geno.vcf.gz"
 magiccall(genofile,designcode;
     isfounderinbred,    
     verbose=false,
-    priorlikeparameters = PriorLikeParameters(seqerror = MagicCall.Beta(1,9)),
     outstem = dataid, 
 )
 

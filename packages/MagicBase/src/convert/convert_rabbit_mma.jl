@@ -103,8 +103,8 @@ function rabbitgeno_mma2jl(mmagenofile::AbstractString;
     middf = DataFrame(physchrom = [missing for _ in 1:size(mapdf,1)], 
         physposbp=missing, info=missing,
         founderformat=fformat,offspringformat=offformat,
-        foundererror=missing,offspringerror=missing,seqerror=missing,
-        allelebalancemean=missing,allelebalancedisperse=missing,alleledropout=missing)
+        foundererror=missing,offspringerror=missing,baseerror=missing,
+        allelicbias=missing,allelicoverdispersion=missing,allelicdropout=missing)
     resdf = hcat(mapdf,middf,genodf)
     isfounderinbred = fformat == "GT_haplo"
     indls = names(genodf)

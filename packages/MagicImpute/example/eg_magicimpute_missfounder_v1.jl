@@ -49,13 +49,13 @@ show(offacc)
 
 using Plots
 using StatsBase
-colls = [:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+colls = [:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
 colls = colls[1:1]
 gls = [begin 
     trueerrls = copy(truegeno.markermap[1][!,col])    
     esterrls = copy(magicgeno.markermap[1][!,col])
     b = .!ismissing.(trueerrls)
-    if col == :alleledropout
+    if col == :allelicdropout
         # b .= b .&& esterrls .> 1e-3    
         println("col=",col, ",#marker_incl=",sum(b))
     end    

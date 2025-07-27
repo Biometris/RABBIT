@@ -11,7 +11,7 @@ dataid="sim"
 isfounderinbred = false
 
 fhaplofile = dataid*"_fhaplo.vcf.gz"
-ncluster = 2
+ncluster = 5
 nsnpchr = 200
 nparent = 2
 @time simfhaplo(;
@@ -22,26 +22,26 @@ nparent = 2
     outfile=fhaplofile
 )
 
-epsf = 0.01
-epso = 0.01
+epsf = 0.05
+epso = 0.05
 missf = 0.05
 misso = 0.05
+seqerr = 0.002
 # pedcode = string(nparent, "star-self0")
 pedcode = string(nparent, "ril-self0")
 @time magicsimulate(fhaplofile,pedcode;
-    popsize=100,
+    popsize=200,
     isfounderinbred,    
-    foundererror = Beta(2, 2/epsf-2.0),
-    offspringerror = Beta(2, 2/epso-2.0),
-    foundermiss = Beta(2,2/missf-2),
-    offspringmiss = Beta(2,2/misso-2),
-    error_randallele = 1.0, 
-    seqfrac = 0.0,
-    seqerror = Beta(2,2/0.005-2),
-    allelebalancemean = Beta(3,3),
-    allelebalancedisperse = Exponential(0.2),
-    # alleledropout = Beta(1,199),
-    seqdepth = Gamma(2, 10),
+    foundererror = Beta(1, 1/epsf-1),
+    offspringerror = Beta(1, 1/epso-1),
+    foundermiss = Beta(1,1/missf-1),
+    offspringmiss = Beta(1,1/misso-1),
+    error_randallele = 1,
+    seqfrac = 1.0,
+    baseerror = Beta(1,1/seqerr-1),
+    allelicbias = Beta(3,3),
+    allelicoverdispersion = Exponential(0.3),    
+    seqdepth = Gamma(1, 40),
     outstem= dataid,    
 )
 

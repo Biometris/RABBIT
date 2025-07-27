@@ -47,10 +47,11 @@ export
     vcffilter, merge_vcffiles, 
     vcf_count_markers, vcf_del_samples,vcf_rename_samples,
     arrayfile2vcf, merge_arrayfiles, 
-    # for likeparameters
-    LikeParameters, parse_likeparameters, 
-    ThreshLikeParameters, parse_threshlikeparameters,
-    PriorLikeParameters, parse_priorlikeparameters,    
+    # for likeparam
+    LikeParam, 
+    SoftThreshLikeParam, ThreshLikeParam, 
+    PriorLikeParam, 
+    parse_likeparam, 
     # for accuracy
     magicaccuracy,magicaccuracy!,mapaccuracy,
     imputeaccuracy, imputeaccuracy!,
@@ -58,7 +59,7 @@ export
     plotmarkermap,plotmarkererror,
     saveprobplot, plotcondprob, animcondprob, 
     plotmosaic, histmosaic, savemosaic,
-    plotrecomheat,
+    plotrecomheat,ploterrorcompare,
     # other I/O
     memoryuse, getabsfile, printconsole, printpkgst,    
     create_targz, extract_targz,
@@ -77,7 +78,7 @@ include("base/localbrent.jl")
 include("base/pathformat.jl")
 include("base/basis.jl")
 include("base/vcfbase.jl")
-include("base/likeparameters.jl")
+include("base/likeparam.jl")
 include("base/getfindexlist.jl")
 include("magicped/parsedesign.jl")
 include("magicped/magicped.jl")

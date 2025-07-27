@@ -907,13 +907,13 @@ function readmarkermap_vcf(genofile::AbstractString;
     # vcf column ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
     markermap = MagicBase.vcf_get_subgeno(genofile; subsamples = [], commentstring, workdir);
     colnames= ["marker", "linkagegroup","poscm","physchrom", "physposbp", "info", "founderformat","offspringformat",
-        "foundererror","offspringerror","seqerror","allelebalancemean","allelebalancedisperse","alleledropout"]
+        "foundererror","offspringerror","baseerror","allelicbias","allelicoverdispersion","allelicdropout"]
     df = DataFrame([String[] for _ in 1:length(colnames)],colnames)
     for rowgeno in eachrow(markermap)
         physchrom,physposbp,snpid = [i== "." ? "NA" : i for i in rowgeno[1:3]]       
         info = rowgeno[8]
-        # res: newinfo, linkagegroup, poscm, foundererror, offspringerror, seqerror, 
-        #       allelebalancemean, allelebalancedisperse, alleledropout
+        # res: newinfo, linkagegroup, poscm, foundererror, offspringerror, baseerror, 
+        #       allelicbias, allelicoverdispersion, allelicdropout
         resinfo = MagicBase.parse_vcf_info(info)
         res = vcat([snpid,resinfo[2],resinfo[3],physchrom, physposbp,resinfo[1]], ["NA", "NA"], resinfo[4:end])
         push!(df, res)
@@ -1063,7 +1063,7 @@ function vcf_plink_map(vcffile::AbstractString;
             while !eof(io)                
                 line = split(readline(io,keep=false),"\t")                
                 # vcfcols = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
-                # resinfo: [newinfo, linkagegroup, poscm, foundererror, offspringerror, seqerror, allelebalancemean, allelebalancedisperse, alleledropout]
+                # resinfo: [newinfo, linkagegroup, poscm, foundererror, offspringerror, baseerror, allelicbias, allelicoverdispersion, allelicdropout]
                 resinfo = MagicBase.parse_vcf_info(line[8])
                 if in("NA", resinfo[2:3])                 
                     chrid = line[3]   

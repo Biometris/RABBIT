@@ -25,6 +25,8 @@ catch err
 finally 
     # clean up
     cd(@__DIR__)
-    rm.(filter(x->occursin("sim_", x), readdir()))
-    rm.(filter(x->occursin(r"^jl_", x), readdir()))
+    rm.(filter(x->!isdir(x) && occursin("sim_", x), readdir()))
+    rm.(filter(x->!isdir(x) && occursin(r"^jl_", x), readdir()))
 end
+
+

@@ -1,7 +1,7 @@
 ##fileformat=.csv
 ##fileDate=20231003
 ##source=MagicSimulate
-marker,linkagegroup,poscm,physchrom,physposbp,info,founderformat,offspringformat,foundererror,offspringerror,seqerror,allelebalancemean,allelebalancedisperse,alleledropout,P1,P2,P3,P4,P5,P6
+marker,linkagegroup,poscm,physchrom,physposbp,info,founderformat,offspringformat,foundererror,offspringerror,baseerror,allelicbias,allelicoverdispersion,allelicdropout,P1,P2,P3,P4,P5,P6
 snp1,LG1,0.0,NA,NA,NA,GT_haplo,NA,NA,NA,NA,NA,NA,NA,1,1,2,1,1,1
 snp2,LG1,0.3699,NA,NA,NA,GT_haplo,NA,NA,NA,NA,NA,NA,NA,1,2,1,1,1,1
 snp3,LG1,1.073,NA,NA,NA,GT_haplo,NA,NA,NA,NA,NA,NA,NA,2,1,1,2,1,1

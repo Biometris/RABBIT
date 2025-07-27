@@ -31,7 +31,7 @@ function magicreconstruct(genofile::AbstractString,
     isphysmap::Bool=false,
     recomrate::Real=1.0,
     model::AbstractString="jointmodel",    
-    likeparameters::LikeParameters=LikeParameters(),   
+    likeparam::LikeParam=LikeParam(),   
     israndallele::Bool=true, 
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
@@ -42,6 +42,7 @@ function magicreconstruct(genofile::AbstractString,
     nplot_subpop::Integer = 10,
     posteriordigits::Integer = 4, 
     thincm::Real = 0, 
+    tukeyfence::Real=1.5,
     isparallel::Bool=true,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
@@ -61,8 +62,8 @@ function magicreconstruct(genofile::AbstractString,
     isnothing(outstem) || (outstem = outstem*"_magicreconstruct")
     info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,
         commentstring,workdir, io, verbose)
-    (;foundererror, offspringerror, seqerror) = likeparameters
-    check_common_arg(model, foundererror, offspringerror, seqerror, workdir, tempdirectory;
+    (;foundererror, offspringerror, baseerror) = likeparam
+    check_common_arg(model, foundererror, offspringerror, baseerror, workdir, tempdirectory;
         chrsubset,snpsubset)
     check_reconstruct_arg(hmmalg,outext)
     tused = @elapsed begin 
@@ -76,9 +77,9 @@ function magicreconstruct(genofile::AbstractString,
         "seconds, mem=",mem1,"|",mem2,"MB")
     MagicBase.printconsole(io,verbose,msg)                
     magicancestry=magicreconstruct!(magicgeno;
-        model, likeparameters, israndallele, 
+        model, likeparam, israndallele, 
         isfounderinbred,  
-        chrsubset, snpsubset,
+        chrsubset, snpsubset,tukeyfence,
         isparallel,hmmalg, posteriordigits, isignorephase, isMMA, tempdirectory,
         nplot_subpop, thincm, workdir,outstem,outext,logfile=io, verbose)
     tused = round(time()-starttime,digits=1)
@@ -143,7 +144,7 @@ julia> magicreconstruct(magicgeno,model="jointmodel")
 """
 function magicreconstruct!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
-    likeparameters::LikeParameters=LikeParameters(),   
+    likeparam::LikeParam=LikeParam(),   
     israndallele::Bool=true, 
     isfounderinbred::Bool=true,    
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
@@ -154,6 +155,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
     nplot_subpop::Integer=10,
     posteriordigits::Integer = 4, 
     thincm::Real = 0, 
+    tukeyfence::Real=1.5,
     isparallel::Bool=true,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
@@ -165,8 +167,8 @@ function magicreconstruct!(magicgeno::MagicGeno;
     io = MagicBase.set_logfile_begin(logfile, workdir, "magicreconstruct"; verbose)        
     isa(logfile, AbstractString) && printpkgst(io,verbose,"MagicReconstruct")
     # check and print args
-    (;foundererror,offspringerror,seqerror) = likeparameters
-    check_common_arg(model, foundererror,offspringerror,seqerror,
+    (;foundererror,offspringerror,baseerror) = likeparam
+    check_common_arg(model, foundererror,offspringerror,baseerror,
         workdir, tempdirectory; chrsubset,snpsubset)
     check_reconstruct_arg(hmmalg,outext)        
     model = MagicBase.reset_model(magicgeno.magicped,model;io,verbose)    
@@ -178,13 +180,14 @@ function magicreconstruct!(magicgeno::MagicGeno;
     hmmalg = lowercase(hmmalg)
     msg = string("list of options: \n",
         "model = ", model, "\n",        
-        "likeparameters = ", likeparameters,"\n",                
+        "likeparam = ", likeparam,"\n",                
         "chrsubset = ", isnothing(chrsubset) ? "all chromosomes" : chrsubset,"\n",
         "snpsubset = ", isnothing(snpsubset) ? "all markers" : snpsubset,"\n",
         "hmmalg = ", hmmalg,"\n",
         "isignorephase = ", isignorephase,"\n",        
         "nplot_subpop = ", nplot_subpop, "\n",
         "thincm = ", thincm, "\n",
+        "tukeyfence = ", tukeyfence, "\n",
         "posteriordigits = ", posteriordigits,"\n",
         "isparallel = ", isparallel, isparallel ? string("(nworker=",nworkers(),")") : "", "\n",
         "workdir = ",workdir,"\n",
@@ -199,8 +202,8 @@ function magicreconstruct!(magicgeno::MagicGeno;
     isignorephase && reset_ignorephase!(magicgeno)
     MagicBase.check_required_geneticmap(magicgeno; io)
     MagicBase.check_markerorder(magicgeno; io,verbose)    
-    isnothing(seqerror) && (seqerror = 0.001)
-    MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], seqerror, isfounderinbred)
+    isnothing(baseerror) && (baseerror = 0.001)
+    MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], baseerror, isfounderinbred)
     MagicBase.rawgenocall!(magicgeno; targets = ["founders"], callthreshold = 0.95, isfounderinbred)
     # MagicBase.rawgenocall!(magicgeno; targets = ["founders","offspring"], callthreshold = 0.95, isfounderinbred, isoffspringphased=true)
     founderformat, offspringformat = MagicBase.setunphasedgeno!(magicgeno)
@@ -220,7 +223,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
     end
     MagicBase.info_magicgeno(magicgeno;io,verbose)
     outtarfile =  reconstruct!(magicgeno;
-        model, likeparameters, israndallele, isfounderinbred,
+        model, likeparam, israndallele, isfounderinbred,
         hmmalg, isMMA, posteriordigits, isparallel,io, outext = ".csv.gz", 
         outstem, workdir, tempdirectory,verbose)        
     magicancestry = try 
@@ -233,7 +236,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
         # detect offpsing outliers
         tused = @elapsed begin 
             posterior_prior_recom!(magicancestry; minprob=0.7)
-            detect_outlier!(magicancestry; tukeyfence=3, istransform=false)       
+            detect_outlier!(magicancestry; tukeyfence, istransform=true)       
             if !isnothing(outstem)
                 recomfile = save_posterior_recom(magicancestry.magicped; outstem, workdir)                 
                 plot_posterior_recom(recomfile; workdir, outstem)
@@ -310,7 +313,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
                 try 
                     probtypels = model == "depmodel" ? ["haploprob"] : ["haploprob", "genoprob"]
                     tused = @elapsed  for probtype in probtypels
-                        saveprobplot(magicancestry; nplot_subpop, probtype, workdir=figdir, outstem)     
+                        saveprobplot(magicancestry; nplot_subpop, probtype, workdir=figdir, outstem=nothing)     
                     end                    
                 catch err
                     @warn string(err, ". Could not plot condprob")
@@ -446,7 +449,7 @@ end
 function check_common_arg(model::Union{AbstractString,AbstractVector},     
     epsf::Union{Nothing,Real},
     epso::Union{Nothing,Real},
-    seqerror::Union{Nothing,Real}, workdir::AbstractString,tempdirectory::AbstractString;
+    baseerror::Union{Nothing,Real}, workdir::AbstractString,tempdirectory::AbstractString;
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing)    
     if isa(model,AbstractVector)
@@ -468,8 +471,8 @@ function check_common_arg(model::Union{AbstractString,AbstractVector},
     if !isnothing(epso) &&!(0<=epso<1)
         @error string("epso=", epso,"; offspring allelic error probability is not in [0,1)")
     end
-    if !isnothing(seqerror) &&!(0<=seqerror<1)
-        @error string("seqerror=", seqerror,"; sequencing error probability is not in [0,1)")
+    if !isnothing(baseerror) &&!(0<=baseerror<1)
+        @error string("baseerror=", baseerror,"; sequencing error probability is not in [0,1)")
     end
     if !isdir(workdir)
         @error string("workdir=", workdir, " is not a directory")

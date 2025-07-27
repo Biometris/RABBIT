@@ -4,24 +4,24 @@ function offspringcorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMat
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector},
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},    
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},    
     snporder::AbstractVector,    
     correctalg::AbstractString,
     decodetempfile::AbstractString,    
     ismalexls::AbstractVector,    
     israndallele::Bool,     
     correctthesh::Real,
-    threshlikeparameters::ThreshLikeParameters)    
+    threshlikeparam::ThreshLikeParam)    
     mismatch = get_mismatch(chrfhaplo,chroffgeno,popmakeup,priorprocess,priorspace;
-        epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,        
+        epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,        
         snporder, correctalg, decodetempfile,ismalexls,israndallele, issnpGT,correctthesh
     )
     nerrorls = sum(mismatch,dims=2)[:,1]
     noff = size(chroffgeno,2)
-    delsnps_off = findall(nerrorls .> 2*threshlikeparameters.offspringerror*noff)        
+    delsnps_off = findall(nerrorls .> 2*threshlikeparam.offspringerror*noff)        
     isempty(delsnps_off) || MagicReconstruct.setpriorprocess!(priorprocess,snporder, delsnps_off)    
     # set offspring errorneous genotypes to missing
     mismatch[delsnps_off,:] .= false    
@@ -47,10 +47,10 @@ function get_mismatch(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector},
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,        
     issnpGT::AbstractVector, 
     correctalg::AbstractString,
@@ -61,13 +61,13 @@ function get_mismatch(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     mismatch = falses(size(chroffgeno)...)    
     tempjld2file = tempname(dirname(abspath(decodetempfile)); cleanup = true)		
     MagicImpute.singlesite_genoprob(chrfhaplo,chroffgeno; popmakeup,
-        epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,
-        alleledropout, issnpGT,outjld2file = tempjld2file)
+        epsf,epso, epso_perind, baseerror, allelicbias, allelicoverdispersion,
+        allelicdropout, issnpGT,outjld2file = tempjld2file)
     pri1=first(values(priorprocess))
 	snpincl = snporder[pri1.markerincl]
     if correctalg in ["viterbi","viterbi_forwardbackward"]
         MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-            epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,        
+            epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,        
             hmmalg="viterbi", decodetempfile, israndallele,issnpGT,snporder)       
         chrviterbi = MagicReconstruct.get_chr_viterbi(decodetempfile, snporder)
         nstate, nfgl = MagicReconstruct.hmm_nstate_nfgl(popmakeup)	
@@ -87,12 +87,12 @@ function get_mismatch(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     end
     if correctalg in ["forwardbackward","viterbi_forwardbackward"]
         MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-            epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,        
+            epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,        
             hmmalg="forwardbackward", decodetempfile, israndallele, issnpGT,snporder)                   
         MagicImpute.condprob2postprob!(chrfhaplo,decodetempfile,tempjld2file,popmakeup; epsf)         
         MagicImpute.singlesite_genoprob(chrfhaplo,chroffgeno; popmakeup,
-            epsf,epso, epso_perind, seqerror, allelebalancemean, allelebalancedisperse,
-            alleledropout, issnpGT,outjld2file = decodetempfile)              
+            epsf,epso, epso_perind, baseerror, allelicbias, allelicoverdispersion,
+            allelicdropout, issnpGT,outjld2file = decodetempfile)              
         mismatch2 = MagicImpute.get_mismatch(decodetempfile, tempjld2file; snpincl, threshold=correctthesh)   
         # println("nsnp=",size(chrfhaplo,1),",nsnpincl=",length(snpincl)) 
         # println("mismatch df=", DataFrame(offgeno=chroffgeno[mismatch2],os=findall(mismatch2)))            

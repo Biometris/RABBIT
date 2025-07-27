@@ -57,7 +57,7 @@ foundererror = offspringerror = Beta(1,95)
 foundermiss = offspringmiss = Beta(1,4)
 seqfrac = 0.5
 seqdepth = Gamma(2,10)
-seqerror = 0.001
+baseerror = 0.001
 select_proportion = 0.1
 select_nqtl = 50
 fhaplofile = "sim_fhaplo.csv"
@@ -96,7 +96,7 @@ offgeno = contfgl.offspringgeno[chr]
 
 truegeno = genedrop(magicfgl; isfounderinbred,isphased=true)
 obsgeno = simgeno(truegeno;foundererror,offspringerror,
-    foundermiss,offspringmiss,seqfrac,seqdepth,seqerror)
+    foundermiss,offspringmiss,seqfrac,seqdepth,baseerror)
 # 0
 obsgeno.markermap[1]
 obsgeno.foundergeno[1]

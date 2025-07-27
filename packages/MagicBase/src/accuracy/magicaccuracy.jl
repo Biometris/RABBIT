@@ -63,7 +63,7 @@ function magicaccuracy!(truegeno::MagicGeno,magicest::Union{MagicGeno,MagicAnces
     alignmarker!(truegeno,magicest) # afterward, same sets of markers
     # align founders
     if isa(magicest, MagicGeno)
-        MagicBase.rawgenoprob!(magicest; targets = ["founders"], seqerror=0.001, isfounderinbred)
+        MagicBase.rawgenoprob!(magicest; targets = ["founders"], baseerror=0.001, isfounderinbred)
         MagicBase.rawgenocall!(magicest; targets = ["founders"], callthreshold = 0.95, isfounderinbred)
     end
     alignfounder && alignfounder!(truegeno,magicest)
@@ -488,7 +488,7 @@ function alignchromosome!(truegeno::MagicGeno, magicest::Union{MagicGeno,MagicAn
 end
 
 
-function findtruelg(truemarkermap, estmarkermap; minfreq=0.2, isphysmap = [false, false], verbose=true)
+function findtruelg(truemarkermap, estmarkermap; minfreq=0.3, isphysmap = [false, false], verbose=true)
     # true chromosome IDs for each stimated linakge group
     snpinter = [length(intersect(i[!,:marker],j[!,:marker]))
         for i in truemarkermap, j in estmarkermap]                

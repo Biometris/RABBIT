@@ -74,10 +74,10 @@ function parse_commandline()
         help = "\"depmodel\", \"indepmodel\", or \"jointmodel\" specifies prior dependence of ancestral prior process along two homologous chromosomes within an offspring"
         arg_type = AbstractString
         default = "jointmodel"
-        "--likeparameters"
+        "--likeparam"
         help = "Set error rate values in the genotypic data model. "
         arg_type = AbstractString        
-        default = "LikeParameters()"   
+        default = "LikeParam()"   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
@@ -230,10 +230,13 @@ function main(args::Vector{String})
     end
     delete!(parsed_args, :nworker)
     push!(parsed_args, :isparallel => isparallel)    
-    like = parsed_args[:likeparameters]
-    likeparameters = MagicMap.parse_likeparameters(like)
-    delete!(parsed_args, :likeparameters)
-    @time magicmap(genofile, pedinfo; likeparameters,
+
+    id = "LikeParam"
+    id2 = Symbol(lowercase(id))
+    likeparam = MagicBase.parse_likeparam(parsed_args[id2],id)    
+    delete!(parsed_args, id2)
+    
+    @time magicmap(genofile, pedinfo; likeparam,
         ncluster, minncluster, maxncluster, knncluster, knnorder, parsed_args...)
     if isparallel
         rmprocs(workers()...;waitfor=0)

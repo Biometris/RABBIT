@@ -55,11 +55,11 @@ end
 
 function rawgenoprob!(magicgeno::MagicGeno;
     targets::AbstractVector= ["founders","offspring"],
-    seqerror::Real=0.001,    
+    baseerror::Real=0.001,    
     isfounderinbred::Bool=true,
     isoffspringinbred::Bool=false)
     # if isfounderinbred, readprob => genocall for founders
-    errdigit0 = split(last(split(@sprintf("%.f",seqerror),".")),"")
+    errdigit0 = split(last(split(@sprintf("%.f",baseerror),".")),"")
     errdigit2=findfirst(x->x!="0",errdigit0)
     errdigit = isnothing(errdigit2) ? 6 : max(6,errdigit2+2)    
     chridls = lowercase.([string(i[1,:linkagegroup]) for i=magicgeno.markermap])
@@ -71,13 +71,13 @@ function rawgenoprob!(magicgeno::MagicGeno;
                 magicgeno.foundergeno[chr] = Matrix{Any}(magicgeno.foundergeno[chr])
                 chrgeno = magicgeno.foundergeno[chr]
                 if isfounderinbred
-                    prob = [round.(j,digits=errdigit) for j= genoprobhaplo.(chrgeno[snps,:],seqerror)]
+                    prob = [round.(j,digits=errdigit) for j= genoprobhaplo.(chrgeno[snps,:],baseerror)]
                 else
-                    prob = [round.(j,digits=errdigit) for j= genoprobdiplo.(chrgeno[snps,:],seqerror)]
+                    prob = [round.(j,digits=errdigit) for j= genoprobdiplo.(chrgeno[snps,:],baseerror)]
                 end
                 if chridls[chr] in ["chrx"]
                     ismale = magicgeno.magicped.founderinfo[:gender] .== "male"
-                    prob[:,ismale] = [round.(j,digits=errdigit) for j= genoprobhaplo.(chrgeno[snps,ismale];seqerror)]
+                    prob[:,ismale] = [round.(j,digits=errdigit) for j= genoprobhaplo.(chrgeno[snps,ismale];baseerror)]
                 end
                 chrgeno[snps,:] .= prob
                 format[snps] .= "GP"
@@ -92,9 +92,9 @@ function rawgenoprob!(magicgeno::MagicGeno;
                 magicgeno.offspringgeno[chr] = Matrix{Any}(magicgeno.offspringgeno[chr])
                 chrgeno = magicgeno.offspringgeno[chr]
                 if isoffspringinbred
-                    prob = [round.(j,digits=errdigit) for j in genoprobhaplo.(chrgeno[snps,:],seqerror)]
+                    prob = [round.(j,digits=errdigit) for j in genoprobhaplo.(chrgeno[snps,:],baseerror)]
                 else
-                    prob = [round.(j,digits=errdigit) for j in genoprobdiplo.(chrgeno[snps,:],seqerror)]
+                    prob = [round.(j,digits=errdigit) for j in genoprobdiplo.(chrgeno[snps,:],baseerror)]
                 end 
                 if chridls[chr] in ["chrx"]
                     ismale = magicgeno.magicped.offspringinfo[:gender] .== "male"
@@ -109,7 +109,7 @@ function rawgenoprob!(magicgeno::MagicGeno;
 end
 
 function genocalldiplo(genomtx::AbstractMatrix, formatls::AbstractVector;
-    seqerror::Real=0.001,callthreshold::Real=0.95)
+    baseerror::Real=0.001,callthreshold::Real=0.95)
     # formatls[i] is the format of genomtx[i,:] for marker i
     calledgeno = copy(genomtx)
     formatset = unique(formatls)
@@ -118,7 +118,7 @@ function genocalldiplo(genomtx::AbstractMatrix, formatls::AbstractVector;
     isempty(d) || @error string("unknow genotype format: ",d)
     ii = formatls .== "AD"
     subgeno = view(calledgeno,ii,:)
-    subgeno .= genocalldiplo(subgeno; seqerror,callthreshold, isphased=false)
+    subgeno .= genocalldiplo(subgeno; baseerror,callthreshold, isphased=false)
     ii = formatls .== "GP"
     subgeno = view(calledgeno,ii,:)
     subgeno .= callfromprob.(subgeno,callthreshold; isphased=false,ishaplo=false)
@@ -132,17 +132,17 @@ function genocalldiplo(genomtx::AbstractMatrix, formatls::AbstractVector;
 end
 
 function genocalldiplo(allelicdepth::AbstractVecOrMat;
-    seqerror::Real=0.001,callthreshold::Real=0.95,
+    baseerror::Real=0.001,callthreshold::Real=0.95,
     isphased::Bool=false)
-    callfromprob.(genoprobdiplo.(allelicdepth, seqerror),callthreshold; isphased,ishaplo=false)
+    callfromprob.(genoprobdiplo.(allelicdepth, baseerror),callthreshold; isphased,ishaplo=false)
 end
 
 
-function genoprobdiplo_biallelic(reads::AbstractVector,seqerror::Real)
+function genoprobdiplo_biallelic(reads::AbstractVector,baseerror::Real)
     # reads is a vector of integer
     length(reads)==2 || @error string("read counts for non bi-alleles: ",reads)    
     ploidy = 2
-    p=[[dot([1-seqerror,seqerror], j) for j=[[1-i/ploidy,i/ploidy],[i/ploidy,1-i/ploidy]]] for i=0:ploidy]
+    p=[[dot([1-baseerror,baseerror], j) for j=[[1-i/ploidy,i/ploidy],[i/ploidy,1-i/ploidy]]] for i=0:ploidy]
     # logp matrix size: 2x(ploidy+1)
     # logp[i,j]: log probability of a sampled read being allele i given dosage being j-1
     logp = log.(hcat(p...))
@@ -155,16 +155,16 @@ function genoprobdiplo_biallelic(reads::AbstractVector,seqerror::Real)
     Vector{Float64}(res ./ sum(res))
 end
 
-function genoprobdiplo(reads::AbstractVector,seqerror::Real)
+function genoprobdiplo(reads::AbstractVector,baseerror::Real)
     na = length(reads)
     na >=2 || @error string("requires at least two read counts! read counts=",reads)    
     readdepth = sum(reads)
-    phetero = 0.5*(1-seqerror+seqerror/(na-1))
-    phetero2 = seqerror/(na-1)
+    phetero = 0.5*(1-baseerror+baseerror/(na-1))
+    phetero2 = baseerror/(na-1)
     # 2*phetero+phetero2*(na-2) ≈ 1.0
     logpls = [if i == j
             ni = reads[i]
-            ni*log(1-seqerror) + (readdepth-ni)*log(seqerror)
+            ni*log(1-baseerror) + (readdepth-ni)*log(baseerror)
         else
             nij = reads[i] + reads[j]
             nij*log(phetero) + (readdepth-nij)*log(phetero2)    
@@ -176,7 +176,7 @@ function genoprobdiplo(reads::AbstractVector,seqerror::Real)
 end
 
 function genocallhaplo(genomtx::AbstractMatrix, formatls::AbstractVector;
-    seqerror::Real=0.001,callthreshold::Real=0.95)    
+    baseerror::Real=0.001,callthreshold::Real=0.95)    
     calledgeno = copy(genomtx)
     formatset = unique(formatls)
     if (in("GT_unphased", formatset) || in("GT_phased", formatset))
@@ -186,7 +186,7 @@ function genocallhaplo(genomtx::AbstractMatrix, formatls::AbstractVector;
     isempty(d) || @error string("unexpected genotype format: ",d)
     ii = formatls .== "AD"
     subgeno = view(calledgeno,ii,:)
-    subgeno .= genocallhaplo(subgeno; seqerror,callthreshold)
+    subgeno .= genocallhaplo(subgeno; baseerror,callthreshold)
     ii = formatls .== "GP"
     subgeno = view(calledgeno,ii,:)
     subgeno .= callfromprob.(subgeno,callthreshold; ishaplo=true)
@@ -195,11 +195,11 @@ end
 
 
 function genocallhaplo(allelicdepth::AbstractVecOrMat;
-    seqerror::Real=0.001,callthreshold::Real=0.95)
-    callfromprob.(genoprobhaplo.(allelicdepth, seqerror),callthreshold; ishaplo=true)
+    baseerror::Real=0.001,callthreshold::Real=0.95)
+    callfromprob.(genoprobhaplo.(allelicdepth, baseerror),callthreshold; ishaplo=true)
 end
 
-function genoprobhaplo(reads::AbstractVector,seqerror::Real)
+function genoprobhaplo(reads::AbstractVector,baseerror::Real)
     # reads is a vector of integer
     length(reads)==2 || @error string("read counts for ≥3 alleles: ",reads)
     if reads[1]>0 && reads[2]==0
@@ -207,7 +207,7 @@ function genoprobhaplo(reads::AbstractVector,seqerror::Real)
     elseif reads[1]==0 && reads[2]>0
         [0.0, 1.0]
     else
-        p = genoprobdiplo(reads, seqerror)
+        p = genoprobdiplo(reads, baseerror)
         p[2] >= 0.5 ? [0.5,0.5] : [p[1]+p[2]/2, p[3]+p[2]/2]
     end
 end

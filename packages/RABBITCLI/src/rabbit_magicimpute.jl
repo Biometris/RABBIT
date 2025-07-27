@@ -88,18 +88,22 @@ function parse_commandline()
         help = "\"depmodel\", \"indepmodel\", or \"jointmodel\" specifies prior dependence of ancestral prior process along two homologous chromosomes within an offspring"
         arg_type = AbstractString
         default = "jointmodel"
-        "--likeparameters"
+        "--likeparam"
         help = "parameters for genotypic data model. If isinfererror = true, parameters with values being nothing will be inferred. "
         arg_type = AbstractString
-        default = "LikeParameters()"   
-        "--threshlikeparameters"
-        help = "markers with inferred likeparameters values > threshlikeparameters values will be deleted"
+        default = "LikeParam()"   
+        "--softthreshlikeparam"
+        help = "markers with inferred likeparam values > threshlikeparam values will be deleted only if they are also outliers."
         arg_type = AbstractString
-        default = "ThreshLikeParameters()"   
-        "--priorlikeparameters"
+        default = "SoftThreshLikeParam()"
+        "--threshlikeparam"
+        help = "markers with inferred likeparam values > threshlikeparam values will be deleted"
+        arg_type = AbstractString
+        default = "ThreshLikeParam()"   
+        "--priorlikeparam"
         help = "priors for likelihood parameters"
         arg_type = AbstractString
-        default = "PriorLikeParameters()"   
+        default = "PriorLikeParam()"   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
@@ -168,7 +172,7 @@ function parse_commandline()
         "--tukeyfence"
         help = "tukeyfence for detecting outlier error rates"
         arg_type = Float64
-        default = 3.0                
+        default = 1.5          
         "--isordermarker"
         help = "if true, refine local marker ordering, If it is nothing, isordermarker=true only if mapfile exists."
         arg_type = AbstractString
@@ -180,7 +184,7 @@ function parse_commandline()
         "--coolrate"
         help = "temperature is mutiplied by coolrate after each iteration of annealing agrogrithm"        
         arg_type = Float64
-        default = 0.85
+        default = 0.8
         # "--minaccept"
         # help = "minimum accept rate for controlling the window size of ordering update"
         # arg_type = Float64
@@ -353,16 +357,15 @@ function main(args::Vector{String})
     end
     delete!(parsed_args, :nworker)
     push!(parsed_args, :isparallel => isparallel)    
-    like = parsed_args[:likeparameters]
-    likeparameters = MagicImpute.parse_likeparameters(like)
-    delete!(parsed_args, :likeparameters)
-    maxlike = parsed_args[:threshlikeparameters]
-    threshlikeparameters = MagicImpute.parse_threshlikeparameters(maxlike)
-    delete!(parsed_args, :threshlikeparameters)
-    priorlike = parsed_args[:priorlikeparameters]
-    priorlikeparameters = MagicImpute.parse_priorlikeparameters(priorlike)
-    delete!(parsed_args, :priorlikeparameters)
-    @time magicimpute(genofile, pedinfo; mapfile, likeparameters, threshlikeparameters, priorlikeparameters, parsed_args...)    
+     likedict = Dict()
+    for id in ["LikeParam","SoftThreshLikeParam","ThreshLikeParam","PriorLikeParam"]
+        id2 = Symbol(lowercase(id))
+        like = parsed_args[id2]
+        likeparam = MagicBase.parse_likeparam(like,id)
+        push!(likedict, id2 => likeparam)
+        delete!(parsed_args, id2)
+    end
+    @time magicimpute(genofile, pedinfo; mapfile, likedict..., parsed_args...)    
     if isparallel
         rmprocs(workers()...;waitfor=0)
     end

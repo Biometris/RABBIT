@@ -19,7 +19,7 @@ genetic map construction from genofile and pedinfo.
   along the two homologous chromosomes within an offspring. It must be "depmodel",
   "indepmodel", or "jointmodel". 
 
-`likeparameters::LikeParameters=LikeParameters()`: specifies default genotyping error rates. 
+`likeparam::LikeParam=LikeParam()`: specifies default genotyping error rates. 
 
 `threshcall::Real = model == "depmodel" ? 0.95 : 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
 
@@ -106,7 +106,7 @@ function magicmap(genofile::AbstractString,
     pedinfo::Union{MagicBase.JuncDist,AbstractString};
     formatpriority::AbstractVector=["GT","AD"],    
     model::AbstractString="jointmodel",
-    likeparameters::LikeParameters=LikeParameters(),            
+    likeparam::LikeParam=LikeParam(),            
     israndallele::Bool=true, 
     threshcall::Real = (model == "depmodel" || !israndallele) ? 0.95 : 0.9, 
     isfounderinbred::Bool = true,        
@@ -165,11 +165,11 @@ function magicmap(genofile::AbstractString,
         magicped = formmagicped(genofile, pedinfo; commentstring, workdir)
         nsub = length(unique(magicped.offspringinfo[!,:member]))
         # npopsize = size(magicped.offspringinfo,1)
-        isdupebinning = nmarker_perchr > 1000 && nsub == 1 
+        isdupebinning = nmarker_perchr > 1000 && nsub == 1 && isfounderinbred
         printconsole(io,verbose,string("reset isdupebinning=",isdupebinning, 
             " (#markers=",nmarker, ", markerthin=", markerthin, ", #subpops=", nsub, ")"))
     end
-    seqerror = MagicBase.get_seqerror(likeparameters)
+    baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
     if isdupebinning
         binfile = getabsfile(workdir, outstem*"_binning.csv.gz")
         if isfile(binfile)
@@ -181,7 +181,7 @@ function magicmap(genofile::AbstractString,
             binfile = first(MagicMap.binning(genofile,pedinfo;
                 isdepmodel = model == "depmodel",
                 formatpriority, isfounderinbred,
-                seqerror, markerthin,binshare,
+                baseerror, markerthin,binshare,
                 isparallel,commentstring, workdir,
                 outstem,verbose))
             msg  = string("tused = ", round(time()-startbin,digits=1), "s in binning", 
@@ -203,7 +203,7 @@ function magicmap(genofile::AbstractString,
             binfile, 
             formatpriority, threshcall,
             isdepmodel = model == "depmodel",
-            seqerror, markerthin,minlodsave, minldsave,
+            baseerror, markerthin,minlodsave, minldsave,
             isparallel,commentstring, workdir,
             outstem,verbose
         )
@@ -221,7 +221,7 @@ function magicmap(genofile::AbstractString,
         startlinage = time()
         linkagefile = magiclinkage(genofile,pedinfo;
             formatpriority, ldfile,  isfounderinbred, 
-            model,likeparameters, israndallele, threshcall,
+            model,likeparam, israndallele, threshcall,
             markerthin,
             byfounder, 
             minlodsave,maxrfsave = 1.0,

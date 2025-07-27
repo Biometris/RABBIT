@@ -4,10 +4,10 @@ function infer_error_perind!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     epsf::Union{Real,AbstractVector}, 
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector}, 
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},        
+    baseerror::Union{Real,AbstractVector}, 
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},        
     prior_peroffspringerror::Distribution, 
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
@@ -22,7 +22,7 @@ function infer_error_perind!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
         offls = popmakeup[popid]["offspring"]
         for off in offls
             epso_perind[off] = infer_epso_perind(off, popid, fderive,offcode,popmakeup,priorprocess;
-                epsf,epso,epso_ind = epso_perind[off], seqerror,allelebalancemean, allelebalancedisperse, alleledropout,
+                epsf,epso,epso_ind = epso_perind[off], baseerror,allelicbias, allelicoverdispersion, allelicdropout,
                 prior_peroffspringerror,issnpGT,isoffphased,israndallele, snporder, itmax,temperature
             )
         end
@@ -37,10 +37,10 @@ function infer_epso_perind(offindex::Integer,popid::AbstractString,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_ind::Real, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},    
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},    
     prior_peroffspringerror::Distribution, 
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
@@ -49,11 +49,13 @@ function infer_epso_perind(offindex::Integer,popid::AbstractString,
     itmax::Integer=20,temperature::Real=0.0)
     accuracygoal, precisiongoal = 4, 4        
     function loglfun(x::Real)
+        # estimation refers to transformed space
+        logjacobi = x - 2*log(1+exp(x)) # dp/dx = exp(x)/(1+exp(x))^2             
         epso_ind2 = 1/(1+exp(-x))  # inverse of logit transformation             
         logpri = logpdf(prior_peroffspringerror,epso_ind2)        
         loglike_perind(offindex, popid, fderive,offcode,popmakeup,priorprocess;
-            epsf,epso,epso_ind = epso_ind2, seqerror,allelebalancemean, allelebalancedisperse, alleledropout,
-            issnpGT,isoffphased,israndallele, snporder) + logpri 
+            epsf,epso,epso_ind = epso_ind2, baseerror,allelicbias, allelicoverdispersion, allelicdropout,
+            issnpGT,isoffphased,israndallele, snporder) + logpri + logjacobi
     end    
     if epso_ind ≈ 0.0
         xstart = log(1e-4)
@@ -87,10 +89,10 @@ function loglike_perind(offindex::Integer,popid::AbstractString,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_ind::Real, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},    
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},    
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
     israndallele::Bool,
@@ -102,7 +104,7 @@ function loglike_perind(offindex::Integer,popid::AbstractString,
     markerincl, initprob, tranprobseq = MagicReconstruct.hashcode2prior(priorprocess,hashcode);
     obsseq = view(offcode, :,offindex);
     dataprobseq = [zeros(MagicReconstruct._float_like,length(nzstate))  for _ in 1:length(obsseq)]
-    MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_ind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
+    MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_ind, baseerror, allelicbias,allelicoverdispersion,allelicdropout,
         fderive,nzstate,isoffphased,israndallele,issnpGT,ishaploidsub);
     dataprobseq2 = view(dataprobseq, snporder[markerincl])               
     fwscale = last(HMM.forward(initprob,tranprobseq,dataprobseq2))
@@ -118,10 +120,10 @@ function infer_error_perind_viterbi!(chrfhaplo::AbstractMatrix,chroffgeno::Abstr
     epsf::Union{Real,AbstractVector}, 
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector}, 
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},        
+    baseerror::Union{Real,AbstractVector}, 
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},        
     prior_peroffspringerror::Distribution, 
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
@@ -139,7 +141,7 @@ function infer_error_perind_viterbi!(chrfhaplo::AbstractMatrix,chroffgeno::Abstr
 
     # infer hidden origin states; results are saved in decodetempfile        
     MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-        epsf,epso,epso_perind, seqerror,allelebalancemean, allelebalancedisperse, alleledropout,
+        epsf,epso,epso_perind, baseerror,allelicbias, allelicoverdispersion, allelicdropout,
         hmmalg="viterbi", decodetempfile, issnpGT, isoffphased, israndallele, snporder);
     # chrviterbi: nsnp x noff, row i = viterbi-path of input makrer index i
     chrviterbi = MagicReconstruct.get_chr_viterbi(decodetempfile, snporder)    
@@ -158,7 +160,7 @@ function infer_error_perind_viterbi!(chrfhaplo::AbstractMatrix,chroffgeno::Abstr
         offls = popmakeup[popid]["offspring"]
         for off in offls
             epso_perind[off] = infer_epso_perind_viterbi(chrviterbi, fderive,offcode, off,popid,popmakeup,snpincl; 
-                epsf,epso,epso_ind = epso_perind[off], seqerror,allelebalancemean, allelebalancedisperse, alleledropout,                
+                epsf,epso,epso_ind = epso_perind[off], baseerror,allelicbias, allelicoverdispersion, allelicdropout,                
                 prior_peroffspringerror,isoffphased,israndallele, issnpGT, itmax,temperature
             ) 
         end
@@ -174,10 +176,10 @@ function infer_epso_perind_viterbi(chrviterbi::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_ind::Real, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},    
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},    
     prior_peroffspringerror::Distribution, 
     issnpGT::AbstractVector,
     isoffphased::Bool=false,
@@ -185,11 +187,12 @@ function infer_epso_perind_viterbi(chrviterbi::AbstractMatrix,
     itmax::Integer=20,temperature::Real=0.0)
     accuracygoal, precisiongoal = 4, 4        
     function loglfun(x::Real)
+        logjacobi = x - 2*log(1+exp(x)) # dp/dx = exp(x)/(1+exp(x))^2  
         epso_ind2 = 1/(1+exp(-x))  # inverse of logit transformation     
         logpri = logpdf(prior_peroffspringerror,epso_ind2)        
         logllike_perind_viterbi(chrviterbi, fderive,offcode,offindex, popid, popmakeup,snpincl;
-            epsf,epso,epso_ind = epso_ind2, seqerror,allelebalancemean, allelebalancedisperse, alleledropout,
-            issnpGT,isoffphased,israndallele) + logpri
+            epsf,epso,epso_ind = epso_ind2, baseerror,allelicbias, allelicoverdispersion, allelicdropout,
+            issnpGT,isoffphased,israndallele) + logpri + logjacobi
     end    
     xstart = log(epso_ind/(1-epso_ind))
     errfraction = 1/(1+exp(-xstart))
@@ -221,10 +224,10 @@ function logllike_perind_viterbi(chrviterbi::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_ind::Real,     
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     isoffphased::Bool,
     israndallele::Bool,
     issnpGT::AbstractVector)        
@@ -233,7 +236,7 @@ function logllike_perind_viterbi(chrviterbi::AbstractMatrix,
     nzstate = popmakeup[popid]["nzstate"]             
     obsseq = view(offcode, :,offindex);
     dataprobseq = [zeros(MagicReconstruct._float_like,length(nzstate))  for _ in 1:length(obsseq)]
-    MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_ind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
+    MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_ind, baseerror, allelicbias,allelicoverdispersion,allelicdropout,
         fderive,nzstate,isoffphased,israndallele,issnpGT,ishaploidsub);
     dataprobls = view(dataprobseq, snpincl)
     originls = chrviterbi[snpincl, offindex]

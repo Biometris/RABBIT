@@ -5,7 +5,7 @@ function binning(genofile::AbstractString,
     formatpriority::AbstractVector=["GT","AD"],
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
     isfounderinbred::Bool=true,
-    seqerror::Real=0.001,
+    baseerror::Real=0.001,
     markerthin::Integer=1,
     binshare::Real=0.5,
     commentstring::AbstractString="##",
@@ -23,7 +23,7 @@ function binning(genofile::AbstractString,
         "formatpriority = ", formatpriority, "\n",
         "threshcall = ", threshcall, "\n",
         "isfounderinbred = ", isfounderinbred, "\n",
-        "seqerror = ", seqerror, "\n",
+        "baseerror = ", baseerror, "\n",
         "markerthin = ", markerthin, "\n",
         "binshare = ", binshare, "\n",
         "commentstring = ", commentstring, "\n",
@@ -40,7 +40,7 @@ function binning(genofile::AbstractString,
     nsnp = size(only(magicgeno.markermap),1)
     MagicBase.submagicgeno!(magicgeno, snpsubset=1:markerthin:nsnp)
     MagicBase.info_magicgeno(magicgeno;io=logio,verbose)
-    MagicBase.rawgenoprob!(magicgeno; seqerror,isfounderinbred,
+    MagicBase.rawgenoprob!(magicgeno; baseerror,isfounderinbred,
         isoffspringinbred = isdepmodel)
     MagicBase.rawgenocall!(magicgeno; isfounderinbred, callthreshold = threshcall)        
     # set A2 as minor aallele

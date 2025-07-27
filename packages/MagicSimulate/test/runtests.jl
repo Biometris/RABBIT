@@ -56,7 +56,7 @@ cd(@__DIR__)
         @test isa(magicsimulate("fhaplo_inbred.vcf.gz","4ril-self3";
             popsize = 5,
             seqfrac = 0.5,
-            seqerror = Beta(1,199),
+            baseerror = Beta(1,199),
             seqdepth = Gamma(2,10),
             isobligate = true,
             interference = 5,

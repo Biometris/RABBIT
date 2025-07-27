@@ -81,7 +81,8 @@ function info_missing(magicgeno::MagicGeno;
     MagicBase.printconsole(io,verbose,msg)
 end
 
-function merge_missprogeny!(magicgeno::MagicGeno,missgeno::MagicGeno)    
+
+function merge_missprogeny!(magicgeno::MagicGeno,missgeno::MagicGeno; bindelimiter="#",isspacemarker=true)    
     # dict for chr
     chrls = [i[1,:linkagegroup] for i in magicgeno.markermap]
     misschrls = [isempty(i) ? nothing : i[1,:linkagegroup] for i in missgeno.markermap]
@@ -99,27 +100,42 @@ function merge_missprogeny!(magicgeno::MagicGeno,missgeno::MagicGeno)
     # @info string("merge_missprogeny! according to poscol=",poscol)
     nf = size(magicgeno.magicped.founderinfo,1)
     noff = size(magicgeno.magicped.offspringinfo,1)
-    for chr in eachindex(chrls)
+    for chr in eachindex(chrls)        
         isnothing(chr2misschr[chr]) && continue
         misschr = chr2misschr[chr]
         addmap = missgeno.markermap[misschr]
         isempty(addmap) && continue        
-        if poscol == :physposbp  
+        if poscol == :physposbp  || isspacemarker
             addmap[!,:poscm] .= missing
         end        
         nowmap = magicgeno.markermap[chr]      
         newmap = vcat(nowmap,addmap)
+
         # restore input marker ordering
-        # sort!(newmap,poscol)         
-        newdict = Dict(newmap[!,:marker] .=> 1:size(newmap,1))        
-        inputindices = [get(newdict,i,missing) for i in inputmap[chr][!,:marker]]        
-        deleteat!(inputindices,ismissing.(inputindices))
+        inputmarkers = split.(inputmap[chr][!,:marker],bindelimiter)
+        newmarkers = split.(newmap[:,:marker],bindelimiter)
+        inputindices = [findfirst(x->issubset(x,input), newmarkers) for input in inputmarkers]
+        b = isnothing.(inputindices)
+        deleteat!(inputindices,b) 
+        deleteat!(inputmarkers,b)         
+        chrinputmap = inputmap[chr][.!b,:]
+        if eltype(chrinputmap[!,:poscm]) <: AbstractString
+            chrinputmap[!,:poscm] .= parse.(Float64,chrinputmap[!,:poscm])
+        end
         newmap = newmap[inputindices, :]
+        # check markers
+        newmarkers = split.(newmap[:,:marker],bindelimiter)
+        inputmarkers = split.(chrinputmap[!,:marker],bindelimiter)
+        all(map((x,y) -> !isempty(intersect(x,y)),newmarkers,inputmarkers)) || @error "inconsisent markers"
         # interpolate poscm
         b = ismissing.(newmap[!,:poscm])
         if poscol == :physposbp            
             interp_mono = extrapolate(interpolate(newmap[.!b,:physposbp],Float64.(newmap[.!b,:poscm]),  LinearMonotonicInterpolation()), Flat());
             newmap[b,:poscm] .= [interp_mono(i) for i in newmap[b,:physposbp]]  
+        elseif isspacemarker    
+            interp_mono = extrapolate(interpolate(chrinputmap[.!b,:poscm],Float64.(newmap[.!b,:poscm]),  LinearMonotonicInterpolation()), Flat());
+            newmap[b,:poscm] .= [interp_mono(i) for i in chrinputmap[b,:poscm]]  
+            # @info "interpolate poscm for missgeno" newmap[b, :] newmap[130:137,:] chrinputmap[130:137,:]
         else            
             any(b) && @warn string("Could not iterpolate poscm for missgeno!")
             issorted(newmap,poscol) || @error string(poscol, " is not sorted")

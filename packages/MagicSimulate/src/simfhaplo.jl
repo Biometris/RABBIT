@@ -67,10 +67,10 @@ function simfhaplo(;
                     "offspringformat" => missing,
                     "foundererror"=>missing,
                     "offspringerror"=>missing,
-                    "seqerror"=>missing,
-                    "allelebalancemean"=>missing,
-                    "allelebalancedisperse"=>missing,
-                    "alleledropout"=>missing,
+                    "baseerror"=>missing,
+                    "allelicbias"=>missing,
+                    "allelicoverdispersion"=>missing,
+                    "allelicdropout"=>missing,
                 )
                 nfgl = isfounderinbred ? nparent : 2*nparent
                 haplo = ones(Int, nfgl,nsnp)

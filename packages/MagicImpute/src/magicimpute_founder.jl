@@ -1,26 +1,26 @@
 
 function magicimpute_founder!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
-	likeparameters::LikeParameters=LikeParameters(),   
-	threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
-	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
+	likeparam::LikeParam=LikeParam(),   
+	softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam(),    
+	threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
+	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
-	startbyhalf::Union{Nothing,Integer}=nothing, 
+	startbyhalf::Union{Nothing,Integer}=5, 
 	isgreedy::Bool=false,
 	isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,     
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
-	isinferjunc::Union{Nothing, Bool} = nothing, 
-	iscorrectfounder::Union{Nothing, Bool} = nothing,    
+	isinferjunc::Union{Nothing, Bool} = false, 
+	iscorrectfounder::Union{Nothing, Bool} = true,    
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,    		
 	skeletonsize::Union{Nothing,Integer} = nothing, 	
 	isinfererror::Union{Nothing, Bool} = true,
-	tukeyfence::Real=3.0,						
-	minoutlier::Real=0.05, 
+	tukeyfence::Real=1.5,							
 	isimputefounder::Union{Nothing,Bool}=nothing, 	
 	threshproposal::Real=0.7, 		
 	isallowmissing::Bool=true, 
@@ -33,7 +33,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	orderactions::AbstractVector = ["inverse","permute"],  
     orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.85,
+    coolrate::Real=0.8,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	
@@ -47,10 +47,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	more_verbose::Bool=false)
     starttime = time()
     io = MagicBase.set_logfile_begin(logfile, workdir, "magicimpute_founder!"; verbose)
-	seqerror = MagicBase.get_seqerror(likeparameters)
-	epsf = MagicBase.get_foundererror(likeparameters)
-	epso = MagicBase.get_offspringerror(likeparameters)	
-	MagicReconstruct.check_common_arg(model, epsf, epso, seqerror,
+	baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
+	epsf = MagicBase.get_likeproperty(likeparam, :foundererror)
+	epso = MagicBase.get_likeproperty(likeparam, :offspringerror)	
+	MagicReconstruct.check_common_arg(model, epsf, epso, baseerror,
         workdir, tempdirectory)
 	check_impute_arg(0.9,byfounder,
         delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate)
@@ -58,9 +58,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
     isparallel = isparallel && nprocs() > 1	&& (length(magicgeno.markermap) > 1 || nrepeatmax == nrepeatmin > 1)	
     msg = string("list of options: \n",
         "model = ", model, "\n",
-		"likeparameters = ", likeparameters, "\n",		
-		"threshlikeparameters = ", threshlikeparameters, "\n",		
-		"priorlikeparameters = ", priorlikeparameters, "\n",	
+		"likeparam = ", likeparam, "\n",		
+		"softthreshlikeparam = ", softthreshlikeparam, "\n",
+		"threshlikeparam = ", threshlikeparam, "\n",		
+		"priorlikeparam = ", priorlikeparam, "\n",	
 		"israndallele = ", israndallele,"\n",				
 		"isfounderinbred = ", isfounderinbred,"\n",								
 		"byfounder = ", byfounder, "\n",
@@ -77,8 +78,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
         "isdelmarker = ", isdelmarker, "\n",
         "delsiglevel = ", delsiglevel, "\n",
         "isinfererror = ", isinfererror, "\n",				
-		"tukeyfence = ", tukeyfence, "\n",								
-		"minoutlier = ", minoutlier, "\n",								
+		"tukeyfence = ", tukeyfence, "\n",										
 		"isordermarker = ", isordermarker, "\n",
 		"isspacemarker = ", isspacemarker, "\n",
         "trimcm = ", trimcm, "\n",
@@ -162,41 +162,42 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 			printconsole(io,verbose,msg)		
 		end
 	end	   
-	MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], seqerror, isfounderinbred)
+	MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], baseerror, isfounderinbred)
     MagicBase.rawgenocall!(magicgeno; targets = ["founders"], callthreshold = 0.95, isfounderinbred)
     founderformat, offspringformat = MagicBase.setunphasedgeno!(magicgeno)		
-	liketargetls = MagicBase.get_liketargetls(likeparameters)
+	liketargetls = MagicBase.get_liketargetls(likeparam)
 	if all(occursin.(r"^GT",offspringformat))
-        setdiff!(liketargetls,["seqerror","allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["baseerror","allelicbias","allelicoverdispersion","allelicdropout"])
     end
     if model == "depmodel"
-        setdiff!(liketargetls,["allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["allelicbias","allelicoverdispersion","allelicdropout"])
     end
 	if isnothing(isinfererror) 		
 		isinfererror = isspacemarker || in("AD", offspringformat) 
 		printconsole(io,verbose, string("reset isinfererror=",isinfererror))
 	end
 	if isempty(liketargetls) && isinfererror
-		msg = string("reset isinfererror = false for fixed likeparameters = ",likeparameters)
+		msg = string("reset isinfererror = false for fixed likeparam = ",likeparam)
 		printconsole(io, false, string("Warning: ",msg))
 		@warn msg
 		isinfererror = false
 	end
-	if isinfererror
-		msg = string("inferring likelihood parameters ", liketargetls)
+	if isinfererror		
+		msg = MagicBase.get_info_likeparam(likeparam; isinfererror, ismultiline=true)
 		printconsole(io,verbose,msg)
 	end
 	if isnothing(iscorrectfounder) 		
-		iscorrectfounder = !in("AD", offspringformat) || (model == "depmodel") 
+		iscorrectfounder = true
 		printconsole(io,verbose, string("reset iscorrectfounder=",iscorrectfounder))
 	end	
 	if isnothing(startbyhalf) 
 		if isgreedy
 			startbyhalf = -1 # not used 
 		else
-			nfounder = length(magicgeno.magicped.founderinfo[!,:individual])
-			noff = length(magicgeno.magicped.offspringinfo[!,:member])				
-			startbyhalf = noff/nfounder < 20 ? 7 : 5					
+			# nfounder = length(magicgeno.magicped.founderinfo[!,:individual])
+			# noff = length(magicgeno.magicped.offspringinfo[!,:member])				
+			# startbyhalf = noff/nfounder < 20 ? 7 : 5			
+			startbyhalf = 5		
 			printconsole(io,verbose, string("reset startbyhalf=",startbyhalf))
 		end
 	end	
@@ -228,6 +229,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	MagicBase.info_magicgeno(magicgeno;io,verbose)		
 	# isimpute_afterrepeat = true
 	if isrepeatimpute2		
+		isordermarker_repeat = isordermarker
 		nrepeatimpute =  nrepeatmin == nrepeatmax  ? nrepeatmin : (nrepeatmin,nrepeatmax)
 		# isspacemarker=false, isordermarker=false: assuming input input markermap is good enough and founder imputation is roobust to the inital genetic map
 		# uickinfererror=true: skip estimations for some error rate parameters to speed up computation		
@@ -236,13 +238,15 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		if length(partmagicgenols) == 1 || isordermarker 			
 			printconsole(io,verbose, string("\nstart founder imputation with nrepeatmin = ", nrepeatmin, " and nrepeatmax = ",nrepeatmax))						
 			magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
-				model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror = false,
+				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-				isdelmarker, isinfererror, isordermarker, isspacemarker, 
-				delsiglevel, tukeyfence,  minoutlier, trimcm, trimfraction, skeletonsize, 
+				isdelmarker, isinfererror, 
+				isordermarker = isordermarker_repeat, isspacemarker= isordermarker_repeat ? isspacemarker : false,  quickinfererror = isordermarker_repeat, 
+				delsiglevel, tukeyfence,  trimcm, trimfraction, skeletonsize, 
 				slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
-				inittemperature, coolrate, minaccept, spacebyviterbi,
+				inittemperature = isordermarker_repeat ? inittemperature : 0.0, 
+				coolrate, minaccept, spacebyviterbi,
 				isparallel, maxiter, workdir,tempdirectory,
 				io, verbose,more_verbose
 			)
@@ -258,13 +262,15 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 					nrepeatmin, " and nrepeatmax = ",nrepeatmax, " for subpopulations = ",subpopls))						
 				MagicBase.info_magicgeno(partmagicgeno;io,verbose)		
 				magicimpute_founder_repeat!(partmagicgeno,nrepeatimpute;
-					model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
+					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, isinfererror, isordermarker, isspacemarker, 
-					delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
+					isdelmarker, isinfererror, 
+					isordermarker = isordermarker_repeat, isspacemarker= isordermarker_repeat ? isspacemarker : false,  quickinfererror = isordermarker_repeat, 
+					delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
 					slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
-					inittemperature, coolrate, minaccept,spacebyviterbi,                
+					inittemperature = isordermarker_repeat ? inittemperature : 0.0, 
+					coolrate, minaccept,spacebyviterbi,                
 					isparallel, maxiter, workdir,tempdirectory,
 					io, verbose,more_verbose
 				)
@@ -302,11 +308,11 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	printconsole(io,verbose, msg)						
 	nrepeatimpute = isrepeatimpute2 ? 1 : -1           	
 	magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
-		model, likeparameters, threshlikeparameters, priorlikeparameters, quickinfererror=false, 
+		model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, quickinfererror=false, 
 		israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy,
 		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,	threshproposal, 
 		isdelmarker, isinfererror, isordermarker, isspacemarker, 
-		delsiglevel, tukeyfence, minoutlier, trimcm, trimfraction, skeletonsize, 
+		delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
 		slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
 		inittemperature, coolrate, minaccept,spacebyviterbi,                 
 		isparallel, maxiter, workdir,tempdirectory,
@@ -318,13 +324,13 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		# savemagicgeno("missgeno.csv.gz", missgeno; workdir)
 		# @info string("missgenofile=",missgenofile) 
 		rm(missgenofile;force=true)		
-		MagicBase.merge_missprogeny!(magicgeno,missgeno)
+		MagicBase.merge_missprogeny!(magicgeno,missgeno; isspacemarker)
 		msg = string("insert ", nsnpmiss, " markers with all offspring genotypes being missing")
 		printconsole(io,verbose,msg)
 		MagicBase.check_markerorder(magicgeno; io,verbose)
 		if isinfererror
 			for chr in 1:length(magicgeno.markermap)				
-				for col in [:foundererror, :offspringerror,:seqerror,:allelebalancemean, :allelebalancedisperse,:alleledropout]
+				for col in [:foundererror, :offspringerror,:baseerror,:allelicbias, :allelicoverdispersion,:allelicdropout]
 					ls = magicgeno.markermap[chr][!,col]
 					b = ismissing.(ls)
 					if !all(b)
@@ -340,7 +346,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		offinfo = MagicBase.offspringinfo2df(magicgeno.magicped.offspringinfo)			
 		offcols = occursin.(r"^peroffspringerror",names(offinfo))
 		if any(offcols)
-			nlargeerr = sum(Matrix(offinfo[!,offcols] .>  threshlikeparameters.peroffspringerror),dims=2)[:,1] 
+			nlargeerr = sum(Matrix(offinfo[!,offcols] .>  threshlikeparam.peroffspringerror),dims=2)[:,1] 
 			insertcols!(offinfo, size(offinfo,2)+1, "#LG_large" =>nlargeerr)
 			islargeerr = nlargeerr .>= 1
 			if any(islargeerr)				
@@ -430,26 +436,26 @@ end
 
 function describe_phase_msg(io::Union{Nothing, IO},verbose::Bool,offspringformat::AbstractVector)
     msg = "keywords in print messages: \n"
-    msg *= "\t#diff      ≡ #differences between proposal and current imputing\n"    
-	msg *= "\tΔlogl      ≡ increase of log-likelihood due to proposal imputing\n"
-	msg *= "\tstuck      ≡ measure of imputation being stuck\n"
-	msg *= "\tbyhalf     ≡ if true, obtain proposal conditional on one half chr\n"
-	msg *= "\t#missf     ≡ #missing founder genotypes\n"
-	msg *= "\t#correctf  ≡ #corrected founder genotypes (and set obsgeno missing)\n"
-	msg *= "\t#mono      ≡ #monomorphic markers\n"
-	msg *= "\t#del_mono  ≡ #deleted monomorphic markers\n"
-	msg *= "\t#del_err   ≡ #deleted markers with too large error rates\n"
-	msg *= "\t#del       ≡ #deleted markers via Vuong's test\n"
-	msg *= "\tεo         ≡ offspring error rate per marker \n"
-	msg *= "\tξo         ≡ offspring error rate per individual\n"
+    msg *= "\t#diff         ≡ #differences between proposal and current imputing\n"    
+	msg *= "\tΔlogl         ≡ increase of log-likelihood due to proposal imputing\n"
+	msg *= "\tstuck         ≡ measure of imputation being stuck\n"
+	msg *= "\tbyhalf        ≡ if true, obtain proposal conditional on one half chr\n"
+	msg *= "\t#missf        ≡ #missing founder genotypes\n"
+	msg *= "\t#correctf     ≡ #corrected founder genotypes (and set obsgeno missing)\n"
+	msg *= "\t#mono         ≡ #monomorphic markers\n"
+	msg *= "\t#del_mono     ≡ #deleted monomorphic markers\n"
+	msg *= "\t#del_err      ≡ #deleted markers with too large error rates\n"
+	msg *= "\t#del          ≡ #deleted markers via Vuong's test\n"
+	msg *= "\tεo            ≡ offspring error rate per marker \n"
+	msg *= "\tξo            ≡ offspring error rate per individual\n"
 	if in("AD",offspringformat)	
-		msg *= "\tεseq       ≡ sequence base error rate per marker\n"
-		msg *= "\tABmean     ≡ sequence allelic bias per marker\n"
-		msg *= "\tdisperse   ≡ sequence overdispersion per marker\n"
+		msg *= "\tεbase         ≡ sequence base error rate per marker\n"
+		msg *= "\tbias          ≡ sequence allelic bias per marker\n"
+		msg *= "\toverdisperse  ≡ sequence overdispersion per marker\n"
 	end
-	msg *= "\t#off_excl  ≡ #offspring temporarily excluded due to large ξo\n"
-	msg *= "\tt          ≡ time used for each sub-step\n"	
-	msg *= "\tmem        ≡ memory use before and after garbage collection"	
+	msg *= "\t#off_excl     ≡ #offspring temporarily excluded due to large ξo\n"
+	msg *= "\tt             ≡ time used for each sub-step\n"	
+	msg *= "\tmem           ≡ memory use before and after garbage collection"	
     printconsole(io, verbose,msg)
 end
 
@@ -552,9 +558,10 @@ end
 function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
     model::AbstractString="jointmodel",	
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
-    likeparameters::LikeParameters= isnothing(inputneighbor) ? LikeParameters(peroffspringerror=0.0) : LikeParameters(), 	
-	threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
-	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
+    likeparam::LikeParam= isnothing(inputneighbor) ? LikeParam(peroffspringerror=0.0) : LikeParam(), 	
+	softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam(),    
+	threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
+	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	quickinfererror::Bool=false,
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
@@ -571,8 +578,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
 	delsiglevel::Real = 0.01,    		
-	tukeyfence::Real=3.0,		
-	minoutlier::Real=0.05, 					
+	tukeyfence::Real=1.5,			
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
 	skeletonsize::Union{Nothing,Integer} = nothing, 	
@@ -581,7 +587,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	orderactions::AbstractVector = ["inverse","permute"],  
     orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.85,
+    coolrate::Real=0.8,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	
@@ -592,24 +598,24 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
     verbose::Bool=true,
 	more_verbose::Bool=false)
 	if isinfererror && quickinfererror		
-		(;foundererror,offspringerror,peroffspringerror,seqerror,allelebalancemean,allelebalancedisperse,alleledropout) = likeparameters
+		(;foundererror,offspringerror,peroffspringerror,baseerror,allelicbias,allelicoverdispersion,allelicdropout) = likeparam
 		if isnothing(peroffspringerror)
 			peroffspringerror  = 0.0
 			msg = string("peroffspringerror is reset to 0 for efficiently repeating founder imputation!")
 			printconsole(io,verbose,msg)
 		end
 		# to add condition for AD data
-		# if isnothing(allelebalancedisperse)
-		# 	allelebalancedisperse  = 0.0
-		# 	msg = string("allelebalancedisperse is reset to 0 for efficiently repeating founder imputation!")
+		# if isnothing(allelicoverdispersion)
+		# 	allelicoverdispersion  = 0.0
+		# 	msg = string("allelicoverdispersion is reset to 0 for efficiently repeating founder imputation!")
 		# 	printconsole(io,verbose,msg)
 		# end
-		# if isnothing(alleledropout)
-		# 	alleledropout  = 0.0
-		# 	msg = string("alleledropout is reset to 0 for efficiently repeating founder imputation!")
+		# if isnothing(allelicdropout)
+		# 	allelicdropout  = 0.0
+		# 	msg = string("allelicdropout is reset to 0 for efficiently repeating founder imputation!")
 		# 	printconsole(io,verbose,msg)
 		# end		
-		likeparameters = LikeParameters(;foundererror,offspringerror,peroffspringerror,seqerror,allelebalancemean,allelebalancedisperse,alleledropout)
+		likeparam = LikeParam(;foundererror,offspringerror,peroffspringerror,baseerror,allelicbias,allelicoverdispersion,allelicdropout)
 	end	
 	magicprior=MagicReconstruct.calmagicprior(magicgeno,model; isfounderinbred)	
 	#  split and save magicgeno by chromosomes
@@ -649,7 +655,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
-					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
+					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin, slidewin_neighbor,orderactions, orderactions_neighbor,
 					inittemperature, coolrate, minaccept,spacebyviterbi, 
 	                logio=y, maxiter, imputetempfile = z, 
@@ -672,7 +678,9 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 			        end
 				end
 				rm.(logfilels,force=true)
-			end
+				@everywhere GC.gc() # force garbage collection in all workers			
+				@everywhere GC.gc() 
+			end			
         else
 			# chrls = sortperm([size(i,1) for i in magicgeno.markermap];rev=true)			
             for i in eachindex(magicgenofilels,imputetempfilels)				
@@ -683,7 +691,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
-					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
+					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,
 					inittemperature, coolrate, minaccept, spacebyviterbi,                   
 					logio=io, maxiter, 
@@ -713,9 +721,10 @@ end
 function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer;
     model::AbstractString="jointmodel",	
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
-    likeparameters::LikeParameters= isnothing(inputneighbor) ? LikeParameters(peroffspringerror=0.0) : LikeParameters(), 	
-	threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
-	priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
+    likeparam::LikeParam= isnothing(inputneighbor) ? LikeParam(peroffspringerror=0.0) : LikeParam(), 	
+	softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam(),    
+	threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
+	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	quickinfererror::Bool=false,
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
@@ -732,8 +741,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
 	delsiglevel::Real = 0.01,    		
-	tukeyfence::Real=3.0,			
-	minoutlier::Real=0.05, 
+	tukeyfence::Real=1.5,				
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
 	skeletonsize::Union{Nothing,Integer} = nothing, 	
@@ -742,7 +750,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	orderactions::AbstractVector = ["inverse","permute"],  
     orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.85,
+    coolrate::Real=0.8,
     minaccept::Real=0.15,
 	spacebyviterbi::Bool=false, 
 	isparallel::Bool=true,	
@@ -753,24 +761,24 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
     verbose::Bool=true,
 	more_verbose::Bool=false)
 	if isinfererror && quickinfererror		
-		(;foundererror,offspringerror,peroffspringerror,seqerror,allelebalancemean,allelebalancedisperse,alleledropout) = likeparameters
+		(;foundererror,offspringerror,peroffspringerror,baseerror,allelicbias,allelicoverdispersion,allelicdropout) = likeparam
 		if isnothing(peroffspringerror)
 			peroffspringerror  = 0.0
 			msg = string("peroffspringerror is reset to 0 for efficiently repeating founder imputation!")
 			printconsole(io,verbose,msg)
 		end
 		# to add condition for AD data
-		# if isnothing(allelebalancedisperse)
-		# 	allelebalancedisperse  = 0.0
-		# 	msg = string("allelebalancedisperse is reset to 0 for efficiently repeating founder imputation!")
+		# if isnothing(allelicoverdispersion)
+		# 	allelicoverdispersion  = 0.0
+		# 	msg = string("allelicoverdispersion is reset to 0 for efficiently repeating founder imputation!")
 		# 	printconsole(io,verbose,msg)
 		# end
-		# if isnothing(alleledropout)
-		# 	alleledropout  = 0.0
-		# 	msg = string("alleledropout is reset to 0 for efficiently repeating founder imputation!")
+		# if isnothing(allelicdropout)
+		# 	allelicdropout  = 0.0
+		# 	msg = string("allelicdropout is reset to 0 for efficiently repeating founder imputation!")
 		# 	printconsole(io,verbose,msg)
 		# end		
-		likeparameters = LikeParameters(;foundererror,offspringerror,peroffspringerror,seqerror,allelebalancemean,allelebalancedisperse,alleledropout)
+		likeparam = LikeParam(;foundererror,offspringerror,peroffspringerror,baseerror,allelicbias,allelicoverdispersion,allelicdropout)
 	end
 	inputnrepeatimpute = nrepeatimpute
 	nrepeatimpute = max(1, nrepeatimpute)
@@ -827,7 +835,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
-					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
+					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin, slidewin_neighbor,orderactions, orderactions_neighbor,
 					inittemperature, coolrate, minaccept,spacebyviterbi, 
 	                imputetempfile=y,logio=z, repeatrun=w, maxiter, 
@@ -850,7 +858,9 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 			        end
 				end
 				rm.(logfilemtx,force=true)
-			end
+				@everywhere GC.gc() # force garbage collection in all workers			
+				@everywhere GC.gc() 
+			end			
         else
 			# chrls = sortperm([size(i,1) for i in magicgeno.markermap];rev=true)			
             for i in eachindex(magicgenofilemtx)				
@@ -861,7 +871,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
-					isinfererror, likeparameters, threshlikeparameters, priorlikeparameters, tukeyfence, minoutlier, 															
+					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,
 					inittemperature, coolrate, minaccept, spacebyviterbi, 
                     imputetempfile=imputetempfilemtx[i],repeatrun = repeatrunmtx[i], 					
@@ -958,11 +968,11 @@ function savemapfile(magicgeno::MagicGeno;
 			"founderformat,format of founder genotypes at the marker",
 			"offspringformat, format of offspring genotypes at the marker",
 			"foundererror, allelic error rate in founders at the marker",
-			"offsprignerror, allelic error rate in offspring at the marker",
-			"seqeerror, sequence based error rate at the marker",
-			"allelebalancemean, mean sequence allelic balance among offspring at the marker",
-			"allelebalancedisperse, overdispersion for the distribution of sequence allelic balance among offspring at the marker",
-			"alleledropout, 0- and 1-inflation for the distribution of sequence allelic balance among offspring at the maker"
+			"offspringerror, allelic error rate in offspring at the marker",
+			"baseerror, sequence based error rate at the marker",
+			"allelicbias, mean sequence allelic balance among offspring at the marker",
+			"allelicoverdispersion, overdispersion for the distribution of sequence allelic balance among offspring at the marker",
+			"allelicdropout, 0- and 1-inflation for the distribution of sequence allelic balance among offspring at the maker"
 		]
 		msg = ""
 		for i in eachindex(descripls)

@@ -54,7 +54,7 @@ nstate, nfgl = MagicReconstruct.hmm_nstate_nfgl(popmakeup)
 ###########################################################
 
 exportall(MagicCall)
-likeparameters = MagicBase.LikeParameters()
+likeparameters = MagicBase.LikeParam()
 formatpriority = ["AD","GT"]
 missingset = [".","./.", ".|."]    
 isdelmonomorphic = false
@@ -63,9 +63,9 @@ rowstring = readline(inio,keep=false)
 rowgeno = split(rowstring,"\t")
 ismultiallele = length(split(rowgeno[5],",")) > 1 # col5=alternative                     
 ismultiallele && isdelmultiallelic && return ("multiallelic", rowstring)
-seqerror = MagicBase.get_seqerror(likeparameters)
+baseerror = MagicBase.get_baseerror(likeparameters)
 res = extract_rowgeno!(rowgeno, fcols,offcols,formatpriority,
-    missingset,isfounderinbred,isdelmonomorphic,seqerror)    
+    missingset,isfounderinbred,isdelmonomorphic,baseerror)    
 res
 res == "monomorphic" && return ("monomorphic",join(rowgeno,"\t"))
 inputformat, fgeno, founderformat, offgeno, offspringformat = res
@@ -75,13 +75,13 @@ fgeno
 offgeno
 
 popidls = keys(popmakeup)
-logl = callogl_singlesite(offgeno; popmakeup, popidls, epso, seqerror,
-                allelebalancemean, allelebalancedisperse, 
-                alleledropout,offspringformat,israndallele
+logl = callogl_singlesite(offgeno; popmakeup, popidls, epso, baseerror,
+                allelicbias, allelicoverdispersion, 
+                allelicdropout,offspringformat,israndallele
 )
 
 if offspringformat == "AD"                
-    like = MagicReconstruct.diplolikeGBS(view(offgeno,offls),epso,seqerror,allelebalancemean,allelebalancedisperse,alleledropout; israndallele)    
+    like = MagicReconstruct.diplolikeGBS(view(offgeno,offls),epso,baseerror,allelicbias,allelicoverdispersion,allelicdropout; israndallele)    
 else
     like = MagicReconstruct.diplolike(view(offgeno,offls),epso;israndallele)
 end
@@ -92,8 +92,8 @@ end
 using Distributions
 
 # imputation/correction and error estimations    
-likeparameters=LikeParameters(offspringerror=0.005, peroffspringerror=0.0)
-priorlikeparameters = PriorLikeParameters(seqerror=Beta(1,99))
+likeparameters=LikeParam(offspringerror=0.005, peroffspringerror=0.0)
+priorlikeparameters = PriorLikeParam(baseerror=Beta(1,99))
 israndallele = true
 isinfererror = true
 byfounder = 0
@@ -114,12 +114,12 @@ esterrors
 
 ###########################################################
 
-liketargetls, epsf, epso, pereoffspringerror, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		        
+liketargetls, epsf, epso, pereoffspringerror, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparameters(likeparameters)		        
 @time fhaploset,fhaploweight = priorfhaplo_singlesite(fgeno,founderformat; foundererror=epsf, 
-    seqerror, allelebalancemean,allelebalancedisperse,alleledropout, israndallele
+    baseerror, allelicbias,allelicoverdispersion,allelicdropout, israndallele
 )
 fhaplo = map((x,y)->x[rand(Categorical(y))], fhaploset, fhaploweight)       
-nowlogp = callogl_singlesite(fhaplo, offgeno; popmakeup, epsf,epso, seqerror,
-    allelebalancemean, allelebalancedisperse, alleledropout,offspringformat,israndallele
+nowlogp = callogl_singlesite(fhaplo, offgeno; popmakeup, epsf,epso, baseerror,
+    allelicbias, allelicoverdispersion, allelicdropout,offspringformat,israndallele
 ) 
 

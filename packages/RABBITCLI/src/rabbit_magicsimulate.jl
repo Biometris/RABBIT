@@ -82,15 +82,15 @@ function parse_commandline()
         help = "distribution of mean read depth among markers"
         arg_type = AbstractString
         default = "Gamma(2,5)"
-        "--seqerror"
+        "--baseerror"
         help = "distribution of sequence read error probability"
         arg_type = AbstractString
         default = "Beta(1,999)"
-        "--allelebalancemean"
+        "--allelicbias"
         help = "distribution of allelic balance mean among markers"
         arg_type = AbstractString
         default = "Beta(10,10)"
-        "--allelebalancedisperse"
+        "--allelicoverdispersion"
         help = "distribution of allele balance overdispersion among markers"
         arg_type = AbstractString
         default = "Exponential(0.05)"
@@ -154,7 +154,7 @@ function main(args::Vector{String})
     pedinfo = strip(parsed_args[:pedinfo])
     delete!(parsed_args, :fhaplofile)
     delete!(parsed_args, :pedinfo)
-    for k in [:foundermiss, :offspringmiss, :seqdepth, :foundererror,:offspringerror,:seqerror,:allelebalancemean, :allelebalancedisperse]
+    for k in [:foundermiss, :offspringmiss, :seqdepth, :foundererror,:offspringerror,:baseerror,:allelicbias, :allelicoverdispersion]
         parsed_args[k] = eval(Meta.parse(parsed_args[k]))
     end
     @time magicsimulate(fhaplofile, pedinfo; parsed_args...)

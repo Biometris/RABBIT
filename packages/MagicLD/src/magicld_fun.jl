@@ -6,7 +6,7 @@ function magicld(genofile::AbstractString,
     missingstring=["NA","missing"],        
     isdepmodel::Bool=false,        
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
-    seqerror::Real=0.001,
+    baseerror::Real=0.001,
     markerthin::Integer=1,
     minlodsave::Union{Nothing, Real}=nothing,
     minldsave::Union{Nothing, Real}=nothing,
@@ -47,7 +47,7 @@ function magicld(genofile::AbstractString,
     MagicBase.printconsole(io,verbose,msg)  
     res=magicld!(magicgeno; binfile,
         isdepmodel, threshcall,
-        seqerror, markerthin, minlodsave,minldsave, 
+        baseerror, markerthin, minlodsave,minldsave, 
         isparallel,workdir, outstem,logfile=io,verbose
     )
     tused = round(time()-starttime,digits=1)
@@ -59,7 +59,7 @@ function magicld!(magicgeno::MagicGeno;
     binfile::Union{Nothing,AbstractString}=nothing,
     isdepmodel::Bool=false,    
     threshcall::Real = isdepmodel ? 0.95 : 0.9,   
-    seqerror::Real=0.001,
+    baseerror::Real=0.001,
     markerthin::Integer=1,
     minlodsave::Union{Nothing, Real}=nothing,
     minldsave::Union{Nothing, Real}=nothing,    
@@ -77,7 +77,7 @@ function magicld!(magicgeno::MagicGeno;
         "binfile = ", binfile,"\n",            
         "isdepmodel = ", isdepmodel,"\n",          
         "threshcall = ", threshcall, "\n",          
-        "seqerror = ", seqerror,"\n",
+        "baseerror = ", baseerror,"\n",
         "markerthin = ", markerthin, "\n",
         "minlodsave = ", minlodsave, "\n",
         "minldsave = ", minldsave, "\n",        
@@ -155,7 +155,7 @@ function magicld!(magicgeno::MagicGeno;
     offformat = unique(reduce(vcat,[unique(i[!,:offspringformat]) for i=magicgeno.markermap]))    
     setdiff!(offformat,["GT"])
     MagicBase.rawgenoprob!(magicgeno; targets = ["founders","offspring"],
-        seqerror, isfounderinbred=false, isoffspringinbred = isdepmodel)        
+        baseerror, isfounderinbred=false, isoffspringinbred = isdepmodel)        
     MagicBase.rawgenocall!(magicgeno; callthreshold = threshcall, isfounderinbred=false,ishalfcall=true)
     if !isempty(intersect(offformat, ["GP", "AD"]))
         msg = string("offspringformat=",join(offformat,","), "; transformed to GT with threshcall=",threshcall)

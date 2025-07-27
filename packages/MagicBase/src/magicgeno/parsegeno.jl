@@ -100,7 +100,7 @@ end
 
 function parsecol_pos_error!(genodf::AbstractDataFrame)
     colls = propertynames(genodf)
-    intersect!(colls, [:poscm,:physposbp, :foundererror, :offspringerror, :peroffspringerror, :seqerror, :allelebalancemean, :allelebalancedisperse,:alleledropout])
+    intersect!(colls, [:poscm,:physposbp, :foundererror, :offspringerror, :peroffspringerror, :baseerror, :allelicbias, :allelicoverdispersion,:allelicdropout])
     for col in colls
         missingstringls = ["","missing","NA"]
         postype = col == :physposbp ? Int : Float64
@@ -116,7 +116,7 @@ function splitgenodf(genodf::DataFrame,founderid::AbstractVector,
     recomrate::Real=1.0)
     #  [:marker, :linkagegroup,:poscm, :physposbp, :info,
     #     :founderformat,:offspringformat,:foundererror,:offspringerror,
-    #     :seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]    
+    #     :baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]    
     sampleid = names(genodf)[_col_1stsample:end]
     # println("names(genodf)=",names(genodf), ";founderid=",founderid,",offspringid=",offspringid)    
     diff = setdiff(sampleid,founderid,offspringid)
@@ -383,7 +383,7 @@ end
 
 function parsemarkermap!(markermap::DataFrame)
     colnames = [:marker, :linkagegroup,:poscm, :physchrom, :physposbp, :info, :founderformat,:offspringformat,
-        :foundererror,:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+        :foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
     ncol = size(markermap,2)
     if ncol >=3 
         rename!(markermap,colnames[1:ncol])

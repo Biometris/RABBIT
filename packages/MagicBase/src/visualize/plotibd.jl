@@ -352,7 +352,7 @@ function saveprobplot(
     outstem2 = isnothing(outstem) ? "" : outstem    
     for k = 1:2
         ii = k == 1 ? iiout : iinonout
-        outid = k == 1 ? probtype*"_plot_outlier_" : probtype*"_plot_"
+        outid = k == 1 ? probtype*"_outlier_" : probtype*"_"
         outid = outstem2*"_"*outid
         isempty(ii) && continue
         for i in ii            

@@ -29,10 +29,10 @@ function contfgl_markermap(chrlen::AbstractVector,chrid::AbstractVector)
         "offspringformat" => "contfgl",
         "foundererror" => missing,
         "offspringerror" => missing,
-        "seqerror" => missing,
-        "allelebalancemean" => missing,
-        "allelebalancedisperse" => missing,
-        "alleledropout" => missing,
+        "baseerror" => missing,
+        "allelicbias" => missing,
+        "allelicoverdispersion" => missing,
+        "allelicdropout" => missing,
     ) for chr in eachindex(chrlen)]
 end
 

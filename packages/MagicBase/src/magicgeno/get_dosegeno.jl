@@ -1,6 +1,6 @@
 
 function get_dosegeno(magicgeno::MagicGeno;    
-    seqerror::Real=0.001,
+    baseerror::Real=0.001,
     callthreshold::Real=0.95,
     iscalling::Bool=false,
     isdepmodel::Bool=false)
@@ -9,14 +9,14 @@ function get_dosegeno(magicgeno::MagicGeno;
     if iscalling
         noff = size(offgeno,2)
         isoffspringinbred = isdepmodel ? trues(noff) : falses(noff)
-        get_calledgeno!(offgeno,formatls; seqerror,callthreshold,isoffspringinbred)
+        get_calledgeno!(offgeno,formatls; baseerror,callthreshold,isoffspringinbred)
         formatls = ["GT_unphased" for _ in 1:length(formatls)]
     end
     get_dosegeno(offgeno, formatls; isdepmodel)
 end
 
 function get_calledgeno!(calledgeno::AbstractMatrix, formatls::AbstractVector;
-    seqerror::Real=0.001,
+    baseerror::Real=0.001,
     callthreshold::Real=0.95,
     isoffspringinbred::BitVector)
     formatset = unique(formatls)
@@ -32,13 +32,13 @@ function get_calledgeno!(calledgeno::AbstractMatrix, formatls::AbstractVector;
         if any(isoffspringinbred)
             b = [i in ["AD","GP"] for i in formatls]
             subgeno =view(calledgeno, b, isoffspringinbred)
-            subgeno .= MagicBase.genocallhaplo(subgeno, formatls[b]; seqerror,callthreshold) .^ 2
+            subgeno .= MagicBase.genocallhaplo(subgeno, formatls[b]; baseerror,callthreshold) .^ 2
         end
         if !all(isoffspringinbred)
             b = [i in ["AD","GP"] for i in formatls]
             subgeno =view(calledgeno, b, .!isoffspringinbred)
             subgeno .= MagicBase.genocalldiplo(subgeno, formatls[b];
-                seqerror = 0.001,callthreshold = 0.95)
+                baseerror = 0.001,callthreshold = 0.95)
         end
     end
     calledgeno

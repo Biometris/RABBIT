@@ -57,18 +57,26 @@ function parse_commandline()
         help = "\"depmodel\", \"indepmodel\", or \"jointmodel\" specifies prior dependence of ancestral prior process along two homologous chromosomes within an offspring"
         arg_type = AbstractString
         default = "jointmodel"
-        "--likeparameters"
+        "--likeparam"
         help = "parameters for genotypic data model. If isinfererror = true, parameters with values being nothing will be inferred. "
         arg_type = AbstractString
-        default = "LikeParameters(offspringerror=0.005, peroffspringerror=0.0)"   
-        "--threshlikeparameters"
-        help = "markers with inferred likeparameters values > threshlikeparameters values will be deleted"
+        default = "LikeParam(offspringerror=0.005)"           
+        "--softthreshlikeparam"
+        help = "markers with inferred likeparam values > threshlikeparam values will be deleted only if they are also outliers."
         arg_type = AbstractString
-        default = "ThreshLikeParameters()"   
-        "--priorlikeparameters"
+        default = "SoftThreshLikeParam()"
+        "--threshlikeparam"
+        help = "markers with inferred likeparam values > threshlikeparam values will be deleted"
+        arg_type = AbstractString
+        default = "ThreshLikeParam()"   
+        "--priorlikeparam"
         help = "priors for likelihood parameters"
         arg_type = AbstractString
-        default = "PriorLikeParameters(offspringerror=Beta(1,19),seqerror=Beta(1,99))"   
+        default = "PriorLikeParam()"   
+        "--tukeyfence"
+        help = "tukeyfence for detecting outlier error rates"
+        arg_type = Float64
+        default = 1.5          
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
@@ -79,8 +87,8 @@ function parse_commandline()
         default = "nothing"
         "--threshoffspring"
         help = "offspring genotypes are called if maximum posterior probability > threshoffspring"
-        arg_type = Float64
-        default = 0.95        
+        arg_type = AbstractString
+        default = "nothing"
         "--iscalloffspring"
         help = "if true, offspring genotypes are called"
         arg_type = Bool
@@ -178,24 +186,26 @@ function main(args::Vector{String})
     end
     delete!(parsed_args, :nworker)
     push!(parsed_args, :isparallel => isparallel)    
-    like = parsed_args[:likeparameters]
-    likeparameters = MagicCall.parse_likeparameters(like)
-    delete!(parsed_args, :likeparameters)
-    maxlike = parsed_args[:threshlikeparameters]
-    threshlikeparameters = MagicCall.parse_threshlikeparameters(maxlike)
-    delete!(parsed_args, :threshlikeparameters)
-    priorlike = parsed_args[:priorlikeparameters]
-    priorlikeparameters = MagicCall.parse_priorlikeparameters(priorlike)
-    delete!(parsed_args, :priorlikeparameters)    
-    reset_kwarg_nothing!(parsed_args,:threshfounder,Float64)    
-    if isnothing(parsed_args[:threshfounder])
-        delete!(parsed_args, :threshfounder)
+
+     likedict = Dict()
+    for id in ["LikeParam","SoftThreshLikeParam", "ThreshLikeParam","PriorLikeParam"]
+        id2 = Symbol(lowercase(id))
+        like = parsed_args[id2]
+        likeparam = MagicBase.parse_likeparam(like,id)
+        push!(likedict, id2 => likeparam)
+        delete!(parsed_args, id2)
     end
+
+    for t in [:threshfounder,:threshoffspring]
+        reset_kwarg_nothing!(parsed_args,t,Float64)    
+        isnothing(parsed_args[t]) && delete!(parsed_args, t)
+    end
+    
     reset_kwarg_nothing!(parsed_args,:isinfererror,Bool)    
     if isnothing(parsed_args[:isinfererror]) 
         parsed_args[:isinfererror] = !parsed_args[:israwcall] 
     end
-    @time magiccall(genofile, pedinfo; likeparameters, threshlikeparameters, priorlikeparameters, parsed_args...)    
+    @time magiccall(genofile, pedinfo; likedict..., parsed_args...)    
     if isparallel
         rmprocs(workers()...;waitfor=0)
     end

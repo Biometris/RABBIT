@@ -55,7 +55,7 @@ nstate, nfgl = MagicReconstruct.hmm_nstate_nfgl(popmakeup)
 
 
 MagicBase.exportall(MagicCall)
-likeparameters = MagicBase.LikeParameters()
+likeparameters = MagicBase.LikeParam()
 formatpriority = ["AD","GT"]
 missingset = [".","./.", ".|."]    
 isfounderinbred,isdelmonomorphic = false, false

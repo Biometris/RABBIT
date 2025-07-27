@@ -4,7 +4,7 @@
 function calsitedataprob_multiphase(sitefhaplo::AbstractMatrix,sitegeno::AbstractVector,
     popmakeup::AbstractDict;
     epsf::Real,epso::Real, epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Real,allelebalancemean::Real,allelebalancedisperse::Real,alleledropout::Real,
+    baseerror::Real,allelicbias::Real,allelicoverdispersion::Real,allelicdropout::Real,
     popidls=keys(popmakeup),
     offspringexcl::AbstractVector, 
     isoffphased::Bool=false,
@@ -34,7 +34,7 @@ function calsitedataprob_multiphase(sitefhaplo::AbstractMatrix,sitegeno::Abstrac
         else
             sitelikelihoodGBS!(dataprobls,offls,sitefhaplo,sitegeno,nzstate,nstate,
                 ishaploid,epsf,epso,epso_perind,
-                seqerror,allelebalancemean,allelebalancedisperse,alleledropout,israndallele)
+                baseerror,allelicbias,allelicoverdispersion,allelicdropout,israndallele)
         end
     end
     offls = offspringfrompop(popmakeup,popidls,offspringexcl)
@@ -61,13 +61,13 @@ end
 function calsitedataprob_singlephase(sitefhaplo::AbstractVector,sitegeno::AbstractVector,
     popmakeup::AbstractDict;
     epsf::Real,epso::Real, epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Real,allelebalancemean::Real,allelebalancedisperse::Real,alleledropout::Real,    
+    baseerror::Real,allelicbias::Real,allelicoverdispersion::Real,allelicdropout::Real,    
     isoffphased::Bool=false,
     israndallele::Bool,
     issiteGT::Bool)    
     dataprobls = init_dataprobls_singlephase(popmakeup)    
     calsitedataprob_singlephase!(dataprobls,sitefhaplo,sitegeno,popmakeup;
-        epsf, epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        epsf, epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         isoffphased,israndallele,issiteGT
     )
     dataprobls    
@@ -78,7 +78,7 @@ end
 function calsitedataprob_singlephase!(dataprobls::AbstractVector, sitefhaplo::AbstractVector,sitegeno::AbstractVector,
     popmakeup::AbstractDict;
     epsf::Real,epso::Real, epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Real,allelebalancemean::Real,allelebalancedisperse::Real,alleledropout::Real,    
+    baseerror::Real,allelicbias::Real,allelicoverdispersion::Real,allelicdropout::Real,    
     isoffphased::Bool=false,
     israndallele::Bool,
     issiteGT::Bool)
@@ -101,7 +101,7 @@ function calsitedataprob_singlephase!(dataprobls::AbstractVector, sitefhaplo::Ab
         else
             sitelikelihoodGBS!(dataprobls2,offls,sitefhaplo2,sitegeno,nzstate,nstate,
                 ishaploid,epsf,epso,epso_perind,
-                seqerror,allelebalancemean,allelebalancedisperse,alleledropout,israndallele)
+                baseerror,allelicbias,allelicoverdispersion,allelicdropout,israndallele)
         end
     end    
     dataprobls    
@@ -199,7 +199,7 @@ function sitelikelihoodGBS!(dataprobls::AbstractVector,offls::AbstractVector,
     sitefhaplo::AbstractMatrix,sitegeno::AbstractVector,
     nzstate::AbstractVector,nstate::Integer,
     ishaploid::Bool, epsf::Real,epso::Real, epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Real,allelebalancemean::Real,allelebalancedisperse::Real,alleledropout::Real,
+    baseerror::Real,allelicbias::Real,allelicoverdispersion::Real,allelicdropout::Real,
     israndallele::Bool)
     nhaplo, nfgl=size(sitefhaplo)
     noff = length(offls)
@@ -219,7 +219,7 @@ function sitelikelihoodGBS!(dataprobls::AbstractVector,offls::AbstractVector,
         dataformat = typeof(first(offgenols)) 
         if dataformat <: AbstractVector            
             # jldopen("test.jld2","w") do file
-            #     file["breakpoint"] = [offls,sitefhaplo,sitegeno,nzstate,nstate,ishaploid,epsf,epso,seqerror]
+            #     file["breakpoint"] = [offls,sitefhaplo,sitegeno,nzstate,nstate,ishaploid,epsf,epso,baseerror]
             # end
             # error("TODO: GBS for haploid offspring")
             datatype = eltype(first(offgenols)) 
@@ -229,7 +229,7 @@ function sitelikelihoodGBS!(dataprobls::AbstractVector,offls::AbstractVector,
                 epsols = [epso + i -  epso * i for i in epso_perind[offls]]
             end
             if datatype <: Integer
-                like = MagicReconstruct.haplolikeGBS(offgenols,epsols,seqerror)  # format = AD
+                like = MagicReconstruct.haplolikeGBS(offgenols,epsols,baseerror)  # format = AD
             elseif datatype <: AbstractFloat                
                 like = MagicReconstruct.haplolikeGBS(offgenols,epsols) # format = GP
             else
@@ -290,7 +290,7 @@ function sitelikelihoodGBS!(dataprobls::AbstractVector,offls::AbstractVector,
             epsols = [epso + i -  epso * i for i in epso_perind[offls]]
         end
         if eltype(first(sitegeno_off)) <: Integer
-            like = diplolikeGBS(sitegeno_off,epsols,seqerror,allelebalancemean,allelebalancedisperse,alleledropout; israndallele)
+            like = diplolikeGBS(sitegeno_off,epsols,baseerror,allelicbias,allelicoverdispersion,allelicdropout; israndallele)
         else
             like = diplolikeGBS(sitegeno_off,epsols; israndallele)
         end

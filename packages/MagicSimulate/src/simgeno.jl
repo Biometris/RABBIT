@@ -6,10 +6,10 @@ function simgeno(truegeno::MagicGeno,magicfgl::MagicGeno;
     foundererror::Distribution=Beta(1,199),
     offspringerror::Distribution=Beta(1,199),    
     seqfrac::Real=0.5,
-    seqerror::Distribution = Beta(1,199),
-    allelebalancemean::Distribution = Beta(5,5),    
-    allelebalancedisperse::Distribution = Exponential(0.05),    
-    alleledropout::Distribution = Beta(1,19),    
+    baseerror::Distribution = Beta(1,199),
+    allelicbias::Distribution = Beta(5,5),    
+    allelicoverdispersion::Distribution = Exponential(0.05),    
+    allelicdropout::Distribution = Beta(1,19),    
     seqdepth::Distribution = Gamma(2, 5),
     seqdepth_overdispersion::Distribution = Gamma(1,1))
     # initial obsgeno
@@ -29,12 +29,12 @@ function simgeno(truegeno::MagicGeno,magicfgl::MagicGeno;
     applyerror!(obsgeno; foundererror,offspringerror,subpop_randallele, targetfounder=true)    
     applyerror!(obsgeno; foundererror,offspringerror,subpop_randallele, targetfounder=false)        
     # apply sequencing error and allelic balance due to unbalance amplification in PCR enrichment    
-    simread!(obsgeno; seqfrac, seqerror, allelebalancemean, allelebalancedisperse, alleledropout, seqdepth,seqdepth_overdispersion)
+    simread!(obsgeno; seqfrac, baseerror, allelicbias, allelicoverdispersion, allelicdropout, seqdepth,seqdepth_overdispersion)
     missing2string!(obsgeno)
     # assume obsgeno and true have same markermap
     for chr in eachindex(obsgeno.markermap)        
         if all(obsgeno.markermap[chr][!,:marker] .== truegeno.markermap[chr][!,:marker])
-            for col in [:foundererror,:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+            for col in [:foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
                 truegeno.markermap[chr][!,col] .= obsgeno.markermap[chr][!,col] 
                 obsgeno.markermap[chr][!,col]  .= missing
             end
@@ -198,10 +198,10 @@ end
 
 function simread!(magicgeno::MagicGeno; 
     seqfrac::Real=0.5,
-    seqerror::Distribution = Beta(1,199),
-    allelebalancemean::Distribution = Beta(5,5),    
-    allelebalancedisperse::Distribution = Exponential(0.05),    
-    alleledropout::Distribution = Beta(1,19),    
+    baseerror::Distribution = Beta(1,199),
+    allelicbias::Distribution = Beta(5,5),    
+    allelicoverdispersion::Distribution = Exponential(0.05),    
+    allelicdropout::Distribution = Beta(1,19),    
     seqdepth::Distribution = Gamma(2, 5),
     seqdepth_overdispersion::Distribution = Gamma(1,1))
     seqfrac ≈ 0.0 && return magicgeno
@@ -209,10 +209,10 @@ function simread!(magicgeno::MagicGeno;
         isseq = rand(Bernoulli(seqfrac),size(magicgeno.markermap[chr],1))
         if any(isseq) 
             nmarker_seq = sum(isseq)
-            col = :seqerror
+            col = :baseerror
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                seqerrls = rand(seqerror, nmarker_seq)
+                seqerrls = rand(baseerror, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
                 ls[isseq] .= seqerrls
                 magicgeno.markermap[chr][!,col] .= ls
@@ -220,38 +220,38 @@ function simread!(magicgeno::MagicGeno;
                 seqerrls = magicgeno.markermap[chr][isseq,col]
             end
 
-            col = :allelebalancemean
+            col = :allelicbias
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                allelebalancemeanls = rand(allelebalancemean, nmarker_seq)
+                allelicbiasls = rand(allelicbias, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
-                ls[isseq] .= allelebalancemeanls
+                ls[isseq] .= allelicbiasls
                 magicgeno.markermap[chr][!,col] .= ls
             else
-                allelebalancemeanls = magicgeno.markermap[chr][isseq,col]
+                allelicbiasls = magicgeno.markermap[chr][isseq,col]
             end
 
-            col = :allelebalancedisperse
+            col = :allelicoverdispersion
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                allelebalancedispersels = rand(allelebalancedisperse, nmarker_seq)
+                allelicoverdispersionls = rand(allelicoverdispersion, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
-                ls[isseq] .= allelebalancedispersels
+                ls[isseq] .= allelicoverdispersionls
                 magicgeno.markermap[chr][!,col] .= ls
             else
-                allelebalancedispersels = magicgeno.markermap[chr][isseq,col]
+                allelicoverdispersionls = magicgeno.markermap[chr][isseq,col]
             end
 
 
-            col = :alleledropout
+            col = :allelicdropout
             b = ismissing.(magicgeno.markermap[chr][isseq,col])
             if any(b)                    
-                alleledropoutls = rand(alleledropout, nmarker_seq)
+                allelicdropoutls = rand(allelicdropout, nmarker_seq)
                 ls = Vector{Union{Missing, Float32}}(magicgeno.markermap[chr][:,col])
-                ls[isseq] .= alleledropoutls
+                ls[isseq] .= allelicdropoutls
                 magicgeno.markermap[chr][!,col] .= ls
             else
-                alleledropoutls = magicgeno.markermap[chr][isseq,col]
+                allelicdropoutls = magicgeno.markermap[chr][isseq,col]
             end
 
             for targetfounder in [true, false]   
@@ -264,7 +264,7 @@ function simread!(magicgeno::MagicGeno;
                 chrdepth = MagicSimulate.randdepth(seqdepth, seqdepth_overdispersion,nind,nmarker_seq)                
                 for snp in 1:nmarker_seq
                     chrtrue[:,snp] .= trueg2AD.(chrtrue[:,snp],chrdepth[:,snp],seqerrls[snp],
-                        allelebalancemeanls[snp],allelebalancedispersels[snp],alleledropoutls[snp])
+                        allelicbiasls[snp],allelicoverdispersionls[snp],allelicdropoutls[snp])
                 end
                 if targetfounder
                     magicgeno.foundergeno[chr][isseq,:] .= permutedims(chrtrue)
@@ -287,7 +287,7 @@ function get_subpop_randallele(magicfgl::MagicGeno;error_randallele)
             Dict([begin         
                 offls = pop2off[popid]
                 randallele = mean(isnonibd[:,offls])                 
-                println("chr=",chr, ",popid=",popid,", randallele=",randallele)
+                # println("chr=",chr, ",popid=",popid,", randallele=",randallele)
                 popid =>(offspring=offls, randallele=randallele)
             end for popid in keys(pop2off)])
         end for chr in eachindex(magicfgl.offspringgeno)]

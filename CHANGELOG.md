@@ -35,3 +35,13 @@
 * magicimpute: reset default behavior of startbyhalf (5 or 7); reset default isallowmissing = true
 * magicbase/parsebreedped:  allow intermediate parents: create duplicated "id_virtualoffspring" for intermeidate parent "id"
 * magicimpute: when impute "id_virtualoffspring", its observed genotypes are reset to the corresondng "id" that is imputed in the 1st step of founder imputation. 
+
+## RABBIT v1.3.3
+* magiccall: reset defaults: likeparameters, priorlikeparametes, threshoffspring
+* magicbase: minfreq = 0.3 for mapcorkendall
+* magicmap: default isdupebinning = false for outbred; minfreq = 0.3 for setting minsilhouette 
+* magicimpute: add SoftThreshLikeparameters and reset default of priorlikeparametes; reset tukeyfence= 1.5, startbyhalf = 5. 
+* MagicCall: new keyargs softthreshlikeparameters and tukeyfence
+* Rename: change Parameters into Params in the structs such as LikeParameters and ThreshParameters. 
+* Rename: change seqerror => baseerror, allelebalancemean => allelicbais, allelebalancedisperse => allelicoverdispersion, alleledropout => allelicdropout
+

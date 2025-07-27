@@ -6,10 +6,10 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing, AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     offspringexcl::AbstractVector,
     snporder::AbstractVector,
     israndallele::Bool,     
@@ -27,8 +27,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     nsnp == length(snporder) || @error "dimension mismatch!"
     loglikels = MagicReconstruct.hmm_loglikels(chrfhaplo,chroffgeno,
         popmakeup,priorprocess;
-        epsf,epso,epso_perind, seqerror,
-        allelebalancemean,allelebalancedisperse,alleledropout, 
+        epsf,epso,epso_perind, baseerror,
+        allelicbias,allelicoverdispersion,allelicdropout, 
         decodetempfile=imputetempfile, israndallele,issnpGT,snporder
     )	
     loglikels[offspringexcl] .= 0.0 
@@ -59,8 +59,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
                 founderforwardbackward!(findex,
                     newchrfhaplo,chroffgeno,
                     popmakeup,priorprocess,fhaplosetpp2; 
-                    epsf,epso,epso_perind,seqerror,
-                    allelebalancemean,allelebalancedisperse,alleledropout,
+                    epsf,epso,epso_perind,baseerror,
+                    allelicbias,allelicoverdispersion,allelicdropout,
                     offspringexcl, snporder,israndallele, issnpGT,
                     reversechr = !reversechr, forwardtempfile=imputetempfile, 
                     threshproposal, 
@@ -71,8 +71,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
         for findex in findexlist                             
             founderforwardbackward!(findex,newchrfhaplo,chroffgeno,
                 popmakeup,priorprocess,fhaplosetpp; 
-                epsf,epso,epso_perind, seqerror,
-                allelebalancemean,allelebalancedisperse,alleledropout, 
+                epsf,epso,epso_perind, baseerror,
+                allelicbias,allelicoverdispersion,allelicdropout, 
                 offspringexcl, snporder,israndallele, issnpGT,
                 reversechr, forwardtempfile=imputetempfile, threshproposal)    
         end                
@@ -80,8 +80,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     bdiff = get_bdiff(chrfhaplo,newchrfhaplo,snpincl)     
     ndiff = sum(bdiff)
     loglikels = MagicReconstruct.hmm_loglikels(newchrfhaplo,chroffgeno,popmakeup,priorprocess;
-        epsf,epso,epso_perind, seqerror,
-        allelebalancemean,allelebalancedisperse,alleledropout, 
+        epsf,epso,epso_perind, baseerror,
+        allelicbias,allelicoverdispersion,allelicdropout, 
         decodetempfile=imputetempfile, israndallele,issnpGT,snporder
     )	
     loglikels[offspringexcl] .= 0.0 
@@ -155,10 +155,10 @@ function founderforward(chroffgeno::AbstractMatrix, popidls::AbstractVector,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing, AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},    
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},    
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,
     israndallele::Bool,
     issnpGT::AbstractVector, 
@@ -172,18 +172,18 @@ function founderforward(chroffgeno::AbstractMatrix, popidls::AbstractVector,
     end
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
-    seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
-    allelebalancemeanls = typeof(allelebalancemean) <: Real ? allelebalancemean*ones(nsnp) : allelebalancemean
-    allelebalancedispersels = typeof(allelebalancedisperse) <: Real ? allelebalancedisperse*ones(nsnp) : allelebalancedisperse
-    alleledropoutls = typeof(alleledropout) <: Real ? alleledropout*ones(nsnp) : alleledropout
+    baseerrorls = typeof(baseerror) <: Real ? baseerror*ones(nsnp) : baseerror
+    allelicbiasls = typeof(allelicbias) <: Real ? allelicbias*ones(nsnp) : allelicbias
+    allelicoverdispersionls = typeof(allelicoverdispersion) <: Real ? allelicoverdispersion*ones(nsnp) : allelicoverdispersion
+    allelicdropoutls = typeof(allelicdropout) <: Real ? allelicdropout*ones(nsnp) : allelicdropout
     markerincl=first(values(priorprocess)).markerincl
     tseq = findall(markerincl)
     jldopen(forwardtempfile,"w") do file
         snp = snporder[tseq[1]]
         dataprobls = MagicReconstruct.calsitedataprob_multiphase(fhaploset[snp],chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind,seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp],                    
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind,baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp],                    
             popidls, offspringexcl, israndallele,issiteGT = issnpGT[snp])        
         noff =length(startprob)        
         origprob = [[startprob[i] .* dataprob[i] for i=1:noff] for dataprob in dataprobls]
@@ -194,9 +194,9 @@ function founderforward(chroffgeno::AbstractMatrix, popidls::AbstractVector,
             tranprob = gettranprob(tseq[kk-1], popmakeup, priorprocess,popidls,offspringexcl)
             snp = snporder[tseq[kk]]            
             dataprobls =MagicReconstruct.calsitedataprob_multiphase(fhaploset[snp],chroffgeno[snp,:],popmakeup;
-                epsf=epsfls[snp], epso=epsols[snp], epso_perind,seqerror=seqerrorls[snp], 
-                allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                alleledropout=alleledropoutls[snp], 
+                epsf=epsfls[snp], epso=epsols[snp], epso_perind,baseerror=baseerrorls[snp], 
+                allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                allelicdropout=allelicdropoutls[snp], 
                 popidls, offspringexcl, israndallele, issiteGT = issnpGT[snp])
             snppre = snporder[tseq[kk-1]]        
             # println("kk=",kk, ",snppre=",snppre,",fwphaseprob[snppre] =",fwphaseprob[snppre],
@@ -300,10 +300,10 @@ function founderforwardbackward!(findex::AbstractVector,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing, AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     offspringexcl::AbstractVector,
     snporder::AbstractVector,
     israndallele::Bool,
@@ -325,7 +325,7 @@ function founderforwardbackward!(findex::AbstractVector,
     fwphaseindex, fwphaseprob = founderforward(chroffgeno,
         popidls, offspringexcl, popmakeup,priorprocess,fhaploset; 
         epsf,epso,epso_perind, 
-        seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         snporder,israndallele,issnpGT,forwardtempfile)
     isgc && GC.gc()
     # fhaploset=map((x,y)->x[y,:],fhaploset,fwphaseindex)

@@ -19,5 +19,6 @@ export
     magiccall
 
 include("magiccall_fun.jl")
+include("shift_outliers.jl")
 
 end # module MagicCall

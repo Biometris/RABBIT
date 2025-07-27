@@ -66,7 +66,7 @@ function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVe
     2a/(2a + b + c)
 end
 
-function mapcorkendall(mapx, mapy; isphysmap = [false,false], minfreq = 0.2)
+function mapcorkendall(mapx, mapy; isphysmap = [false,false], minfreq = 0.3)
     mapylg = MagicBase.findtruelg(mapy,mapx; minfreq, isphysmap = reverse(isphysmap))    
     mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
     map(MagicBase.calcorkendall, mapx, mapy2)

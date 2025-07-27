@@ -8,7 +8,7 @@ pwd()
 isfounderinbred = true
 
 
-dataid = "sim2"
+dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
@@ -33,13 +33,13 @@ show(offacc)
 
 using Plots
 using StatsBase
-colls = [:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+colls = [:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
 colls = colls[1:1]
 gls = [begin 
     trueerrls = copy(truegeno.markermap[1][!,col])    
     esterrls = copy(magicgeno.markermap[1][!,col])
     b = .!ismissing.(trueerrls)
-    if col == :alleledropout
+    if col == :allelicdropout
         # b .= b .&& esterrls .> 1e-3    
         println("col=",col, ",#marker_incl=",sum(b))
     end    
@@ -71,7 +71,7 @@ genofile2 = outstem*"_magicimpute_geno.vcf.gz"
 @time magicancestry = magicreconstruct(genofile2,pedfile;     
     # isignorephase = true,         
     isfounderinbred,
-    nplot_subpop = 1, 
+    # nplot_subpop = 1, 
     outstem
 );
 

@@ -8,10 +8,10 @@ function updateorder!(snporder::AbstractVector,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},    
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     israndallele::Bool,     
     issnpGT::AbstractVector, 
     decodetempfile::AbstractString,
@@ -36,7 +36,7 @@ function updateorder!(snporder::AbstractVector,
         loglhis, accepthis, winsizehis =segementorder!(snporder, proptype,
             chrfhaplo,chroffgeno, popmakeup,priorprocess;
             offspringexcl, slidewinsize, maxwinsize, chrneighbor=nothing,
-            epsf, epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+            epsf, epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
             israndallele, issnpGT,decodetempfile,temperature)
         accept = mean(accepthis)
         tused = round(time()-startt,digits=1)
@@ -65,10 +65,10 @@ function updateorder_neighbor!(snporder::AbstractVector,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},    
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},  
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},  
     israndallele::Bool,     
     issnpGT::AbstractVector, 
     decodetempfile::AbstractString,
@@ -89,7 +89,7 @@ function updateorder_neighbor!(snporder::AbstractVector,
         loglhis, accepthis, winsizehis = segementorder!(snporder, proptype,
             chrfhaplo,chroffgeno, popmakeup,priorprocess;
             offspringexcl, slidewinsize=nothing, maxwinsize=maxwinsize[p], chrneighbor,
-            epsf, epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+            epsf, epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
             israndallele, issnpGT,decodetempfile, temperature)
         accept = isempty(winsizehis) ? 0.0 : mean(accepthis)
         meanwinsize = isempty(winsizehis) ? 0.0 : round(mean(winsizehis),digits=1)
@@ -120,10 +120,10 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},    
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     israndallele::Bool,     
     issnpGT::AbstractVector, 
     decodetempfile::AbstractString,
@@ -134,14 +134,14 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
     nsnp = size(chroffgeno,1)
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
-    seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
-    allelebalancemeanls = typeof(allelebalancemean) <: Real ? allelebalancemean*ones(nsnp) : allelebalancemean
-    allelebalancedispersels = typeof(allelebalancedisperse) <: Real ? allelebalancedisperse*ones(nsnp) : allelebalancedisperse
-    alleledropoutls = typeof(alleledropout) <: Real ? alleledropout*ones(nsnp) : alleledropout
+    baseerrorls = typeof(baseerror) <: Real ? baseerror*ones(nsnp) : baseerror
+    allelicbiasls = typeof(allelicbias) <: Real ? allelicbias*ones(nsnp) : allelicbias
+    allelicoverdispersionls = typeof(allelicoverdispersion) <: Real ? allelicoverdispersion*ones(nsnp) : allelicoverdispersion
+    allelicdropoutls = typeof(allelicdropout) <: Real ? allelicdropout*ones(nsnp) : allelicdropout
     MagicReconstruct.callogbackward_permarker!(decodetempfile, chrfhaplo,chroffgeno, popmakeup,priorprocess;
-        epsf = epsfls, epso = epsols, epso_perind, seqerror = seqerrorls,
-        allelebalancemean = allelebalancemeanls, allelebalancedisperse = allelebalancedispersels, 
-        alleledropout = alleledropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
+        epsf = epsfls, epso = epsols, epso_perind, baseerror = baseerrorls,
+        allelicbias = allelicbiasls, allelicoverdispersion = allelicoverdispersionls, 
+        allelicdropout = allelicdropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
     tseq = findall(first(values(priorprocess)).markerincl)    
     dataprobls = MagicReconstruct.init_dataprobls_singlephase(popmakeup)    
     jldopen(decodetempfile,"r") do bwfile
@@ -151,9 +151,9 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls,chrfhaplo[snp,:],
             chroffgeno[snp,:],popmakeup;
             epsf=epsfls[snp], epso=epsols[snp], epso_perind, 
-            seqerror=seqerrorls[snp], allelebalancemean=allelebalancemeanls[snp], 
-            allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp],  
+            baseerror=baseerrorls[snp], allelicbias=allelicbiasls[snp], 
+            allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp],  
             israndallele, issiteGT = issnpGT[snp])
         fw_prob_logl = MagicReconstruct.calinitforward(dataprobls, popmakeup)
         fwls = Vector{Union{Nothing,typeof(fw_prob_logl)}}(nothing,maximum(tseq))
@@ -204,8 +204,8 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
                 segtseq, segttranls = getsegprop("original", fwkk+1,kkmin-1, tseq)
                 fwseg= calsegforward!(dataprobls, segtseq, segttranls,fwkk+1,tseq, fwls,
                     chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
-                    epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
-                    allelebalancedispersels,alleledropoutls, israndallele, issnpGT)
+                    epsfls,epsols,epso_perind, baseerrorls,allelicbiasls,
+                    allelicoverdispersionls,allelicdropoutls, israndallele, issnpGT)
                 fwls[tseq[(fwkk+1):(kkmin-1)]] .= fwseg
                 fwkk = kkmin-1
             end
@@ -214,8 +214,8 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
                 isnothing(bwls[bw_t]) && (bwls[bw_t] = bwfile[string("t", bw_t)])
                 updatebwls!(dataprobls, bwls, kkmax, bwkk, tseq, chrfhaplo, chroffgeno,
                     snporder,popmakeup, priorprocess;
-                    epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
-                    allelebalancedispersels,alleledropoutls, israndallele, issnpGT)
+                    epsfls,epsols,epso_perind, baseerrorls,allelicbiasls,
+                    allelicoverdispersionls,allelicdropoutls, israndallele, issnpGT)
                 bwkk = kkmax
             end
             bw_tmax = bwls[tseq[kkmax]]
@@ -224,8 +224,8 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
                 segtseq, segttranls = getsegprop("original", kkmin, kkmax, tseq)
                 fwsegcheck = calsegforward!(dataprobls, segtseq, segttranls,kkmin,tseq,fwls,
                     chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
-                    epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
-                    allelebalancedispersels,alleledropoutls, israndallele, issnpGT)
+                    epsfls,epsols,epso_perind, baseerrorls,allelicbiasls,
+                    allelicoverdispersionls,allelicdropoutls, israndallele, issnpGT)
                 logl2 = sum(calindlogl(last(fwsegcheck),logbwprob, popmakeup;offspringexcl))
                 msg = string("inconsisent logl=",logl,",logl2=",logl2, "; action=",proptype, "; [kkmin,kkmax]=",[kkmin,kkmax])                 
                 isapprox(logl2,logl;atol=1e-3) || @warn msg maxlog=20                
@@ -234,8 +234,8 @@ function segementorder!(snporder::AbstractVector, proptype::AbstractString,
             segtseq, segttranls = getsegprop(proptype, kkmin, kkmax, tseq; kkmid)
             fwsegprop = calsegforward!(dataprobls, segtseq, segttranls,kkmin,tseq,fwls,
                 chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
-                epsfls,epsols,epso_perind, seqerrorls,allelebalancemeanls,
-                allelebalancedispersels,alleledropoutls,israndallele, issnpGT)
+                epsfls,epsols,epso_perind, baseerrorls,allelicbiasls,
+                allelicoverdispersionls,allelicdropoutls,israndallele, issnpGT)
             proplogl = sum(calindlogl(last(fwsegprop),logbwprob, popmakeup;offspringexcl))
             if temperature <= 0.0
                 isaccept = proplogl >= logl
@@ -355,19 +355,19 @@ function calsegforward!(dataprobls,
     epsfls::AbstractVector,
     epsols::AbstractVector,
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerrorls::AbstractVector,
-    allelebalancemeanls::AbstractVector,
-    allelebalancedispersels::AbstractVector,
-    alleledropoutls::AbstractVector,
+    baseerrorls::AbstractVector,
+    allelicbiasls::AbstractVector,
+    allelicoverdispersionls::AbstractVector,
+    allelicdropoutls::AbstractVector,
     israndallele::Bool, 
     issnpGT::AbstractVector)
     fwseg = Vector{eltype(fwls)}()    
     # cal first fw    
     snp = snporder[segtseq[1]]
     MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:],chroffgeno[snp,:],popmakeup;
-        epsf=epsfls[snp], epso=epsols[snp],seqerror=seqerrorls[snp], epso_perind, 
-        allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-        alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])
+        epsf=epsfls[snp], epso=epsols[snp],baseerror=baseerrorls[snp], epso_perind, 
+        allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+        allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])
     if kkmin == 1
         fw_prob_logl = MagicReconstruct.calinitforward(dataprobls, popmakeup)
     else        
@@ -381,9 +381,9 @@ function calsegforward!(dataprobls,
         snp = snporder[segtseq[i+1]]
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:],
             chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])
         fw_prob_logl2 =  deepcopy(last(fwseg))
         MagicReconstruct.calnextforward!(fw_prob_logl2,segtseq[i],dataprobls,popmakeup, priorprocess;ttran = segttranls[i])
         push!(fwseg,fw_prob_logl2)
@@ -400,10 +400,10 @@ function updatebwls!(dataprobls, bwls::AbstractVector,
     epsfls::AbstractVector,
     epsols::AbstractVector,
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerrorls::AbstractVector,
-    allelebalancemeanls::AbstractVector,
-    allelebalancedispersels::AbstractVector,    
-    alleledropoutls::AbstractVector,    
+    baseerrorls::AbstractVector,
+    allelicbiasls::AbstractVector,
+    allelicoverdispersionls::AbstractVector,    
+    allelicdropoutls::AbstractVector,    
     israndallele::Bool, 
     issnpGT::AbstractVector)
     segtseq = tseq[kkstart:kkend]    
@@ -412,9 +412,9 @@ function updatebwls!(dataprobls, bwls::AbstractVector,
         tnow = segtseq[i]
         snp = snporder[tback]
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])
         logbwprob = copy.(bwls[tback])
         MagicReconstruct.calnextlogbackward!(logbwprob,tback, tnow, dataprobls,popmakeup,priorprocess)
         bwls[tnow] = logbwprob

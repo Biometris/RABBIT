@@ -65,10 +65,10 @@ function parse_commandline()
         help = "\"depmodel\", \"indepmodel\", or \"jointmodel\" specifies prior dependence of ancestral prior process along two homologous chromosomes within an offspring"
         arg_type = AbstractString
         default = "jointmodel"
-        "--likeparameters"
+        "--likeparam"
         help = "Set error rate values in the genotypic data model. "
         arg_type = AbstractString        
-        default = "LikeParameters()"   
+        default = "LikeParam()"   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
@@ -239,10 +239,13 @@ function main(args::Vector{String})
     missfilter = (maxomiss = maxomiss, ormaxfmiss = maxfmiss)
     delete!(parsed_args, :maxomiss)
     delete!(parsed_args, :ormaxfmiss)
-    like = parsed_args[:likeparameters]
-    likeparameters = MagicFilter.parse_likeparameters(like)
-    delete!(parsed_args, :likeparameters)
-    @time magicfilter(genofile, pedinfo; likeparameters,missfilter, parsed_args...)
+    
+    id = "LikeParam"
+    id2 = Symbol(lowercase(id))
+    likeparam = MagicBase.parse_likeparam(parsed_args[id2],id)    
+    delete!(parsed_args, id2)
+
+    @time magicfilter(genofile, pedinfo; likeparam,missfilter, parsed_args...)
     return 0
 end
 

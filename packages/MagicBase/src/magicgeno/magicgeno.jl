@@ -467,14 +467,14 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
             msg = cc*"INFO=<ID=FOUNDERERROR,Number=1,Type=Float,Description=\"Offspring allelic error rate\">"
             occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=SEQERROR,Number=1,Type=Float,Description=\"sequencing base error rate\">"
-            occursin("<ID=SEQERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=SEQERROR,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelebalancemean = alpha/(alpha+beta) and allelebalancedisperse = 1/(alpha+beta)\">"
-            occursin("<ID=SEQERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELEBALANCEDISPERSE,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelebalancemean = alpha/(alpha+beta) and allelebalancedisperse = 1/(alpha+beta)\">"
-            occursin("<ID=ALLELEBALANCEDISPERSE",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELEBALANCEDISPERSE,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
-            occursin("<ID=ALLELEBALANCEDISPERSE",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing base error rate\">"
+            occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
+            occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
+            occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
+            occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
         end
     else
         if typeof(sink) <: AbstractString
@@ -507,7 +507,7 @@ function geno_colnames(magicgeno::MagicGeno,isvcf::Bool,target::AbstractString)
         colnames = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
     else
         colnames = ["marker","linkagegroup","poscm","physchrom", "physposbp","info", "founderformat","offspringformat",
-            "foundererror","offspringerror","seqerror","allelebalancemean","allelebalancedisperse","alleledropout"]
+            "foundererror","offspringerror","baseerror","allelicbias","allelicoverdispersion","allelicdropout"]
     end
     if !isnothing(magicgeno.foundergeno) && in(target,["all","founder"])
         founderid = magicgeno.magicped.founderinfo[!,:individual]
@@ -549,7 +549,7 @@ function togenomtx(magicgeno::MagicGeno,chr::Integer;
         offmtx = nothing
     end
     #  [:marker, :linkagegroup,:poscm, :physchrom, :physposbp, :info,:founderformat,:offspringformat,
-    #   :foundererror,:offspringerror, :seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+    #   :foundererror,:offspringerror, :baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
     mapmtx = Matrix{Any}(magicgeno.markermap[chr]);   
     submapmtx = view(mapmtx,:, vcat([3],9:_col_1stsample-1))    
     submapmtx .= [ismissing(i) ? i : round(i,digits=8) for i in submapmtx]
@@ -586,7 +586,7 @@ function tovcfgenomtx!(mapmtx::AbstractMatrix,
     offspringmtx::Union{Nothing,AbstractMatrix})    
     # input mapmtx columns: 
     #  ["marker","linkagegroup","poscm","physchrom", "physposbp","info", "founderformat","offspringformat", 
-    #   "foundererror","offspringerror", "seqerror","allelebalancemean","allelebalancedisperse","alleledropout"]
+    #   "foundererror","offspringerror", "baseerror","allelicbias","allelicoverdispersion","allelicdropout"]
     # vcfmap colnames = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
     # mid: col4-col9
     nsnp = size(mapmtx,1)
@@ -632,13 +632,13 @@ function tovcfgenomtx!(mapmtx::AbstractMatrix,
             vcfinfo *= string(";OFFSPRINGERROR=",mapmtx[snp, 10])
         end
         if !ismissing(mapmtx[snp,11])
-            vcfinfo *= string(";SEQERROR=",mapmtx[snp, 11])
+            vcfinfo *= string(";BASEERROR=",mapmtx[snp, 11])
         end
         if !ismissing(mapmtx[snp,12])
-            vcfinfo *= string(";ALLELEBALANCEMEAN=",mapmtx[snp, 12])
+            vcfinfo *= string(";ALLELICBIAS=",mapmtx[snp, 12])
         end
         if !ismissing(mapmtx[snp,13])
-            vcfinfo *= string(";ALLELEBALANCEDISPERSE=",mapmtx[snp, 13])
+            vcfinfo *= string(";ALLELICOVERDISPERSION=",mapmtx[snp, 13])
         end
         if !ismissing(mapmtx[snp,14])
             vcfinfo *= string(";ALLELEDROPOUT=",mapmtx[snp, 14])

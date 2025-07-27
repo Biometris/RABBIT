@@ -4,10 +4,10 @@ function callogbackward_permarker!(decodetempfile, chrfhaplo::AbstractMatrix,chr
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},    
     epso_perind::Union{Nothing,AbstractVector},     
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},    
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},    
     israndallele::Bool, 
     issnpGT::AbstractVector,    
     snporder::Union{Nothing,AbstractVector}=nothing)    
@@ -15,10 +15,10 @@ function callogbackward_permarker!(decodetempfile, chrfhaplo::AbstractMatrix,chr
     isnothing(snporder) && (snporder = 1:nsnp)    
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
-    seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
-    allelebalancemeanls = typeof(allelebalancemean) <: Real ? allelebalancemean*ones(nsnp) : allelebalancemean
-    allelebalancedispersels = typeof(allelebalancedisperse) <: Real ? allelebalancedisperse*ones(nsnp) : allelebalancedisperse
-    alleledropoutls = typeof(alleledropout) <: Real ? alleledropout*ones(nsnp) : alleledropout
+    baseerrorls = typeof(baseerror) <: Real ? baseerror*ones(nsnp) : baseerror
+    allelicbiasls = typeof(allelicbias) <: Real ? allelicbias*ones(nsnp) : allelicbias
+    allelicoverdispersionls = typeof(allelicoverdispersion) <: Real ? allelicoverdispersion*ones(nsnp) : allelicoverdispersion
+    allelicdropoutls = typeof(allelicdropout) <: Real ? allelicdropout*ones(nsnp) : allelicdropout
     markerincl=first(values(priorprocess)).markerincl
     tseq = findall(markerincl)    
     hmmalg = "logbackward"
@@ -36,9 +36,9 @@ function callogbackward_permarker!(decodetempfile, chrfhaplo::AbstractMatrix,chr
             snp = snporder[tback]
             MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
                 chroffgeno[snp,:],popmakeup;
-                epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-                allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])            
+                epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+                allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])            
             calnextlogbackward!(logbwprob, tback, tnow, dataprobls,popmakeup, priorprocess)        
             write(file, string("t",tseq[kk]),logbwprob)
         end
@@ -123,16 +123,16 @@ function callogbackward!(decodetempfile::AbstractString,chrfhaplo::AbstractMatri
     epsf::Union{Real,AbstractVector},    
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector},     
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     issnpGT::AbstractVector,
     israndallele::Bool, 
     snporder::Union{Nothing,AbstractVector}=nothing)
     hmmdecode_chr(chrfhaplo,chroffgeno,
         popmakeup,priorprocess;
-        epsf, epso,epso_perind, seqerror,allelebalancemean, allelebalancedisperse,alleledropout,
+        epsf, epso,epso_perind, baseerror,allelicbias, allelicoverdispersion,allelicdropout,
         hmmalg="logbackward", decodetempfile = decodetempfile,
         israndallele, issnpGT, snporder)    
     tomarker_major_order!(decodetempfile)

@@ -213,14 +213,14 @@ function calfhaploprior(obsf::AbstractVector,epsf::Real,
 end
 
 # TODO: revise for founderkind of probability vector
-function calfhaploprior(magicgeno::MagicGeno,chr::Integer, epsf::Real,seqerror::Real,
+function calfhaploprior(magicgeno::MagicGeno,chr::Integer, epsf::Real,baseerror::Real,
     isfounderinbred::Bool,founderkind::AbstractString)
     maxnerror=0
     if founderkind=="readcount"
         if isfounderinbred
             chrfgeno=MagicBase.rawgenocallhaplo.(magicgeno.foundergeno[chr])
         else
-            chrfgeno=MagicBase.rawgenoprobdiplo.(magicgeno.foundergeno[chr],seqerror)
+            chrfgeno=MagicBase.rawgenoprobdiplo.(magicgeno.foundergeno[chr],baseerror)
         end
     else
         chrfgeno= magicgeno.foundergeno[chr]

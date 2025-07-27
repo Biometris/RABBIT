@@ -16,23 +16,25 @@ single marker genotype call from genofile and pedinfo.
   along the two homologous chromosomes within an offspring. It must be "depmodel",
   "indepmodel", or "jointmodel". 
 
-`likeparameters::LikeParameters=LikeParameters(offspringerror=0.005, peroffspringerror=0.0)`: parameters for genotypic data model. 
-  If isinfererror = true, parameters with values being nothing will be inferred. 
+`likeparam::Union{Nothing,LikeParam}=LikeParam(offspringerror=0.005)`: parameters for genotypic data model. 
+  If isinfererror = true, parameters with values being nothing will be inferred.   
 
-`threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters()`: markers with inferred likeparameters values > threshlikeparameters values will be deleted. 
+`softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam()`: markers with inferred likeparam values > softthreshlikeparam values will be deleted only if they are also outliers. 
 
-`priorlikeparameters::PriorLikeParameters=PriorLikeParameters(offspringerror=Beta(1.05,9),seqerror=Beta(1.05,9))`: priors for likelihood parameters
-
+`threshlikeparam::Union{Nothing,LikeParam}=ThreshLikeParam()`: markers with inferred likeparam values > threshlikeparam values will be deleted. 
+ 
+`priorlikeparam::Union{Nothing, PriorLikeParam}=PriorLikeParam()`: priors for likelihood parameters. 
+ 
 `isfounderinbred::Bool=true`: if true, founders are inbred, and otherwise they are outbred.
 
 `israndallele::Bool=true`: if true, genotyping error model follows the random allelic model, and otherwise the random genotypic model. 
 
 `israwcall::Bool= false`: if true, perform raw genotype calling. 
 
-`threshfounder::Real = israwcall ? 0.95 : 0.8`: founder genotypes are called if 
+`threshfounder::Real = israwcall ? 0.95 : 0.7`: founder genotypes are called if 
   maximum posterior probability > threshfounder.
 
-`threshoffspring::Real = 0.95`: offspring genotypes are called if 
+`threshoffspring::Real = israwcall ? 0.95 : 0.9`: offspring genotypes are called if 
   maximum posterior probability > threshoffspring.
 
 `iscalloffspring::Bool=true`: if true, offspring genotypes are called.
@@ -45,7 +47,7 @@ single marker genotype call from genofile and pedinfo.
 
 `maxmiss::Real = 0.99`: delete makrs with genotype missing frequency > 0.99. 
 
-`isinfererror::Bool = !israwcall`: if true, infer marker specific likelihood parameters that have values of nothing in likeparameters. 
+`isinfererror::Bool = !israwcall`: if true, infer marker specific likelihood parameters that have values of nothing in likeparam. 
 
 `samplesize::Integer = 100`: number of posterior samples of founder genotypes
 
@@ -67,12 +69,14 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     model::AbstractString="jointmodel", 
     isfounderinbred::Bool=true,           
     israndallele::Bool=true, 
-    likeparameters::LikeParameters=LikeParameters(offspringerror=0.005, peroffspringerror=0.0),    
-    threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
-    priorlikeparameters::PriorLikeParameters=PriorLikeParameters(offspringerror=Beta(1,19),seqerror=Beta(1,99)),                              
+    likeparam::Union{Nothing,LikeParam} = LikeParam(offspringerror=0.005), 
+    softthreshlikeparam::SoftThreshLikeParam = SoftThreshLikeParam(),
+    threshlikeparam::Union{Nothing, ThreshLikeParam} = ThreshLikeParam(),
+    priorlikeparam::Union{Nothing, PriorLikeParam} = PriorLikeParam(), 
+    tukeyfence::Real = 1.5,    
     israwcall::Bool= false, 
-    threshfounder::Real = israwcall ? 0.95 : 0.9,
-    threshoffspring::Real = 0.95, 
+    threshfounder::Real = israwcall ? 0.95 : 0.7,
+    threshoffspring::Real = israwcall ? 0.95 : 0.9,
     byfounder::Integer=0,
     iscalloffspring::Bool=true, 
     isdelmultiallelic::Bool=true,
@@ -106,9 +110,11 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "genofile = ", genofile, "\n",
         "pedinfo = ", pedinfo, "\n",
         "model = ", model, "\n",
-        "likeparameters = ", likeparameters, "\n",
-        "threshlikeparameters = ", threshlikeparameters, "\n",		
-        "priorlikeparameters = ", priorlikeparameters, "\n",	        
+        "likeparam = ", likeparam, "\n",
+        "softthreshlikeparam = ", softthreshlikeparam, "\n",		
+        "threshlikeparam = ", threshlikeparam, "\n",		
+        "priorlikeparam = ", priorlikeparam, "\n",	        
+        "tukeyfence = ", tukeyfence, "\n", 
         "isfounderinbred = ", isfounderinbred, "\n",        
         "israwcall = ", israwcall, "\n",        
         "israndallele = ", israndallele, "\n",        
@@ -130,10 +136,29 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "workdir = ", workdir, "\n",
         "verbose = ", verbose)
     printconsole(logio,verbose,msg)    
-    if !israwcall
-        msg = string("likeparameters = (foundererror, offspringerror, peroffspringerror, seqerror, allelebalancemean, allelebalancedisperse, alleledropout)")
-        printconsole(logio,verbose,msg)    
-    end
+    if isnothing(threshlikeparam)
+        threshlikeparam = ThreshLikeParam()
+        msg = string("reset threshlikeparam = ", threshlikeparam)
+        printconsole(logio,verbose,msg)
+    end    
+    if isnothing(priorlikeparam)
+        priorlikeparam = PriorLikeParam()
+        msg = string("reset priorlikeparam = ", priorlikeparam)
+        printconsole(logio,verbose,msg)
+    end    
+    ischangedls, priorlikeparam = reset_priorlikeparam(priorlikeparam)
+    if any(ischangedls)
+        msg = MagicBase.get_info_likeparam(priorlikeparam; ismultiline=true)
+        printconsole(logio,verbose,msg)        
+    end    
+    if isnothing(likeparam)
+        likeparam = LikeParam()
+        msg = string("reset likeparam = ", likeparam)
+        printconsole(logio,verbose,msg)
+    end    
+    msg = MagicBase.get_info_likeparam(likeparam; isinfererror, ismultiline=true)
+    printconsole(logio,verbose,msg)            
+    
     genofile2 = MagicBase.getabsfile(workdir,genofile)
     isfile(genofile2) || error(string("Could not find ",genofile2))    
     lastcomment = MagicBase.findlastcomment(genofile2; commentstring)
@@ -146,68 +171,114 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         nwork = nworkers()
         seglen = max(10,min(500,div(nsnp, nwork)))
         paragraphls = collect(Iterators.partition(1:nsnp,seglen*nwork))
-        msg *= string(" divided into ", length(paragraphls), " blocks")
-        nwork > 1 && (msg *= string("; each block distributed over ", nwork, " workers"))        
+        msg *= string(" divided into ", length(paragraphls), " blocks")        
+        nwork > 1 && (msg *= string(", markers in each block being distributed over ", nwork, " workers"))        
     else
         paragraphls = nothing
     end    
-    printconsole(logio,verbose,msg)   
+    printconsole(logio,verbose,msg)       
     outstem *= "_magiccall"
-    in_open(genofile2,"r") do inio                
-        out_open = outext in [".vcf.gz",".csv.gz"] ? GZip.open : open
-        outfile = outstem*"_geno"*outext
-        outfile2 = getabsfile(workdir,outfile)            
-        delmarkerfile = outstem*"_delmarker.vcf.gz"
-        delmarkerfile2 = getabsfile(workdir,delmarkerfile)            
-        out_open(outfile2, "w") do outio                
+    out_open = outext in [".vcf.gz",".csv.gz"] ? GZip.open : open
+    calledfile = outstem*"_called"*outext
+    calledfile2 = getabsfile(workdir,calledfile)            
+    delmarkerfile = outstem*"_delmarker.vcf.gz"
+    delmarkerfile2 = getabsfile(workdir,delmarkerfile)
+    in_open(genofile2,"r") do inio                          
+        out_open(calledfile2, "w") do outio                
             GZip.open(delmarkerfile2,"w") do delio
                 magiccall_io(inio, outio, delio, logio, pedinfo,model, 
-                    likeparameters, threshlikeparameters, priorlikeparameters, 
+                    likeparam, threshlikeparam, priorlikeparam, 
                     formatpriority, israndallele,isfounderinbred, byfounder, 
                     isdelmultiallelic, isdelmonomorphic, minmaf,maxmiss, 
                     threshfounder, threshoffspring, israwcall, isinfererror,
                     iscalloffspring, samplesize, 
                     paragraphls,commentstring, nheader, workdir, verbose)            
             end
-        end
-        msg = string("save called_genofile: ", outfile)
+        end        
+    end
+    outfile = outstem*"_geno"*outext
+    outfile2 = getabsfile(workdir,outfile)            
+    if isinfererror
+        tused = @elapsed outliers = shift_outliers(calledfile2, outfile2, delmarkerfile2; tukeyfence, softthreshlikeparam, threshlikeparam, workdir)
+        msg = string("delete #outlier markers = ", length(outliers), ", tused=", round(tused,digits=1), "s")
         printconsole(logio,verbose,msg)        
-        msg = string("save delmarker_genofile: ", delmarkerfile)
-        printconsole(logio,verbose,msg)       
-        if !israwcall
-            for (i,mapfile) in enumerate([outfile2])                
-                try 
-                    figerr = plotmarkererror(mapfile;tukeyfence=3.0, workdir)
-                    if !isnothing(figerr)                        
-                        markererrfile = string(outstem, i==1 ? "" : "_delmarker", "_inferred_error.png")
-                        try 
-                            MagicBase.savefig(figerr,getabsfile(workdir,markererrfile))
-                        catch err
-                            msg = string("Could not savefig. ",err)
-                            @warn msg
-                            printconsole(logio, verbose, "Warning: "*msg)
-                        end
-                    end 
-                catch err                
-                    msg = string(err, ". Could not plot markererror for mapfile= ",mapfile)
-                    @warn msg
-                    printconsole(logio, verbose, "Warning: "*msg)
-                end
+    else
+        mv(calledfile2, outfile2, force=true)
+    end
+    msg = string("save called_genofile: ", outfile)
+    printconsole(logio,verbose,msg)        
+    msg = string("save delmarker_genofile: ", delmarkerfile)
+    printconsole(logio,verbose,msg)       
+    if !israwcall
+        for (i,mapfile) in enumerate([outfile2])                
+            try 
+                figerr = plotmarkererror(mapfile;tukeyfence=1.5, workdir)
+                if !isnothing(figerr)                        
+                    markererrfile = string(outstem, i==1 ? "" : "_delmarker", "_inferred_error.png")
+                    try 
+                        MagicBase.savefig(figerr,getabsfile(workdir,markererrfile))
+                    catch err
+                        msg = string("Could not savefig. ",err)
+                        @warn msg
+                        printconsole(logio, false, "Warning: "*msg)
+                    end
+                end 
+            catch err                
+                msg = string(err, ". Could not plot markererror for mapfile= ",mapfile)
+                @warn msg
+                printconsole(logio, false, "Warning: "*msg)
             end
         end
     end
+    
     tused = round(time()-starttime,digits=1)
     MagicBase.set_logfile_end(logfile, logio, tused,"magiccall"; verbose,delim="-")
     return nothing
+end
+
+# function threshlike(;
+#     foundererror=0.2, offspringerror=0.2, 
+#     baseerror=0.05, allelicbias=0.9, 
+#     allelicoverdispersion=1.0, allelicdropout=0.05)
+#     ThreshLikeParam(foundererror=foundererror, offspringerror=offspringerror, 
+#         baseerror=baseerror, allelicbias=allelicbias, 
+#         allelicoverdispersion=allelicoverdispersion, allelicdropout=allelicdropout)
+# end
+
+function reset_priorlikeparam(priorlikeparam::PriorLikeParam)
+    priorls = []
+    errnamels = propertynames(priorlikeparam)
+    ischangedls = falses(length(errnamels))
+    for i in eachindex(ischangedls)
+        errname = errnamels[i]
+        prior = getproperty(priorlikeparam,errname)
+        if isnothing(prior)
+            ischangedls[i] = true
+            if errname in [:foundererror, :offspringerror]
+                prior = Beta(1,19)
+            elseif errname in [:baseerror]
+                prior = Beta(1,199)
+            elseif errname in [:allelicbias]
+                prior = Beta(1.01,1.01)
+            elseif errname in [:allelicoverdispersion]
+                prior = Exponential(0.3)            
+            elseif errname in [:allelicdropout]
+                prior = Beta(1,19)
+            end
+        end
+        push!(priorls,prior)
+    end
+    ischangedls, PriorLikeParam(foundererror=priorls[1],offspringerror=priorls[2], peroffspringerror=priorls[3],
+        baseerror =priorls[4], allelicbias=priorls[5],allelicoverdispersion=priorls[6], allelicdropout=priorls[7])
 end
 
 function magiccall_io(inio::IO,outio::IO,delio::IO,
     logio::Union{Nothing, IO},
     pedinfo::Union{Integer,AbstractString}, 
     model::AbstractString, 
-    likeparameters::LikeParameters,        
-    threshlikeparameters::ThreshLikeParameters,        
-    priorlikeparameters::PriorLikeParameters,        
+    likeparam::LikeParam,        
+    threshlikeparam::ThreshLikeParam,        
+    priorlikeparam::PriorLikeParam,        
     formatpriority::AbstractVector,
     israndallele::Bool,
     isfounderinbred::Bool,
@@ -261,7 +332,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
                 minmaf,maxmiss,threshfounder, threshoffspring, isinfererror, iscalloffspring, samplesize, 
-                likeparameters, threshlikeparameters, priorlikeparameters, missingset, nstate,nfgl)        
+                likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl)        
             if res[1] == "maxmiss"
                 write(delio,res[2],"\n")
                 nmaxmiss += 1
@@ -308,7 +379,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             res = pmap(x-> magiccall_rowgeno(x,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
                 minmaf, maxmiss, threshfounder, threshoffspring, isinfererror,iscalloffspring, samplesize, 
-                likeparameters, threshlikeparameters, priorlikeparameters, missingset, nstate,nfgl), multirows)            
+                likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl), multirows)            
             for i in res
                 if i[1] == "maxmiss"
                     write(delio,i[2],"\n")
@@ -364,13 +435,13 @@ function up_nlargeerror!(nlargeerr::AbstractVector,largeerrid::AbstractString)
         nlargeerr[1] += 1
     elseif largeerrid == "largeerror_offspringerror"
         nlargeerr[2] += 1
-    elseif largeerrid == "largeerror_seqerror"
+    elseif largeerrid == "largeerror_baseerror"
         nlargeerr[4] += 1
-    elseif largeerrid == "largeerror_allelebalancemean"
+    elseif largeerrid == "largeerror_allelicbias"
         nlargeerr[5] += 1
-    elseif largeerrid == "largeerror_allelebalancedisperse"
+    elseif largeerrid == "largeerror_allelicoverdispersion"
         nlargeerr[6] += 1
-    elseif largeerrid == "largeerror_alleledropout"
+    elseif largeerrid == "largeerror_allelicdropout"
         nlargeerr[7] += 1
     end
     nlargeerr
@@ -394,31 +465,31 @@ function magiccall_rowgeno(rowstring::AbstractString,
     isinfererror::Bool,
     iscalloffspring::Bool, 
     samplesize::Integer, 
-    likeparameters::LikeParameters,    
-    threshlikeparameters::ThreshLikeParameters,    
-    priorlikeparameters::PriorLikeParameters,    
+    likeparam::LikeParam,    
+    threshlikeparam::ThreshLikeParam,    
+    priorlikeparam::PriorLikeParam,    
     missingset::AbstractVector,    
     nstate::Integer, 
     nfgl::Integer)
     rowgeno = split(rowstring,"\t")
     ismultiallele = length(split(rowgeno[5],",")) > 1 # col5=alternative                     
     ismultiallele && isdelmultiallelic && return ("multiallelic", rowstring)
-    seqerror = MagicBase.get_seqerror(likeparameters)
+    baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
     res = extract_rowgeno!(rowgeno, fcols,offcols,formatpriority,
-        missingset,isfounderinbred,isdelmonomorphic,seqerror)    
+        missingset,isfounderinbred,isdelmonomorphic,baseerror)    
     res == "monomorphic" && return ("monomorphic",join(rowgeno,"\t"))
     inputformat, fgeno, founderformat, offgeno, offspringformat = res
     isoffmiss = rowgeno[offcols] .== "NA"
     # @info "test" fgeno founderformat offgeno offspringformat maxlog = 10
     # imputation/correction and error estimations    
     if israwcall                        
-        fhaplo_GT, fhaplo_GP = infer_fhaplo_rawcall(fgeno,founderformat; seqerror,isfounderinbred,threshfounder)                 
+        fhaplo_GT, fhaplo_GP = infer_fhaplo_rawcall(fgeno,founderformat; baseerror,isfounderinbred,threshfounder)                 
         esterrors = infer_error_rawcall(offgeno,offspringformat; popmakeup, model,isinfererror,
-            likeparameters,priorlikeparameters,israndallele)                        
+            likeparam,priorlikeparam,israndallele)                        
     else        
         fhaplo_GT, fhaplo_GP, esterrors = infer_fhaploerror_singlesite(fgeno,founderformat, offgeno,offspringformat; 
             model, popmakeup, isfounderinbred, israndallele, isinfererror, byfounder, 
-            threshfounder, samplesize, likeparameters, priorlikeparameters)                    
+            threshfounder, samplesize, likeparam, priorlikeparam)                    
     end                    
     add_error_info!(rowgeno,esterrors)    
     # update rowgeno for founder geno         
@@ -472,7 +543,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     if isdelmonomorphic && ismono                
         return ("monomorphic",join(rowgeno,"\t"))
     end    
-    islargeerror, largeerrorid = get_isdelmarker(esterrors,threshlikeparameters)
+    islargeerror, largeerrorid = get_isdelmarker(esterrors,threshlikeparam)
     if islargeerror                 
         return ("largeerror_"*largeerrorid,join(rowgeno,"\t"))
     end        
@@ -531,7 +602,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
 end
 
 function infer_fhaplo_rawcall(fgeno::AbstractVector, founderformat::String; 
-    seqerror::Real=0.001, isfounderinbred::Bool=false,threshfounder::Real=0.95)  
+    baseerror::Real=0.001, isfounderinbred::Bool=false,threshfounder::Real=0.95)  
     if founderformat == "GT"
         alleledict = Dict("1"=>"0","2"=>"1","N"=>".")
         fhaplo_GT = [ismissing(i) ? "./." : join(replace(split(i,""),alleledict...),"/") for i in fgeno]
@@ -548,9 +619,9 @@ function infer_fhaplo_rawcall(fgeno::AbstractVector, founderformat::String;
     elseif founderformat in ["AD","GP"]
         if founderformat == "AD"            
             if isfounderinbred 
-                fhaplo_postprob = MagicBase.genoprobhaplo.(fgeno,seqerror)
+                fhaplo_postprob = MagicBase.genoprobhaplo.(fgeno,baseerror)
             else
-                fhaplo_postprob = MagicBase.genoprobdiplo_biallelic.(fgeno, seqerror)
+                fhaplo_postprob = MagicBase.genoprobdiplo_biallelic.(fgeno, baseerror)
             end
         else
             # GP
@@ -599,7 +670,7 @@ function extract_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcols:
     missingset::AbstractVector,    
     isfounderinbred::Bool,
     isdelmonomorphic::Bool,
-    seqerror::Real)    
+    baseerror::Real)    
     ids = Symbol.(formatpriority)
     vals = 1:length(formatpriority)
     prioritytuple = (; zip(ids, vals)...)
@@ -612,7 +683,7 @@ function extract_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcols:
     if isfounderinbred        
         threshcall = 0.9
         if founderformat == "AD"            
-            fgeno .= MagicBase.callfromprob.(MagicBase.genoprobhaplo.(fgeno, seqerror),threshcall; 
+            fgeno .= MagicBase.callfromprob.(MagicBase.genoprobhaplo.(fgeno, baseerror),threshcall; 
                 isphased=false,ishaplo=true)            
         elseif founderformat == "GP"
             fgeno .= MagicBase.callfromprob.(fgeno, threshcall; isphased=false,ishaplo=isfounderinbred)
@@ -644,26 +715,26 @@ function extract_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcols:
     inputformat, fgeno, founderformat, offgeno,offspringformat
 end
 
-function get_isdelmarker(esterrors,threshlikeparameters)    
-    epsf,epso, _,seqerror, allelebalancemean,allelebalancedisperse,alleledropout = esterrors
-    epsf > threshlikeparameters.foundererror && return (true, "foundererror")
-    epso > threshlikeparameters.offspringerror && return (true, "offspringerror")
-    seqerror > threshlikeparameters.seqerror && return (true, "seqerror")
-    thresh = threshlikeparameters.allelebalancemean
-    (1-thresh <= allelebalancemean <= thresh) || return (true, "allelebalancemean")
-    allelebalancedisperse > threshlikeparameters.allelebalancedisperse && return (true, "allelebalancedisperse")
-    alleledropout > threshlikeparameters.alleledropout && return (true, "alleledropout")
+function get_isdelmarker(esterrors,threshlikeparam)    
+    epsf,epso, _,baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors
+    epsf > threshlikeparam.foundererror && return (true, "foundererror")
+    epso > threshlikeparam.offspringerror && return (true, "offspringerror")
+    baseerror > threshlikeparam.baseerror && return (true, "baseerror")
+    thresh = threshlikeparam.allelicbias
+    (1-thresh <= allelicbias <= thresh) || return (true, "allelicbias")
+    allelicoverdispersion > threshlikeparam.allelicoverdispersion && return (true, "allelicoverdispersion")
+    allelicdropout > threshlikeparam.allelicdropout && return (true, "allelicdropout")
     (false, "")        
 end
 
 function add_error_info!(rowgeno::AbstractVector,esterrors)
-    epsf,epso, _, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = esterrors
+    epsf,epso, _, baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors
     info = string("FOUNDERERROR=",round(epsf,digits = 5))
     info *= string(";OFFSPRINGERROR=",round(epso,digits = 5))
-    info *= string(";SEQERROR=",round(seqerror,digits = 5))
-    info *= string(";ALLELEBALANCEMEAN=",round(allelebalancemean,digits = 5))
-    info *= string(";ALLELEBALANCEDISPERSE=",round(allelebalancedisperse,digits = 5))
-    info *= string(";ALLELEDROPOUT=",round(alleledropout,digits = 5))    
+    info *= string(";BASEERROR=",round(baseerror,digits = 5))
+    info *= string(";ALLELICBIAS=",round(allelicbias,digits = 5))
+    info *= string(";ALLELICOVERDISPERSION=",round(allelicoverdispersion,digits = 5))
+    info *= string(";ALLELEDROPOUT=",round(allelicdropout,digits = 5))    
     inputinfo = strip(rowgeno[8])
     if !in(inputinfo, [".",""])
         info = string(inputinfo, ";", info)
@@ -676,7 +747,7 @@ function infer_offpostprob_singlesite(fhaplo_GT::AbstractVector,offgeno::Abstrac
     popmakeup::AbstractDict, esterrors::AbstractVector,     
     nstate::Integer,nfgl::Integer,israndallele::Bool,
     isfounderinbred::Bool)
-    epsf,epso, _, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = esterrors
+    epsf,epso, _, baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors
     if isfounderinbred
         fhaplo = first.(split.(fhaplo_GT,"/"))
     else
@@ -700,7 +771,7 @@ function infer_offpostprob_singlesite(fhaplo_GT::AbstractVector,offgeno::Abstrac
                 fderivehaplo = calfderive(fhaplo, nzorigin,ishaploid)
                 if offspringformat == "AD"
                     # genofrmat = AD             
-                    like = MagicReconstruct.haplolikeGBS(sitegeno, epso,seqerror)          
+                    like = MagicReconstruct.haplolikeGBS(sitegeno, epso,baseerror)          
                 elseif offspringformat == "GT"
                     like = MagicReconstruct.haplolike_GT(sitegeno,epso)  
                 else        
@@ -726,8 +797,8 @@ function infer_offpostprob_singlesite(fhaplo_GT::AbstractVector,offgeno::Abstrac
                 fderivediplo = calfderive(fhaplo, nzorigin,ishaploid)
                 if offspringformat == "AD"
                     # format = AD
-                    like = MagicReconstruct.diplolikeGBS(sitegeno,epso,seqerror,
-                        allelebalancemean,allelebalancedisperse,alleledropout; israndallele)   
+                    like = MagicReconstruct.diplolikeGBS(sitegeno,epso,baseerror,
+                        allelicbias,allelicoverdispersion,allelicdropout; israndallele)   
                 elseif offspringformat == "GT"
                     like = MagicReconstruct.diplolike_GT(sitegeno,epso; israndallele)
                 else        
@@ -808,8 +879,8 @@ function parse2_internalgeno!(resgeno::AbstractVector,format::AbstractString; is
 end
 
 function priorfhaplo_singlesite(fgeno::AbstractVector, fformat::AbstractString;        
-    foundererror::Real = 0.005,  seqerror::Real, allelebalancemean::Real,
-    allelebalancedisperse::Real,alleledropout::Real, israndallele::Bool)            
+    foundererror::Real = 0.005,  baseerror::Real, allelicbias::Real,
+    allelicoverdispersion::Real,allelicdropout::Real, israndallele::Bool)            
     if fformat=="GT_haplo"        
         alleleset = ["1","2"]
         fhaploset = [alleleset for _ in eachindex(fgeno)]
@@ -845,8 +916,8 @@ function priorfhaplo_singlesite(fgeno::AbstractVector, fformat::AbstractString;
             filter!(x->in(x.first,gset),wdict)    
             fhaploweight = [wdict[i] for i in fgeno]
         elseif fformat == "AD"
-            like = MagicReconstruct.diplolikeGBS(fgeno, foundererror,seqerror,
-                        allelebalancemean,allelebalancedisperse,alleledropout; israndallele)
+            like = MagicReconstruct.diplolikeGBS(fgeno, foundererror,baseerror,
+                        allelicbias,allelicoverdispersion,allelicdropout; israndallele)
             fhaploweight = [ismissing(i) ? [0.25, 0.5, 0.25] : [i[1], i[2]+i[3], i[4]] ./ sum(i) for i in eachrow(like)]        
         elseif fformat == "GP"
             fhaploweight = fgeno
@@ -864,18 +935,18 @@ function callogl_singlesite!(dataprobls::AbstractVector, fhaplo::AbstractVector,
     epsf::Real,
     epso::Real,
     epso_perind::Union{Nothing,AbstractVector}=nothing, 
-    seqerror::Real,
-    allelebalancemean::Real,
-    allelebalancedisperse::Real,
-    alleledropout::Real,
+    baseerror::Real,
+    allelicbias::Real,
+    allelicoverdispersion::Real,
+    allelicdropout::Real,
     israndallele::Bool,
     offspringformat::AbstractString)     
     issiteGT = occursin(r"^GT",offspringformat)    
     sitefhaplo = reduce(vcat,fhaplo)     
     sitemultiallele = 2
     MagicReconstruct.calsitedataprob_singlephase_nucleo!(dataprobls,sitefhaplo,offgeno, sitemultiallele, popmakeup; 
-        epsf, epso,epso_perind, seqerror,allelebalancemean,
-        allelebalancedisperse, alleledropout,israndallele,issiteGT)
+        epsf, epso,epso_perind, baseerror,allelicbias,
+        allelicoverdispersion, allelicdropout,israndallele,issiteGT)
     singlelogl = 0.0
     for popid in popidls
         offls = popmakeup[popid]["offspring"]
@@ -891,16 +962,16 @@ function callogl_singlesite(inputfhaplo::AbstractVector,offgeno::AbstractVector;
     popidls=keys(popmakeup),
     epsf::Real,
     epso::Real,    
-    seqerror::Real,
-    allelebalancemean::Real,
-    allelebalancedisperse::Real,
-    alleledropout::Real,
+    baseerror::Real,
+    allelicbias::Real,
+    allelicoverdispersion::Real,
+    allelicdropout::Real,
     israndallele::Bool,
     offspringformat::AbstractString)  
     only(callogl_singlesite_multiphase([inputfhaplo], offgeno; 
-        popmakeup, popidls, epsf, epso, seqerror,
-        allelebalancemean, allelebalancedisperse, 
-        alleledropout,offspringformat,israndallele)) 
+        popmakeup, popidls, epsf, epso, baseerror,
+        allelicbias, allelicoverdispersion, 
+        allelicdropout,offspringformat,israndallele)) 
 end
 
 function callogl_singlesite_multiphase(inputfhaplols::AbstractVector,offgeno::AbstractVector; 
@@ -908,10 +979,10 @@ function callogl_singlesite_multiphase(inputfhaplols::AbstractVector,offgeno::Ab
     popidls=keys(popmakeup),
     epsf::Real,
     epso::Real,    
-    seqerror::Real,
-    allelebalancemean::Real,
-    allelebalancedisperse::Real,
-    alleledropout::Real,
+    baseerror::Real,
+    allelicbias::Real,
+    allelicoverdispersion::Real,
+    allelicdropout::Real,
     israndallele::Bool,
     offspringformat::AbstractString)  
     fhaplols = [reduce(vcat, i) for i in inputfhaplols]
@@ -928,7 +999,7 @@ function callogl_singlesite_multiphase(inputfhaplols::AbstractVector,offgeno::Ab
         if ishaploid               
             if offspringformat == "AD"
                 # genofrmat = AD             
-                like = MagicReconstruct.haplolikeGBS(sitegeno, epso,seqerror)            
+                like = MagicReconstruct.haplolikeGBS(sitegeno, epso,baseerror)            
             elseif offspringformat == "GT"
                     # format = GP    
                 like = MagicReconstruct.haplolike_GT(sitegeno,epso)
@@ -951,8 +1022,8 @@ function callogl_singlesite_multiphase(inputfhaplols::AbstractVector,offgeno::Ab
             
             if offspringformat == "AD"
                 # format = AD
-                like = MagicReconstruct.diplolikeGBS(sitegeno,epso,seqerror,
-                        allelebalancemean,allelebalancedisperse,alleledropout; israndallele)
+                like = MagicReconstruct.diplolikeGBS(sitegeno,epso,baseerror,
+                        allelicbias,allelicoverdispersion,allelicdropout; israndallele)
             elseif offspringformat == "GT"
                     # format = GP    
                 like = MagicReconstruct.diplolike_GT(sitegeno,epso; israndallele)
@@ -1032,19 +1103,19 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     byfounder::Integer,
     threshfounder::Real, 
     samplesize::Integer,      
-    likeparameters::LikeParameters,        
-    priorlikeparameters::PriorLikeParameters)    
-    liketargetls, epsf, epso, pereoffspringerror, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		        
+    likeparam::LikeParam,        
+    priorlikeparam::PriorLikeParam)    
+    liketargetls, epsf, epso, pereoffspringerror, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		        
     fhaploset,fhaploweight = priorfhaplo_singlesite(fgeno,founderformat; foundererror=epsf, 
-        seqerror, allelebalancemean,allelebalancedisperse,alleledropout, israndallele
+        baseerror, allelicbias,allelicoverdispersion,allelicdropout, israndallele
     )
     fhaplo = map((x,y)->x[rand(Categorical(y))], fhaploset, fhaploweight)        
     setdiff!(liketargetls, ["foundererror", "peroffspringerror"])
     if occursin(r"^GT",offspringformat)
-        setdiff!(liketargetls,["seqerror","allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["baseerror","allelicbias","allelicoverdispersion","allelicdropout"])
     end
     if model == "depmodel"
-        setdiff!(liketargetls,["allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["allelicbias","allelicoverdispersion","allelicdropout"])
     end    
     isinfererror2 = isinfererror && !isempty(liketargetls) 
     findexlist = calfindexlist(byfounder,fhaploset, popmakeup; isfounderinbred)        
@@ -1056,42 +1127,42 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     for it in 1:maxit            
         if in(founderformat, ["AD"])
             fhaploset,fhaploweight = priorfhaplo_singlesite(fgeno,founderformat; foundererror=epsf, 
-                seqerror, allelebalancemean,allelebalancedisperse,alleledropout, israndallele
+                baseerror, allelicbias,allelicoverdispersion,allelicdropout, israndallele
             )
         end
         update_fhaplo_singlesite!(fhaplo, fhaploset, fhaploweight, findexlist, offgeno; 
-            popmakeup, epsf,epso, seqerror,allelebalancemean, allelebalancedisperse, 
-            alleledropout,offspringformat,israndallele
+            popmakeup, epsf,epso, baseerror,allelicbias, allelicoverdispersion, 
+            allelicdropout,offspringformat,israndallele
         )                    
         it > burnin && push!(fhaplo_history, isfounderinbred ? copy(fhaplo) : copy.(fhaplo))
         if isinfererror2
             for target in liketargetls
-                est = first(infer_error_singlesite(target, offgeno; fhaplo, popmakeup, epsf,epso, seqerror,
-                    allelebalancemean, allelebalancedisperse, alleledropout, offspringformat, 
-                    priorlikeparameters,israndallele,temperature = it<=1 ? 0 : 1))   # temperature = 1: posterior sampling, 0 = optimize
+                est = first(infer_error_singlesite(target, offgeno; fhaplo, popmakeup, epsf,epso, baseerror,
+                    allelicbias, allelicoverdispersion, allelicdropout, offspringformat, 
+                    priorlikeparam,israndallele,temperature = it<=1 ? 0 : 1))   # temperature = 1: posterior sampling, 0 = optimize
                 if target == "offspringerror"
                     epso = est
-                elseif target == "seqerror"
-                    seqerror = est
-                elseif target == "allelebalancemean"
-                    allelebalancemean = est
-                elseif target == "allelebalancedisperse"
-                    allelebalancedisperse = est
-                elseif target == "alleledropout"
-                    alleledropout = est
+                elseif target == "baseerror"
+                    baseerror = est
+                elseif target == "allelicbias"
+                    allelicbias = est
+                elseif target == "allelicoverdispersion"
+                    allelicoverdispersion = est
+                elseif target == "allelicdropout"
+                    allelicdropout = est
                 else
                     @error string("unknown target=",target)
                 end                 
                 # println("it=", it,",target=",target,",est=", est, ", logl=",logl)
             end    
-            nowerror = [epsf, epso, 0, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]
+            nowerror = [epsf, epso, 0, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
             it > burnin && push!(error_history, nowerror)                        
         end                
     end
     if isinfererror2
         esterrors = median.(eachrow(reduce(hcat,error_history)))
     else
-        esterrors = [epsf, epso, 0, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]
+        esterrors = [epsf, epso, 0, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
     end    
     # average fhaplo    
     fhaplo_postprob = fhaplo_history_2postprob(fhaplo_history; isfounderinbred)
@@ -1113,17 +1184,17 @@ function update_fhaplo_singlesite!(fhaplo::AbstractVector, fhaploset::AbstractVe
     popmakeup::AbstractDict,
     epsf::Real,
     epso::Real,
-    seqerror::Real,
-    allelebalancemean::Real,
-    allelebalancedisperse::Real,
-    alleledropout::Real,
+    baseerror::Real,
+    allelicbias::Real,
+    allelicoverdispersion::Real,
+    allelicdropout::Real,
     offspringformat::AbstractString, 
     israndallele::Bool)        
     for findex in findexlist
         fhaplols = getfhaplols(findex,fhaplo,fhaploset)
         in(fhaplo, fhaplols) || @error string("current fhaplo is not in the full list!")
-        logpls = callogl_singlesite_multiphase(fhaplols, offgeno; popmakeup, epsf,epso, seqerror,
-            allelebalancemean, allelebalancedisperse, alleledropout,offspringformat,israndallele) 
+        logpls = callogl_singlesite_multiphase(fhaplols, offgeno; popmakeup, epsf,epso, baseerror,
+            allelicbias, allelicoverdispersion, allelicdropout,offspringformat,israndallele) 
         logpls .+= [callogpri_fhaplo(fhaplo2, fhaploset, fhaploweight) for fhaplo2 in fhaplols]
         logpls .-= MagicBase.logsumexp(logpls)    
         fhaplo .= fhaplols[rand(Categorical(exp.(logpls)))]
@@ -1172,16 +1243,17 @@ end
 
 function cal_logpri(epsf::Real, 
     epso::Real,
-    seqerror::Real, 
-    allelebalancemean::Real,    
-    allelebalancedisperse::Real,    
-    alleledropout::Real,    
-    priorlikeparameters::PriorLikeParameters)
+    baseerror::Real, 
+    allelicbias::Real,    
+    allelicoverdispersion::Real,    
+    allelicdropout::Real,    
+    priorlikeparam::PriorLikeParam)
     logpri = 0.0    
-    prior_errls = [priorlikeparameters.foundererror, priorlikeparameters.offspringerror, priorlikeparameters.seqerror,
-        priorlikeparameters.allelebalancemean, priorlikeparameters.allelebalancedisperse,priorlikeparameters.alleledropout]    
-    errls = [epsf, epso, seqerror,allelebalancemean,allelebalancedisperse,alleledropout]
+    prior_errls = [priorlikeparam.foundererror, priorlikeparam.offspringerror, priorlikeparam.baseerror,
+        priorlikeparam.allelicbias, priorlikeparam.allelicoverdispersion,priorlikeparam.allelicdropout]    
+    errls = [epsf, epso, baseerror,allelicbias,allelicoverdispersion,allelicdropout]
     for i in eachindex(errls,prior_errls)
+        isnothing(prior_errls[i]) && continue
         p =  errls[i]
         logpri += logpdf(prior_errls[i], p)        
     end    
@@ -1194,51 +1266,51 @@ function infer_error_singlesite(target::AbstractString, offgeno::AbstractVector;
     popidls=keys(popmakeup),
     epsf::Real=0.005, 
     epso::Real,
-    seqerror::Real, 
-    allelebalancemean::Real,    
-    allelebalancedisperse::Real,    
-    alleledropout::Real,
+    baseerror::Real, 
+    allelicbias::Real,    
+    allelicoverdispersion::Real,    
+    allelicdropout::Real,
     offspringformat::AbstractString,
-    priorlikeparameters::PriorLikeParameters,
+    priorlikeparam::PriorLikeParam,
     israndallele::Bool, 
     temperature::Real=0.0)    
     accuracygoal, precisiongoal,itmax = 4, 4,20
-    inputerrors = (epsf, epso, seqerror,allelebalancemean,allelebalancedisperse,alleledropout)
+    inputerrors = (epsf, epso, baseerror,allelicbias,allelicoverdispersion,allelicdropout)
     function loglfun(x::Real)
-        epsf, epso, seqerror,allelebalancemean,allelebalancedisperse,alleledropout = inputerrors
+        epsf, epso, baseerror,allelicbias,allelicoverdispersion,allelicdropout = inputerrors
         if target == "offspringerror"
             epso = 1/(1+exp(-x))  # inverse of logit transformation     
         elseif target == "foundererror"
             epsf = 1/(1+exp(-x))                      
-        elseif target == "seqerror"
-            seqerror = 1/(1+exp(-x))                     
-        elseif target == "allelebalancemean"
-            allelebalancemean = 1/(1+exp(-x))    
-        elseif target == "allelebalancedisperse"
-            allelebalancedisperse = exp(x)
-        elseif target == "alleledropout"
-            alleledropout = 1/(1+exp(-x))                     
+        elseif target == "baseerror"
+            baseerror = 1/(1+exp(-x))                     
+        elseif target == "allelicbias"
+            allelicbias = 1/(1+exp(-x))    
+        elseif target == "allelicoverdispersion"
+            allelicoverdispersion = exp(x)
+        elseif target == "allelicdropout"
+            allelicdropout = 1/(1+exp(-x))                     
         else
             @error string("unknown genoerror type: ",target)
         end        
         if temperature ≈ 0.0
             logjacobi = 0 # adding logjacobi results too large estimate error rates and worse geneic map for testing Rice_F2 
         else
-            if target in ["foundererror", "offspringerror", "seqerror","allelebalancemean","alleledropout"]
+            if target in ["foundererror", "offspringerror", "baseerror","allelicbias","allelicdropout"]
                 # estimation refers to transformed space
                 logjacobi = x - 2*log(1+exp(x)) # dp/dx = exp(x)/(1+exp(x))^2                          
-            elseif target == "allelebalancedisperse"                
+            elseif target == "allelicoverdispersion"                
                 logjacobi = x   # dp/dx = exp(x) # estimation refers to transformed space       
             end    
         end
-        logpri = cal_logpri(epsf, epso, seqerror,allelebalancemean,allelebalancedisperse,
-            alleledropout,priorlikeparameters)
+        logpri = cal_logpri(epsf, epso, baseerror,allelicbias,allelicoverdispersion,
+            allelicdropout,priorlikeparam)
         if isnothing(fhaplo)
-            logl = callogl_singlesite(offgeno; popmakeup, popidls, epso, seqerror,
-                allelebalancemean, allelebalancedisperse, alleledropout,offspringformat,israndallele) 
+            logl = callogl_singlesite(offgeno; popmakeup, popidls, epso, baseerror,
+                allelicbias, allelicoverdispersion, allelicdropout,offspringformat,israndallele) 
         else
-            logl = callogl_singlesite(fhaplo, offgeno; popmakeup, popidls, epsf,epso, seqerror,
-                allelebalancemean, allelebalancedisperse, alleledropout,offspringformat,israndallele) 
+            logl = callogl_singlesite(fhaplo, offgeno; popmakeup, popidls, epsf,epso, baseerror,
+                allelicbias, allelicoverdispersion, allelicdropout,offspringformat,israndallele) 
         end        
         logl + logpri + logjacobi
     end    
@@ -1246,18 +1318,18 @@ function infer_error_singlesite(target::AbstractString, offgeno::AbstractVector;
         xstart = log(epso/(1-epso))
     elseif target == "foundererror"
         xstart = log(epsf/(1-epsf))
-    elseif target == "seqerror"
-        xstart = log(seqerror/(1-seqerror))
-    elseif target == "allelebalancemean"
-        xstart = log(allelebalancemean/(1-allelebalancemean))
-    elseif target == "allelebalancedisperse"
-        xstart = max(-10,log(allelebalancedisperse))
-    elseif target == "alleledropout"
-        xstart = log(alleledropout/(1-alleledropout))
+    elseif target == "baseerror"
+        xstart = log(baseerror/(1-baseerror))
+    elseif target == "allelicbias"
+        xstart = log(allelicbias/(1-allelicbias))
+    elseif target == "allelicoverdispersion"
+        xstart = max(-10,log(allelicoverdispersion))
+    elseif target == "allelicdropout"
+        xstart = log(allelicdropout/(1-allelicdropout))
     else
         @error string("unknown genoerror type: ",target)
     end       
-    if target == "allelebalancedisperse"
+    if target == "allelicoverdispersion"
         lowbound, upbound = max(-12.0,xstart-10.0), xstart+10.0
     else
         fraction_upbound = 0.99
@@ -1276,7 +1348,7 @@ function infer_error_singlesite(target::AbstractString, offgeno::AbstractVector;
         x = res2[end][1]        
         logl = missing
     end
-    est =  target == "allelebalancedisperse" ? exp(x) : 1.0/(1.0+exp(-x))     
+    est =  target == "allelicoverdispersion" ? exp(x) : 1.0/(1.0+exp(-x))     
     est, logl
 end
 
@@ -1284,10 +1356,10 @@ function callogl_singlesite(offgeno::AbstractVector;
     popmakeup::AbstractDict,
     popidls=keys(popmakeup),
     epso::Real,
-    seqerror::Real,
-    allelebalancemean::Real,
-    allelebalancedisperse::Real,
-    alleledropout::Real,
+    baseerror::Real,
+    allelicbias::Real,
+    allelicoverdispersion::Real,
+    allelicdropout::Real,
     offspringformat::AbstractString,
     israndallele::Bool)     
     singlelogl = 0.0
@@ -1296,7 +1368,7 @@ function callogl_singlesite(offgeno::AbstractVector;
         ishaploid  =  popmakeup[popid]["ishaploid"]
         if ishaploid            
             if offspringformat == "AD"
-                like = MagicReconstruct.haplolikeGBS(view(offgeno,offls),epso,seqerror)
+                like = MagicReconstruct.haplolikeGBS(view(offgeno,offls),epso,baseerror)
             elseif offspringformat == "GT"
                     # format = GP    
                 like = MagicReconstruct.haplolike_GT(view(offgeno,offls),epso)
@@ -1306,7 +1378,7 @@ function callogl_singlesite(offgeno::AbstractVector;
             end            
         else
             if offspringformat == "AD"                
-                like = MagicReconstruct.diplolikeGBS(view(offgeno,offls),epso,seqerror,allelebalancemean,allelebalancedisperse,alleledropout; israndallele)    
+                like = MagicReconstruct.diplolikeGBS(view(offgeno,offls),epso,baseerror,allelicbias,allelicoverdispersion,allelicdropout; israndallele)    
             elseif offspringformat == "GT"
                     # format = GP    
                 like = MagicReconstruct.diplolike_GT(view(offgeno,offls),epso; israndallele)
@@ -1324,42 +1396,42 @@ function infer_error_rawcall(offgeno::AbstractVector,offspringformat::AbstractSt
     popmakeup::AbstractDict, 
     model::AbstractString,        
     isinfererror::Bool,        
-    likeparameters::LikeParameters,        
-    priorlikeparameters::PriorLikeParameters,
+    likeparam::LikeParam,        
+    priorlikeparam::PriorLikeParam,
     israndallele::Bool)        
-    liketargetls, epsf, epso, epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		    
+    liketargetls, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		    
     setdiff!(liketargetls,["foundererror"])
     if occursin(r"^GT",offspringformat)
-        setdiff!(liketargetls,["seqerror","allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["baseerror","allelicbias","allelicoverdispersion","allelicdropout"])
     end
     if model == "depmodel"
-        setdiff!(liketargetls,["allelebalancemean","allelebalancedisperse","alleledropout"])
+        setdiff!(liketargetls,["allelicbias","allelicoverdispersion","allelicdropout"])
     end        
-    olderror = [epsf,epso, 0, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]    
+    olderror = [epsf,epso, 0, baseerror,allelicbias, allelicoverdispersion, allelicdropout]    
     isinfererror || return olderror    
     logl = oldlogl = -Inf
     maxit = 25
     for it in 1:maxit
         for target in liketargetls
-            est,logl = infer_error_singlesite(target, offgeno;  popmakeup, epso, seqerror,
-                allelebalancemean, allelebalancedisperse, alleledropout, offspringformat, 
-                priorlikeparameters,israndallele,temperature = 0.0)                    
+            est,logl = infer_error_singlesite(target, offgeno;  popmakeup, epso, baseerror,
+                allelicbias, allelicoverdispersion, allelicdropout, offspringformat, 
+                priorlikeparam,israndallele,temperature = 0.0)                    
             if target == "offspringerror"
                 epso = est
-            elseif target == "seqerror"
-                seqerror = est
-            elseif target == "allelebalancemean"
-                allelebalancemean = est
-            elseif target == "allelebalancedisperse"
-                allelebalancedisperse = est
-            elseif target == "alleledropout"
-                alleledropout = est
+            elseif target == "baseerror"
+                baseerror = est
+            elseif target == "allelicbias"
+                allelicbias = est
+            elseif target == "allelicoverdispersion"
+                allelicoverdispersion = est
+            elseif target == "allelicdropout"
+                allelicdropout = est
             else
                 @error string("unknown target=",target)
             end                 
             # println("it=", it,",target=",target,",est=", est, ", logl=",logl)
         end    
-        newerror = [epsf, epso, 0, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]
+        newerror = [epsf, epso, 0, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
         diff = abs.(olderror .- newerror)            
         if (max(diff[1:3]...)<1e-3 && max(diff[4:6]...) < 1e-2) || (logl-oldlogl <= 0.1)
             isinfererror = false
@@ -1374,16 +1446,16 @@ function infer_error_rawcall(offgeno::AbstractVector,offspringformat::AbstractSt
         isinfererror || break
     end
     peroffspringerror = 0
-    esterrors = [epsf,epso, peroffspringerror, seqerror,allelebalancemean, allelebalancedisperse, alleledropout]
+    esterrors = [epsf,epso, peroffspringerror, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
     esterrors
 end    
 
 function infer_offpostprob_rawcall(offgeno::AbstractVector, offspringformat::AbstractString,esterrors::AbstractVector,israndallele::Bool)
-    _,epso,_, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = esterrors    
+    _,epso,_, baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors    
     if offspringformat == "AD"
         # format = AD
-        like0 = MagicReconstruct.diplolikeGBS(offgeno,epso,seqerror,
-            allelebalancemean,allelebalancedisperse,alleledropout; israndallele)
+        like0 = MagicReconstruct.diplolikeGBS(offgeno,epso,baseerror,
+            allelicbias,allelicoverdispersion,allelicdropout; israndallele)
     elseif offspringformat == "GT"
         like = MagicReconstruct.diplolike_GT(offgeno,epso; israndallele)
     else        

@@ -10,7 +10,7 @@ cd(@__DIR__)
 outstem = "example"
 # TEST scenarios: istart, isfounderinbred, seqfrac =0/1
 
-isstar = false
+isstar = true
 isfounderinbred = !isstar
 # isfounderinbred = true 
 # S1_1 Simulate founder genotypic data
@@ -45,16 +45,18 @@ magicsimulate(fhaplofile,pedfile;
     seqdepth = Gamma(2,5),    
     foundermiss = Beta(1,9),
     offspringmiss = Beta(1,9),
-    foundererror = Beta(1,19),
-    offspringerror = Beta(1,19),    
-    allelebalancemean = Beta(5,5),
-    allelebalancedisperse = Exponential(0.05),    
+    foundererror = Beta(1,1/0.01-1),
+    offspringerror = Beta(1,1/0.01-1),    
+    allelicbias = Beta(10,10),
+    allelicoverdispersion = Exponential(0.05),    
     ispheno = true,
     pheno_nqtl=1,
     pheno_h2= 0.5,
     nplot_subpop = 10, 
     outstem,
 )   
+
+# plot(Beta(10,10))
 
 
 # S2 Data filtering
@@ -74,8 +76,9 @@ magicfilter(genofile,pedfile;
 genofile = outstem*"_magicfilter_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
 magiccall(genofile,pedfile;   
-    isfounderinbred,               
-    isparallel = false,     
+    isfounderinbred,                   
+    # threshlikeparam = MagicCall.threshlike(allelicbias=0.8),
+    # isparallel = false,         
     outstem 
 )
 truefile = outstem*"_magicsimulate_truegeno.csv.gz"
@@ -83,7 +86,6 @@ calledgenofile = outstem*"_magiccall_geno.vcf.gz"
 acc = magicaccuracy(truefile,calledgenofile,pedfile;isfounderinbred)
 println(acc)
 plotmarkererror(calledgenofile)
-
 
 # S4 map construction 
 # genofile = outstem*"_magicfilter_geno.vcf.gz"

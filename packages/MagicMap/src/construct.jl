@@ -154,14 +154,15 @@ function construct(linkagefile::AbstractString;
     end    
     if isnothing(maxminlodcluster)
         nmarker = length(markers)
-        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster
+        nmarker_perchr = isnothing(ncluster) ? 2*nmarker/(minncluster+maxncluster) : nmarker/ncluster        
         if nmarker_perchr < 200
             maxminlodcluster = 5
         elseif nmarker_perchr < 1e3 
             maxminlodcluster = 5 + round(Int,(nmarker_perchr - 200)*5/800)            
         else
             maxminlodcluster = 10 + round(Int,5*log2(nmarker_perchr/1e3))
-        end         
+        end                 
+        maxminlodcluster +=  max(0,round(Int,log(2, length(inds)/200)))
         msg = string("reset maxminlodcluster = ", maxminlodcluster)
         printconsole(logio, verbose,msg)    
     end   

@@ -32,9 +32,9 @@ epsf = epso = 0.05
     offspringerror = Uniform(epso,epso+0.001),
     foundermiss = Beta(1,4),
     offspringmiss = Beta(1,4),
-    allelebalancemean = Beta(5,5),
-    allelebalancedisperse = Exponential(0.05),
-    # alleledropout = Beta(2,18),
+    allelicbias = Beta(5,5),
+    allelicoverdispersion = Exponential(0.05),
+    # allelicdropout = Beta(2,18),
     seqdepth = Gamma(2,5),
     outstem= dataid,    
 )

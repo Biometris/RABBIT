@@ -1,7 +1,7 @@
 
 function reconstruct!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
-	likeparameters::LikeParameters=LikeParameters(),   
+	likeparam::LikeParam=LikeParam(),   
 	israndallele::Bool=true, 
 	isfounderinbred::Bool=true,		
     hmmalg::AbstractString="forwardbackward",
@@ -53,7 +53,7 @@ function reconstruct!(magicgeno::MagicGeno;
 			logfilels = [string(tempid, "_chr",chr,".log") for chr in 1:nchr]	            			
 			try
 				pmap((x,y,z,w)->reconstructfun(x, model,magicprior;
-					likeparameters, israndallele, isfounderinbred, hmmalg,posteriordigits,				
+					likeparam, israndallele, isfounderinbred, hmmalg,posteriordigits,				
 					decodetempfile=y, chroutfile=z, logio=w,verbose),
 					genofilels[chroo],decodefilels[chroo],resfilels[chroo],logfilels[chroo])
 			catch err
@@ -80,7 +80,7 @@ function reconstruct!(magicgeno::MagicGeno;
         else
             for chr in eachindex(genofilels)
 				reconstructfun(genofilels[chr], model,magicprior;
-					likeparameters, israndallele, isfounderinbred, hmmalg, posteriordigits,				
+					likeparam, israndallele, isfounderinbred, hmmalg, posteriordigits,				
 					decodetempfile=decodefilels[chr], chroutfile=resfilels[chr], logio=io,verbose) 
 			end
         end        		        
@@ -106,7 +106,7 @@ end
 function reconstruct_chr!(genofile,
     model::AbstractString,	
     magicprior::NamedTuple;
-	likeparameters::LikeParameters=LikeParameters(),   
+	likeparam::LikeParam=LikeParam(),   
 	israndallele::Bool=true, 
 	isfounderinbred::Bool=true,	
     hmmalg::AbstractString="forwardbackward",
@@ -127,7 +127,7 @@ function reconstruct_chr!(genofile,
 	printconsole(io,verbose,string("chr=", chrid, ", reading magicgeno, tused=", round(tused,digits=1),"s",
 		", mem=",join([mem1,mem2],"|")))			
 	chrres = reconstruct_chr!(magicgeno, chr,  model,magicprior;
-		likeparameters,israndallele, isfounderinbred,hmmalg,posteriordigits,
+		likeparam,israndallele, isfounderinbred,hmmalg,posteriordigits,
 		decodetempfile,logio,verbose) 		
 	chrancestry = combine2ancestry(magicgeno,chr, model, chrres, isfounderinbred,posteriordigits)
 	outext = last(MagicBase.split_allext(chroutfile))
@@ -144,7 +144,7 @@ end
 function reconstruct_chr_mma(genofile,
     model::AbstractString,
     magicprior::NamedTuple;
-	likeparameters::LikeParameters=LikeParameters(),   
+	likeparam::LikeParam=LikeParam(),   
 	israndallele::Bool, 
 	isfounderinbred::Bool=true,	
     hmmalg::AbstractString="forwardbackward",
@@ -165,7 +165,7 @@ function reconstruct_chr_mma(genofile,
 	printconsole(io,verbose,string("chr=", chrid, ", reading magicgeno, tused=", round(tused,digits=1),"s",
 		", mem=",join([mem1,mem2],"|")))				
 		chrres = reconstruct_chr_mma(magicgeno, chr,  model,magicprior;
-		likeparameters,israndallele, isfounderinbred,hmmalg,posteriordigits,
+		likeparam,israndallele, isfounderinbred,hmmalg,posteriordigits,
 		decodetempfile,logio,verbose) 		
 	chrancestry = combine2ancestry(magicgeno,chr, model, chrres, isfounderinbred,posteriordigits)
 	savemagicancestry(chroutfile,chrancestry)
@@ -209,7 +209,7 @@ end
 function reconstruct_chr_mma(magicgeno::MagicGeno,chr::Integer,
     model::AbstractString,
     magicprior::NamedTuple;
-	likeparameters::LikeParameters=LikeParameters(),   	
+	likeparam::LikeParam=LikeParam(),   	
 	israndallele::Bool=true, 
     isfounderinbred::Bool=true,	
     hmmalg::AbstractString="forwardbackward",
@@ -220,7 +220,7 @@ function reconstruct_chr_mma(magicgeno::MagicGeno,chr::Integer,
 	io = isa(logio,AbstractString) ? open(logio,"w") : logio
 	try
 		starttime = time()
-		_, epsf, epso, epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		
+		_, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		
 	    # inter-marker distance in Morgan
 	    deltd= diff(magicgeno.markermap[chr][!,:poscm]) * 0.01
 		isoffphased = false
@@ -255,7 +255,7 @@ function reconstruct_chr_mma(magicgeno::MagicGeno,chr::Integer,
 				dataprobseq = [zeros(_float_like,length(nzindex))  for _ in 1:nsnp]
 	            for off in subpop
 	                obsseq = offcode[:,off]					
-					caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
+					caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout,
                     	fderive,nzstate,isoffphased,israndallele,issnpGT,ishaploidsub)
 	                dataprobseq2 = [Vector(dataprobseq[snp][datanzindex]) for snp=1:nsnp]					
 	                if hmmalg == "forwardbackward"
@@ -284,7 +284,7 @@ function reconstruct_chr_mma(magicgeno::MagicGeno,chr::Integer,
 end
 
 function get_all_errls(magicgeno::MagicGeno,chr::Integer; 
-	likeparameters::LikeParameters=LikeParameters(),   	
+	likeparam::LikeParam=LikeParam(),   	
 	io::Union{Nothing,IO}=nothing, verbose::Bool=true)
 	# set error rates	
 	isanyGP = in("GP", magicgeno.markermap[chr][!,:offspringformat])
@@ -299,33 +299,33 @@ function get_all_errls(magicgeno::MagicGeno,chr::Integer;
 	end
 	isanyAD = in("AD", magicgeno.markermap[chr][!,:offspringformat])	
 	if isanyAD
-		seqerrorls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :seqerror, io,verbose)
-		allelebalancemeanls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :allelebalancemean, io,verbose)
-		allelebalancedispersels0 = MagicBase.get_errorls(magicgeno,chr;errorname = :allelebalancedisperse, io,verbose)
-		alleledropoutls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :alleledropout, io,verbose)	
+		baseerrorls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :baseerror, io,verbose)
+		allelicbiasls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :allelicbias, io,verbose)
+		allelicoverdispersionls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :allelicoverdispersion, io,verbose)
+		allelicdropoutls0 = MagicBase.get_errorls(magicgeno,chr;errorname = :allelicdropout, io,verbose)	
 	else
-		seqerrorls0 = nothing
-		allelebalancemeanls0 = nothing
-		allelebalancedispersels0 = nothing
-		alleledropoutls0 = nothing	
+		baseerrorls0 = nothing
+		allelicbiasls0 = nothing
+		allelicoverdispersionls0 = nothing
+		allelicdropoutls0 = nothing	
 	end
-	liketargetls, epsf, epso, epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)		
+	liketargetls, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		
 	nsnp  = size(magicgeno.markermap[chr],1)	
 	epsfls = merge_errorls(epsfls0,epsf,nsnp)	
 	epsols = merge_errorls(epsols0,epso,nsnp)	
 	noff = size(magicgeno.magicped.offspringinfo,1)
 	epsols_perind = merge_errorls(epsols0_perind,epso_perind,noff)	
-	seqerrorls = merge_errorls(seqerrorls0,seqerror,nsnp)	
-	allelebalancemeanls = merge_errorls(allelebalancemeanls0,allelebalancemean,nsnp)		
-	allelebalancedispersels = merge_errorls(allelebalancedispersels0,allelebalancedisperse,nsnp)		
-	alleledropoutls = merge_errorls(alleledropoutls0,alleledropout,nsnp)	
-	(liketargetls, epsfls, epsols, epsols_perind, seqerrorls,allelebalancemeanls,allelebalancedispersels,alleledropoutls)
+	baseerrorls = merge_errorls(baseerrorls0,baseerror,nsnp)	
+	allelicbiasls = merge_errorls(allelicbiasls0,allelicbias,nsnp)		
+	allelicoverdispersionls = merge_errorls(allelicoverdispersionls0,allelicoverdispersion,nsnp)		
+	allelicdropoutls = merge_errorls(allelicdropoutls0,allelicdropout,nsnp)	
+	(liketargetls, epsfls, epsols, epsols_perind, baseerrorls,allelicbiasls,allelicoverdispersionls,allelicdropoutls)
 end
 
 function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
     model::AbstractString,
     magicprior::NamedTuple;
-	likeparameters::LikeParameters=LikeParameters(),   	
+	likeparam::LikeParam=LikeParam(),   	
 	usepermarkererror::Bool=false, 
 	israndallele::Bool=true, 
 	isfounderinbred::Bool=true,	
@@ -351,14 +351,14 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 		length(gtls) > 1 && @error string("mixed phased and unphased genotypes, offspring format=",gtls)		
 		popmakeup,priorprocess= calpriorprocess(magicgeno,chr, model,magicprior; isfounderinbred)				
 		if usepermarkererror		
-			_, epsf, epso, epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = get_all_errls(magicgeno,chr; likeparameters,io,verbose)					
+			_, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = get_all_errls(magicgeno,chr; likeparam,io,verbose)					
 		else
-			_, epsf, epso, epso_perind, seqerror, allelebalancemean,allelebalancedisperse,alleledropout = MagicBase.extract_likeparameters(likeparameters)					
+			_, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)					
 		end
 		# decoding		
 	    tused = @elapsed res = hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-	        epsf,epso, epso_perind,seqerror, 
-			allelebalancemean, allelebalancedisperse, alleledropout,  
+	        epsf,epso, epso_perind,baseerror, 
+			allelicbias, allelicoverdispersion, allelicdropout,  
 			hmmalg, resetvirtual, posteriordigits, issnpGT, isoffphased, israndallele, decodetempfile)				
 		chrlen = round(Int,magicgeno.markermap[chr][end,:poscm] - magicgeno.markermap[chr][1,:poscm])
 		mem1 = round(Int, memoryuse()/10^6)
@@ -378,9 +378,7 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 end
 
 function get_outerlier_indices(ls::AbstractVector; 
-	tukeyfence::Real=3,	
-	minoutlier=0.0,
-	side::String="both")		
+	tukeyfence::Real=1.5, side::String="both")		
     q1,q3=quantile(ls,[0.25,0.75])
 	if side in ["lower","both"]
 		lowbound= q1-tukeyfence*(q3-q1)
@@ -389,18 +387,19 @@ function get_outerlier_indices(ls::AbstractVector;
 		res = Int[]
 	end
 	if side in ["upper","both"]
-		upbound= max(minoutlier,q3+tukeyfence*(q3-q1))
+		upbound= q3+tukeyfence*(q3-q1)
 		append!(res,findall(ls .> upbound))
 	end
 	res
 end
 
 function del_error_indices(errorls::AbstractVector;
-	minoutlier=0.05,tukeyfence::Real=3,max_error::Real=0.2)	
+	tukeyfence::Real=1.5, 
+	softthresh=0.05,hardthresh::Real=0.25)
 	ls = logit.(errorls)
-    q1,q3=quantile(ls,[0.25,0.75])
-	upbound=q3+tukeyfence*(q3-q1)	    
-	upbound=min(max(upbound,logit(minoutlier)),logit(max_error))
+    q1,q3 = quantile(ls,[0.25,0.75])
+	upbound = q3+tukeyfence*(q3-q1)	    
+	upbound = min(max(upbound,logit(softthresh)), logit(min(1.0,hardthresh)))
     findall(ls .> upbound)
 end
 

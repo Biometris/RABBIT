@@ -205,14 +205,14 @@ function randdepth(meandepth::Distribution,nsnp::Integer, nind::Integer)
     hcat([rand(Poisson(i),nind) for i=meanls]...)'
 end
 
-function randreads(chrgeno::AbstractMatrix, meandepth::Distribution, seqerror::Real)
+function randreads(chrgeno::AbstractMatrix, meandepth::Distribution, baseerror::Real)
     # genotypes 1N, 2N, NN are not allowed
     guniq = unique(chrgeno)
     if issubset(guniq,["1","2"])
-        pa1 = [1-seqerror, seqerror]
+        pa1 = [1-baseerror, baseerror]
         genoset = ["1","2"]
     elseif issubset(guniq,["11","12","22"])
-        pa1 = [1-seqerror, 0.5,  seqerror]
+        pa1 = [1-baseerror, 0.5,  baseerror]
         genoset = ["11","12","22"]
     else
         error(string("unkown genotype: ", guniq))
@@ -256,7 +256,7 @@ function simgeno(truegeno::MagicGeno,magicfgl::MagicGeno;
     offspringmiss::Distribution=Beta(1,9),
     seqfrac::Real=0.5,
     seqdepth::Distribution = Gamma(2, 5),
-    seqerror::Real = 0.001)        
+    baseerror::Real = 0.001)        
     obsgeno = deepcopy(truegeno)
     # apply errors
     obsgeno.foundergeno .= [Matrix{Any}(join.(i))  for i in truegeno.foundergeno]
@@ -276,9 +276,9 @@ function simgeno(truegeno::MagicGeno,magicfgl::MagicGeno;
             obsgeno.markermap[chr][isseq,:founderformat] .= "AD"
             obsgeno.markermap[chr][isseq,:offspringformat] .= "AD"
             alleles = obsgeno.foundergeno[chr][isseq,:]
-            obsgeno.foundergeno[chr][isseq,:] .= randreads(alleles, seqdepth, seqerror) 
+            obsgeno.foundergeno[chr][isseq,:] .= randreads(alleles, seqdepth, baseerror) 
             alleles = obsgeno.offspringgeno[chr][isseq,:]
-            obsgeno.offspringgeno[chr][isseq,:].= randreads(alleles, seqdepth, seqerror) 
+            obsgeno.offspringgeno[chr][isseq,:].= randreads(alleles, seqdepth, baseerror) 
         end        
     end
     formatlsls = [i[!,:founderformat] for i  in obsgeno.markermap]

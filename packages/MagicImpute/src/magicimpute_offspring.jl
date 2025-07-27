@@ -1,7 +1,7 @@
 
 function magicimpute_offspring!(magicgeno::MagicGeno;
 	model::AbstractString="jointmodel",
-	likeparameters::LikeParameters=LikeParameters(),   
+	likeparam::LikeParam=LikeParam(),   
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,		
 	threshimpute::Real=0.7,			
@@ -15,10 +15,10 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
     verbose::Bool=true)
 	starttime = time()
 	io = MagicBase.set_logfile_begin(logfile, workdir, "magicimpute_offspring!"; verbose)
-	seqerror = MagicBase.get_seqerror(likeparameters)
-	epsf = MagicBase.get_foundererror(likeparameters)
-	epso = MagicBase.get_offspringerror(likeparameters)		
-	MagicReconstruct.check_common_arg(model,epsf, epso, seqerror,
+	baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
+	epsf = MagicBase.get_likeproperty(likeparam, :foundererror)
+	epso = MagicBase.get_likeproperty(likeparam, :offspringerror)		
+	MagicReconstruct.check_common_arg(model,epsf, epso, baseerror,
         workdir, tempdirectory)
 	if !(0<=threshimpute<=1)
         @error string("threshimpute=", threshimpute, " is not in [0,1]")
@@ -30,7 +30,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	isparallel = isparallel && nprocs() > 1	&& length(magicgeno.markermap) > 1
 	msg = string("list of options: \n",
         "model = ", model, "\n",
-		"likeparameters = ", likeparameters, "\n",		
+		"likeparam = ", likeparam, "\n",		
 		"isfounderinbred = ", isfounderinbred,"\n",		
 		"threshimpute = ", threshimpute,"\n",		
 		"phasealg = ", phasealg,"\n",
@@ -43,7 +43,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
         "verbose = ",verbose)
     printconsole(io,verbose,msg)
 	MagicBase.reset_juncdist!(magicgeno.magicped,model;io,verbose,isfounderinbred)			
-	MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], seqerror, isfounderinbred)
+	MagicBase.rawgenoprob!(magicgeno; targets = ["founders"], baseerror, isfounderinbred)
     MagicBase.rawgenocall!(magicgeno; targets = ["founders"], callthreshold = 0.95, isfounderinbred)
 	founderformat, offspringformat = MagicBase.setunphasedgeno!(magicgeno)	
 	if in("GT_unphased",founderformat)
@@ -86,7 +86,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 			tempid = tempname(jltempdir,cleanup=true)
 			logfilels = [string(tempid, "_chr",chr,".log") for chr in 1:nchr]				
 			try
-		        pmap((x,y,z)->impute_offspring_chr!(x, model,magicprior; likeparameters, threshimpute,
+		        pmap((x,y,z)->impute_offspring_chr!(x, model,magicprior; likeparam, threshimpute,
 					israndallele, isfounderinbred, phasealg, tempfile=y, logio=z,verbose),
 					genofilels[chroo],tempfilels[chroo],logfilels[chroo])
 			catch err
@@ -108,10 +108,12 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 					end
 				end
 				rm.(logfilels,force=true)
+				@everywhere GC.gc() # force garbage collection in all workers			
+				@everywhere GC.gc() 
 			end					
 		else
 			for chr in eachindex(genofilels)
-				impute_offspring_chr!(genofilels[chr], model,magicprior; likeparameters, threshimpute, 
+				impute_offspring_chr!(genofilels[chr], model,magicprior; likeparam, threshimpute, 
 					israndallele, isfounderinbred,phasealg, tempfile = tempfilels[chr], logio=io,verbose)
 			end
 		end
@@ -208,7 +210,7 @@ end
 function impute_offspring_chr!(genofile::AbstractString, 
     model::AbstractString,
     magicprior::NamedTuple;
-	likeparameters::LikeParameters,    
+	likeparam::LikeParam,    
 	threshimpute::Real,
 	israndallele::Bool,
     isfounderinbred::Bool,	
@@ -234,7 +236,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 		isphaseoffspring = !occursin(r"^unphase",phasealg)
 		try	
 			MagicReconstruct.reconstruct_chr!(magicgeno,chr, model,magicprior;
-				likeparameters,israndallele, isfounderinbred, 
+				likeparam,israndallele, isfounderinbred, 
 				usepermarkererror = true, # using inferred error rate in magicgeno.markermap 
 				hmmalg="forwardbackward", resetvirtual=true, 
 				decodetempfile=chrdecodefile,logio=io,verbose
@@ -248,7 +250,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 			ischrx && error(string("TODO for sex chromosome"))
 			# tempfile:  marker genoprob for each offspring			
 			popmakeup = MagicReconstruct.calpopmakeup(magicgeno,chr, model,magicprior; isfounderinbred)			
-			inputepsf = MagicBase.get_foundererror(likeparameters)			
+			inputepsf = MagicBase.get_likeproperty(likeparam, :foundererror)			
 			epsfls = MagicBase.get_errorls(magicgeno,chr;errorname = :foundererror, verbose=false)			
 			if isnothing(epsfls)
 				chrepsf = inputepsf
@@ -258,7 +260,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 			condprob2postprob!(tempfile,chrdecodefile,chrfhaplo,chrepsf,popmakeup; isphaseoffspring, probdigits = 4)			
 			if phasealg == "viterbi"				
 				tviterbi = @elapsed MagicReconstruct.reconstruct_chr!(magicgeno,chr, model,magicprior;
-					likeparameters,israndallele, isfounderinbred, 
+					likeparam,israndallele, isfounderinbred, 
 					usepermarkererror = true, hmmalg="viterbi", resetvirtual=true, 
 					decodetempfile=chrdecodefile,logio=nothing,verbose = false
 				)	

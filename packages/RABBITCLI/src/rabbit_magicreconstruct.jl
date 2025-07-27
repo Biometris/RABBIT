@@ -67,10 +67,10 @@ function parse_commandline()
         arg_type = AbstractString
         required = false
         default = "jointmodel"
-        "--likeparameters"
+        "--likeparam"
         help = "Set error rate values in the genotypic data model. "
         arg_type = AbstractString
-        default = "LikeParameters()"   
+        default = "LikeParam()"   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
@@ -115,7 +115,7 @@ function parse_commandline()
         "--nplot_subpop"
         help = "plots for up to nplot_subpop offspring in each subpopulation"
         arg_type = Int
-        default = 10
+        default = 3
         "--thincm"
         help = "thin ancestry results so that inter-marker distances > thincm"
         arg_type = Float64
@@ -220,11 +220,13 @@ function main(args::Vector{String})
     end
     delete!(parsed_args, :nworker)
     push!(parsed_args, :isparallel => isparallel)
-    like = parsed_args[:likeparameters]
-    likeparameters = MagicReconstruct.parse_likeparameters(like)
-    delete!(parsed_args, :likeparameters)
-    @time magicreconstruct(genofile, pedinfo; 
-        likeparameters, parsed_args...)
+    
+    id = "LikeParam"
+    id2 = Symbol(lowercase(id))
+    likeparam = MagicBase.parse_likeparam(parsed_args[id2],id)    
+    delete!(parsed_args, id2)
+    
+    @time magicreconstruct(genofile, pedinfo; likeparam, parsed_args...)
     if isparallel
         rmprocs(workers()...; waitfor=0)
     end

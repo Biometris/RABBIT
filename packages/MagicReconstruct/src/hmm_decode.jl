@@ -4,10 +4,10 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,Real,AbstractVector},
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     hmmalg::AbstractString,
     posteriordigits::Integer = 4, 
     decodetempfile::Union{Nothing,AbstractString},    
@@ -21,6 +21,7 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
         decodetempfile = tempname(tempdir(); cleanup=true)
     end    
     fderive, offcode  = precompute_chr(chrfhaplo, chroffgeno, popmakeup,isoffphased, issnpGT)
+    isfounderinbred = first(values(popmakeup))["isfounderinbred"] # same for all subpopulations
     nstate, nfgl = hmm_nstate_nfgl(popmakeup)    
     nfgl == size(chrfhaplo,2) || @error string("inconsistent nfgl")
     nsnp,noff=size(chroffgeno)
@@ -56,13 +57,13 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
                 old_hmm_nstate = length(nzstate)
                 dataprobseq = [zeros(_float_like,old_hmm_nstate)  for _ in 1:nsnp]
             end            
-            for off in offls
-                if hmmalg in ["forwardbackward","logforward","logbackward"]                    
-                    off_decode = length(nzcol)/nstate > 0.5 ? zeros(nsnp,nstate) : spzeros(nsnp,nstate)
-                else
-                    # hmmalg == "viterbi"
-                    off_decode = zeros(Int,nsnp)
-                end
+            if hmmalg in ["forwardbackward","logforward","logbackward"]                    
+                off_decode = length(nzcol)/nstate > 0.5 ? zeros(nsnp,nstate) : spzeros(nsnp,nstate)
+            else
+                # hmmalg == "viterbi"
+                off_decode = zeros(Int,nsnp)
+            end
+            for off in offls     
                 if resetvirtual && haskey(virtualdict, off) 
                     # copy founders'geno to virtual offspring for intermeidate parents 
                     virtual_f = virtualdict[off]
@@ -78,7 +79,7 @@ function hmmdecode_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
                         fderive,nzstate,isoffphased2,israndallele, issnpGT2,ishaploidsub)
                 else
                     obsseq = offcode[:,off]
-                    caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], seqerror, allelebalancemean,allelebalancedisperse,alleledropout,
+                    caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], baseerror, allelicbias,allelicoverdispersion,allelicdropout,
                         fderive,nzstate,isoffphased,israndallele, issnpGT,ishaploidsub)
                 end
                 dataprobseq2 = view(dataprobseq, snporder[markerincl])    
@@ -140,10 +141,10 @@ function caldataprobseq!(dataprobseq::AbstractVector,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_ind::Real,     
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     fderive::NamedTuple,
     nzstate::AbstractVector,
     isoffphased::Bool,    
@@ -161,17 +162,17 @@ function caldataprobseq!(dataprobseq::AbstractVector,
     if !all(issnpGT)
         issnpnonGT = .!issnpGT
         fderive2 = ishaploid ? view(fderive.haplo, issnpnonGT,:) : view(fderive.diplo,issnpnonGT,:)
-        if isa(epsf,AbstractVector) || isa(epso,AbstractVector) || isa(seqerror,AbstractVector) || isa(allelebalancemean,AbstractVector) || isa(allelebalancedisperse,AbstractVector) || isa(alleledropout,AbstractVector) 
+        if isa(epsf,AbstractVector) || isa(epso,AbstractVector) || isa(baseerror,AbstractVector) || isa(allelicbias,AbstractVector) || isa(allelicoverdispersion,AbstractVector) || isa(allelicdropout,AbstractVector) 
             f(x) = isa(x,AbstractVector) ? x[issnpnonGT] : x
-            epsf2, epso2,seqerror2,allelebalancemean2,allelebalancedisperse2,alleledropout2 = f(epsf),f(epso),f(seqerror),f(allelebalancemean),f(allelebalancedisperse), f(alleledropout)
+            epsf2, epso2,baseerror2,allelicbias2,allelicoverdispersion2,allelicdropout2 = f(epsf),f(epso),f(baseerror),f(allelicbias),f(allelicoverdispersion), f(allelicdropout)
         else
-            epsf2, epso2,seqerror2,allelebalancemean2,allelebalancedisperse2,alleledropout2 = epsf, epso,seqerror,allelebalancemean,allelebalancedisperse,alleledropout
+            epsf2, epso2,baseerror2,allelicbias2,allelicoverdispersion2,allelicdropout2 = epsf, epso,baseerror,allelicbias,allelicoverdispersion,allelicdropout
         end        
         callinelikeGBS!(view(dataprobseq,issnpnonGT),fderive2,nzstate, view(obsseq,issnpnonGT);
-            epsf=epsf2,epso=epso2,seqerror = seqerror2, 
-            allelebalancemean = allelebalancemean2, 
-            allelebalancedisperse = allelebalancedisperse2, 
-            alleledropout = alleledropout2, ishaploid,israndallele)
+            epsf=epsf2,epso=epso2,baseerror = baseerror2, 
+            allelicbias = allelicbias2, 
+            allelicoverdispersion = allelicoverdispersion2, 
+            allelicdropout = allelicdropout2, ishaploid,israndallele)
     end
     if any(issnpGT)
         # condlike is a function of epsf, epso        
@@ -192,10 +193,10 @@ function hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     decodetempfile::AbstractString,    
     hmmalg::AbstractString="calloglike",
@@ -203,7 +204,7 @@ function hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     issnpGT::AbstractVector)
     isnothing(snporder) && (snporder = collect(1:size(chroffgeno,1)))    
     loglikels = first(MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-        epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         hmmalg, decodetempfile, israndallele,issnpGT,snporder))
     loglikels
 end

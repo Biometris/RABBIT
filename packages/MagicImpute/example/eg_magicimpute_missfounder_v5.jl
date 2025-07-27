@@ -1,7 +1,7 @@
-# using Distributed
-# nprocs() < 6 && addprocs(6-nprocs())
-# @info string("nprocs=", nprocs())
-# @everywhere  using MagicReconstruct, MagicImpute
+using Distributed
+nprocs() < 6 && addprocs(6-nprocs())
+@info string("nprocs=", nprocs())
+@everywhere  using MagicReconstruct, MagicImpute
 
 using Revise
 using MagicBase, MagicReconstruct, MagicImpute
@@ -20,13 +20,13 @@ outstem = dataid*"_output"
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
 missingcode = isfounderinbred ? "N" : "NN"
 for chr in eachindex(magicgeno.markermap)
-    magicgeno.foundergeno[chr] .= missingcode
-    # magicgeno.foundergeno[chr][:,1:14] .= missingcode
+    # magicgeno.foundergeno[chr] .= missingcode
+    magicgeno.foundergeno[chr][:,1:9] .= missingcode
 end
 @time magicgeno = magicimpute!(magicgeno; 
     isfounderinbred,     
     # target = "founder",      
-    # likeparameters = LikeParameters(peroffspringerror=0),      
+    # likeparameters = LikeParam(peroffspringerror=0),      
     model = "depmodel",    
     # isgreedy = true, 
     # byfounder = 4, 

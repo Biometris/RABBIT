@@ -18,7 +18,7 @@ pedinfo = string(dataid, "_magicsimulate_ped.csv")
 @time magiccall(genofile,pedinfo;     
     isfounderinbred,
     israwcall = true, 
-    # likeparameters = LikeParameters(0.005, 0.005, 0.0, nothing, nothing, nothing, 0.0),
+    # likeparameters = LikeParam(0.005, 0.005, 0.0, nothing, nothing, nothing, 0.0),
     # model = "depmodel", 
     # isparallel = false, 
 )
@@ -57,7 +57,7 @@ gls = [begin
         label=string("r=", r),
     )
     g
-end for col in [:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]]
+end for col in [:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]]
 fig = plot(gls...,layout=(length(gls),1),
     size=(350,700),
     leftmargin = 5Plots.mm
@@ -71,4 +71,19 @@ cd(@__DIR__)
 dataid = "sim"
 rm.(filter(x->occursin(dataid, x), readdir()))
 rm.(filter(x->occursin("outstem", x), readdir()))
+
+
+
+
+
+
+##########################3
+
+if !israwcall
+    msg = string("likeparameters = (foundererror, offspringerror, peroffspringerror, baseerror, allelicbias, allelicoverdispersion, allelicdropout)")
+    printconsole(logio,verbose,msg)    
+end
+
+priorlikeparameters = PriorLikeParam(baseerror=Beta(1,299))
+reset_priorlikeparameters(priorlikeparameters)
 

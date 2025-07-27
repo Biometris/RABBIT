@@ -5,10 +5,10 @@ function markerdelete_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     offspringexcl::AbstractVector,
     snporder::AbstractVector,
     decodetempfile::AbstractString,    
@@ -16,8 +16,8 @@ function markerdelete_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix
     issnpGT::AbstractVector, 
     caldistance::Bool,priorlength::Real)
     deltt = markerdelete_chr(chrfhaplo,chroffgeno, popmakeup, priorprocess;
-       delsiglevel,  epsf, epso, epso_perind, seqerror,allelebalancemean,
-       allelebalancedisperse,alleledropout, offspringexcl, snporder, decodetempfile,
+       delsiglevel,  epsf, epso, epso_perind, baseerror,allelicbias,
+       allelicoverdispersion,allelicdropout, offspringexcl, snporder, decodetempfile,
        issnpGT,israndallele, caldistance,priorlength)
     isempty(deltt) || MagicReconstruct.setpriorprocess!(priorprocess, deltt)
     deltt
@@ -29,10 +29,10 @@ function markerdelete_chr(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     offspringexcl::AbstractVector,
     snporder::AbstractVector,
     decodetempfile::AbstractString,    
@@ -48,27 +48,27 @@ function markerdelete_chr(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
     # calcualte binlogl and initialize parameters
     # logl for a bin of makrers is given at the first marker of the bin. 
     binlogl = MagicImpute.calbinlogl(chrfhaplo,chroffgeno;
-        popmakeup,epsf, epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        popmakeup,epsf, epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         snporder, tseq, kksegls, israndallele,issnpGT)      
     # nfounder = size(chrfhaplo,2)    
     nsnp = size(chroffgeno,1)
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
-    seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
-    allelebalancemeanls = typeof(allelebalancemean) <: Real ? allelebalancemean*ones(nsnp) : allelebalancemean
-    allelebalancedispersels = typeof(allelebalancedisperse) <: Real ? allelebalancedisperse*ones(nsnp) : allelebalancedisperse
-    alleledropoutls = typeof(alleledropout) <: Real ? alleledropout*ones(nsnp) : alleledropout    
+    baseerrorls = typeof(baseerror) <: Real ? baseerror*ones(nsnp) : baseerror
+    allelicbiasls = typeof(allelicbias) <: Real ? allelicbias*ones(nsnp) : allelicbias
+    allelicoverdispersionls = typeof(allelicoverdispersion) <: Real ? allelicoverdispersion*ones(nsnp) : allelicoverdispersion
+    allelicdropoutls = typeof(allelicdropout) <: Real ? allelicdropout*ones(nsnp) : allelicdropout    
     MagicReconstruct.callogbackward_permarker!(decodetempfile, chrfhaplo,chroffgeno, popmakeup,priorprocess;
-        epsf = epsfls, epso = epsols, epso_perind, seqerror = seqerrorls,
-        allelebalancemean = allelebalancemeanls, allelebalancedisperse = allelebalancedispersels, 
-        alleledropout = alleledropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
+        epsf = epsfls, epso = epsols, epso_perind, baseerror = baseerrorls,
+        allelicbias = allelicbiasls, allelicoverdispersion = allelicoverdispersionls, 
+        allelicdropout = allelicdropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
     dataprobls = MagicReconstruct.init_dataprobls_singlephase(popmakeup)    
     jldopen(decodetempfile,"r") do bwfile
         snp = snporder[tseq[1]]
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:],chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], 
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], 
             israndallele,issiteGT = issnpGT[snp])
         fw_prob_logl = MagicReconstruct.calinitforward(dataprobls, popmakeup)
         logbwprob = bwfile[string("t", tseq[1])]
@@ -81,9 +81,9 @@ function markerdelete_chr(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
                 for i in pre_fw_kk:(kk-2)
                     snp = snporder[tseq[i+1]]
                     MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:],chroffgeno[snp,:],popmakeup;
-                        epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-                        allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                        alleledropout=alleledropoutls[snp],                     
+                        epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+                        allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                        allelicdropout=allelicdropoutls[snp],                     
                         israndallele, issiteGT = issnpGT[snp])
                     # input fw_prob_logl refers to tseq[i], output fw_prob_logl refers to tseq[i+1]
                     MagicReconstruct.calnextforward!(fw_prob_logl,tseq[i], dataprobls,popmakeup, priorprocess)
@@ -101,8 +101,8 @@ function markerdelete_chr(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
             end
             res[seg] = calvuongts!(dataprobls, kk,kkmax, tseq,logl,binlogl,fw_prob_logl, logbwprob,
                 chrfhaplo, chroffgeno, snporder,popmakeup, priorprocess;
-                epsfls, epsols, epso_perind,seqerrorls,allelebalancemeanls,allelebalancedispersels,
-                alleledropoutls, offspringexcl, israndallele,issnpGT,caldistance,priorlength)
+                epsfls, epsols, epso_perind,baseerrorls,allelicbiasls,allelicoverdispersionls,
+                allelicdropoutls, offspringexcl, israndallele,issnpGT,caldistance,priorlength)
         end
         res
     end
@@ -139,10 +139,10 @@ function calvuongts!(dataprobls, kk::Integer,kkmax::Integer, tseq::AbstractVecto
     snporder::AbstractVector,popmakeup::AbstractDict,priorprocess::AbstractDict;
     epsfls::AbstractVector,epsols::AbstractVector,
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerrorls::AbstractVector,
-    allelebalancemeanls::AbstractVector,
-    allelebalancedispersels::AbstractVector,
-    alleledropoutls::AbstractVector,
+    baseerrorls::AbstractVector,
+    allelicbiasls::AbstractVector,
+    allelicoverdispersionls::AbstractVector,
+    allelicdropoutls::AbstractVector,
     offspringexcl::AbstractVector,
     israndallele::Bool,     
     issnpGT::AbstractVector, 
@@ -159,9 +159,9 @@ function calvuongts!(dataprobls, kk::Integer,kkmax::Integer, tseq::AbstractVecto
         snp = snporder[tseq[kkmax+1]]
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
             chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], 
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], 
             israndallele,issiteGT = issnpGT[snp])
         prop_prob_logl = MagicReconstruct.calinitforward(dataprobls, popmakeup)
         proplogl0 = calindlogl(prop_prob_logl,logbwprob, popmakeup; offspringexcl)
@@ -171,9 +171,9 @@ function calvuongts!(dataprobls, kk::Integer,kkmax::Integer, tseq::AbstractVecto
         if caldistance
             MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
                 chroffgeno[snp,:],popmakeup;
-                epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-                allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                alleledropout=alleledropoutls[snp], 
+                epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+                allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                allelicdropout=allelicdropoutls[snp], 
                 israndallele, issiteGT = issnpGT[snp])
             ttrandis = calinterdis(tseq[kk-1],popmakeup,priorprocess,offspringexcl, 
                 dataprobls,fw_prob_logl[1],logbwprob,priorlength)
@@ -183,9 +183,9 @@ function calvuongts!(dataprobls, kk::Integer,kkmax::Integer, tseq::AbstractVecto
         end
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
             chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], 
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], 
             israndallele, issiteGT = issnpGT[snp])
         prop_prob_logl = deepcopy(fw_prob_logl) # fw_prob_logl refers to tseq[kk-1]
         MagicReconstruct.calnextforward!(prop_prob_logl, tseq[kk-1],dataprobls,popmakeup, priorprocess; ttrandis)
@@ -241,10 +241,10 @@ function calbinlogl(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix;
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector, 
     tseq::AbstractVector,    
     kksegls::AbstractVector,     
@@ -264,8 +264,8 @@ function calbinlogl(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix;
         dataprobseq = [zeros(MagicReconstruct._float_like,length(nzstate))  for _ in 1:nsnp]
         for off = offls
             obsseq = offcode[:,off]                     
-            MagicReconstruct.caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], seqerror,
-                allelebalancemean,allelebalancedisperse,alleledropout,fderive,nzstate, 
+            MagicReconstruct.caldataprobseq!(dataprobseq, obsseq,epsf,epso, epso_perind[off], baseerror,
+                allelicbias,allelicoverdispersion,allelicdropout,fderive,nzstate, 
                 isoffphased,israndallele,issnpGT,ishaploid)
             for (kk,kkmax) in kksegls
                 snpls = snporder[tseq[kk:kkmax]]                
@@ -287,10 +287,10 @@ function calsinglelogl(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix;
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     israndallele::Bool,
     issnpGT::AbstractVector)
     isoffphased = false        
@@ -302,8 +302,8 @@ function calsinglelogl(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix;
         chroffgeno2 = view(chroffgeno,snpincl,:)
         chrfhaplo2 = view(chrfhaplo,snpincl,:)                        
         issnpGT2 = issnpGT[snpincl]        
-        ls =[isa(x, AbstractVector) ? x[snpincl] : x for x in [epsf, epso,seqerror, allelebalancemean,allelebalancedisperse,alleledropout]]        
-        epsf, epso,seqerror, allelebalancemean,allelebalancedisperse,alleledropout = ls
+        ls =[isa(x, AbstractVector) ? x[snpincl] : x for x in [epsf, epso,baseerror, allelicbias,allelicoverdispersion,allelicdropout]]        
+        epsf, epso,baseerror, allelicbias,allelicoverdispersion,allelicdropout = ls
     end    
     fderive, offcode = MagicReconstruct.precompute_chr(chrfhaplo2, chroffgeno2,popmakeup, isoffphased, issnpGT2)
     nsnp, noff = size(chroffgeno2)    
@@ -317,8 +317,8 @@ function calsinglelogl(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix;
         dataprobseq = [zeros(MagicReconstruct._float_like,length(nzstate))  for _ in 1:nsnp]
         for off = offls
             obsseq = offcode[:,off]                      
-            MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_perind[off], seqerror,
-                allelebalancemean,allelebalancedisperse,alleledropout,fderive,nzstate, 
+            MagicReconstruct.caldataprobseq!(dataprobseq,obsseq,epsf,epso,epso_perind[off], baseerror,
+                allelicbias,allelicoverdispersion,allelicdropout,fderive,nzstate, 
                 isoffphased,israndallele,issnpGT2,ishaploid)
             singlelogl[:,off] .= [log(dot(i,initprob)) for i in dataprobseq]
         end

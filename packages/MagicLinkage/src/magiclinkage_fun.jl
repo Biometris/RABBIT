@@ -4,7 +4,7 @@ function magiclinkage(genofile::AbstractString, pedinfo::Union{MagicBase.JuncDis
     formatpriority::AbstractVector=["GT","AD"],    
     isfounderinbred::Bool=true,
     model::AbstractString="jointmodel",
-    likeparameters::LikeParameters=LikeParameters(),   
+    likeparam::LikeParam=LikeParam(),   
     israndallele::Bool=true, 
     threshcall::Real = model == "depmodel" ? 0.95 : 0.9,   
     markerthin::Integer=1,    
@@ -39,7 +39,7 @@ function magiclinkage(genofile::AbstractString, pedinfo::Union{MagicBase.JuncDis
         "seconds, mem=",mem1,"|",mem2,"MB")
     MagicBase.printconsole(logio,verbose,msg)            
     linkagefile=magiclinkage!(magicgeno;        
-        ldfile,model, likeparameters, israndallele, threshcall,
+        ldfile,model, likeparam, israndallele, threshcall,
         markerthin, byfounder, minlodsave, maxrfsave,
         isfounderinbred, 
         isparallel,workdir,outstem,
@@ -55,7 +55,7 @@ function magiclinkage!(magicgeno::MagicGeno;
     ldfile::Union{Nothing,AbstractString}=nothing,
     isfounderinbred::Bool=true,
     model::AbstractString="jointmodel",
-    likeparameters::LikeParameters=LikeParameters(),   
+    likeparam::LikeParam=LikeParam(),   
     israndallele::Bool=true, 
     threshcall::Real = model == "depmodel" ? 0.95 : 0.9,   
     markerthin::Integer=1,    
@@ -74,7 +74,7 @@ function magiclinkage!(magicgeno::MagicGeno;
         "ldfile = ", ldfile, "\n",        
         "isfounderinbred = ", isfounderinbred, "\n",        
         "model = ", model, "\n",
-        "likeparameters = ", likeparameters, "\n",        
+        "likeparam = ", likeparam, "\n",        
         "israndallele = ", israndallele, "\n",        
         "threshcall = ", threshcall, "\n",        
         "markerthin = ", markerthin, "\n",        
@@ -98,9 +98,9 @@ function magiclinkage!(magicgeno::MagicGeno;
     model = MagicBase.reset_model(magicgeno.magicped,model; io=logio,verbose)
     MagicBase.reset_juncdist!(magicgeno.magicped,model; io=logio,verbose,isfounderinbred)    
     isdepmodel = model == "depmodel"    
-    seqerror = MagicBase.get_seqerror(likeparameters)
+    baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
     offformat = unique(reduce(vcat,[unique(i[!,:offspringformat]) for i=magicgeno.markermap]))    
-    MagicBase.rawgenoprob!(magicgeno; seqerror,isfounderinbred,isoffspringinbred= isdepmodel)    
+    MagicBase.rawgenoprob!(magicgeno; baseerror,isfounderinbred,isoffspringinbred= isdepmodel)    
     MagicBase.rawgenocall!(magicgeno; callthreshold = threshcall, isfounderinbred, ishalfcall=true)
     if !isempty(intersect(offformat, ["GP", "AD"]))
         msg = string("offspringformat=",join(offformat,","), "; transformed to GT with threshcall=",threshcall)
@@ -139,8 +139,8 @@ function magiclinkage!(magicgeno::MagicGeno;
     end
     chr = 1
     fhaploset = calfhaploprior_loci(magicgeno,chr)
-    epsf = MagicBase.get_foundererror(likeparameters)
-    epso = MagicBase.get_offspringerror(likeparameters)
+    epsf = MagicBase.get_likeproperty(likeparam, :foundererror)
+    epso = MagicBase.get_likeproperty(likeparam, :offspringerror)
     condlike=MagicReconstruct.precompute_condike(epsf,epso; isoffphased=false,israndallele)
     # offcode for haplo: dict=Dict(["N"=>1,"1"=>2, "2"=>3])
     # offcode for diplo: dict = Dict(["NN", "1N", "2N", "11", "12", "22"] .=> 1:6)

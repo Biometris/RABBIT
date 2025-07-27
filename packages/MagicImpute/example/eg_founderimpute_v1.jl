@@ -21,7 +21,7 @@ tused = @elapsed magicimpute(genofile,pedfile;
     isfounderinbred,  
     # target = "founder",
     # model = "depmodel", 
-    # likeparameters = LikeParameters(peroffspringerror=0.0),              
+    # likeparameters = LikeParam(peroffspringerror=0.0),              
     # isbinning = true, 
     # bincm = 0.05, 
     # isinfererror = false, 

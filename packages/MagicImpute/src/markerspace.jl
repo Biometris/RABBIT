@@ -5,10 +5,10 @@ function markerspace_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},    
     epso_perind::Union{Nothing,AbstractVector},     
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     israndallele::Bool, 
     issnpGT::AbstractVector, 
@@ -29,14 +29,14 @@ function markerspace_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     nsnp = size(chroffgeno,1)
     epsfls = typeof(epsf) <: Real ? epsf*ones(nsnp) : epsf
     epsols = typeof(epso) <: Real ? epso*ones(nsnp) : epso
-    seqerrorls = typeof(seqerror) <: Real ? seqerror*ones(nsnp) : seqerror
-    allelebalancemeanls = typeof(allelebalancemean) <: Real ? allelebalancemean*ones(nsnp) : allelebalancemean
-    allelebalancedispersels = typeof(allelebalancedisperse) <: Real ? allelebalancedisperse*ones(nsnp) : allelebalancedisperse
-    alleledropoutls = typeof(alleledropout) <: Real ? alleledropout*ones(nsnp) : alleledropout
+    baseerrorls = typeof(baseerror) <: Real ? baseerror*ones(nsnp) : baseerror
+    allelicbiasls = typeof(allelicbias) <: Real ? allelicbias*ones(nsnp) : allelicbias
+    allelicoverdispersionls = typeof(allelicoverdispersion) <: Real ? allelicoverdispersion*ones(nsnp) : allelicoverdispersion
+    allelicdropoutls = typeof(allelicdropout) <: Real ? allelicdropout*ones(nsnp) : allelicdropout
     MagicReconstruct.callogbackward_permarker!(decodetempfile, chrfhaplo,chroffgeno, popmakeup,priorprocess;
-        epsf = epsfls, epso = epsols, epso_perind, seqerror = seqerrorls,
-        allelebalancemean = allelebalancemeanls, allelebalancedisperse = allelebalancedispersels, 
-        alleledropout = alleledropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
+        epsf = epsfls, epso = epsols, epso_perind, baseerror = baseerrorls,
+        allelicbias = allelicbiasls, allelicoverdispersion = allelicoverdispersionls, 
+        allelicdropout = allelicdropoutls, israndallele,issnpGT, snporder) # results are saved in decodetempfile
     tseq = findall(first(values(priorprocess)).markerincl)
     dataprobls = MagicReconstruct.init_dataprobls_singlephase(popmakeup)    
     offlogl = jldopen(decodetempfile,"r") do bwfile
@@ -44,9 +44,9 @@ function markerspace_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
             chroffgeno[snp,:],popmakeup;
             epsf=epsfls[snp], epso = epsols[snp], epso_perind, 
-            seqerror=seqerrorls[snp], allelebalancemean=allelebalancemeanls[snp], 
-            allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], 
+            baseerror=baseerrorls[snp], allelicbias=allelicbiasls[snp], 
+            allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], 
             israndallele,issiteGT = issnpGT[snp])
         fw_prob_logl = MagicReconstruct.calinitforward(dataprobls, popmakeup)
         for kk in 1:(length(tseq)-1)
@@ -54,18 +54,18 @@ function markerspace_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
                 snp = snporder[tseq[kk]]
                 MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
                     chroffgeno[snp,:],popmakeup;
-                    epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-                    allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                    alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])
+                    epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+                    allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                    allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])
                 # input fw_prob_logl refers to tseq[kk-1], output fw_prob_logl refers to tseq[kk]
                 MagicReconstruct.calnextforward!(fw_prob_logl,tseq[kk-1],dataprobls,popmakeup, priorprocess)
             end            
             snp = snporder[tseq[kk+1]]
             MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
                 chroffgeno[snp,:],popmakeup;
-                epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-                allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-                alleledropout=alleledropoutls[snp],  israndallele, issiteGT = issnpGT[snp])
+                epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+                allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+                allelicdropout=allelicdropoutls[snp],  israndallele, issiteGT = issnpGT[snp])
             # fw_prob_logl refers to tseq[kk]
             logbwprob = bwfile[string("t", tseq[kk+1])]
             tnowdis = calinterdis(tseq[kk],popmakeup,priorprocess,offspringexcl, 
@@ -76,9 +76,9 @@ function markerspace_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
         snp = snporder[tseq[kk]]
         MagicReconstruct.calsitedataprob_singlephase!(dataprobls, chrfhaplo[snp,:], 
             chroffgeno[snp,:],popmakeup;
-            epsf=epsfls[snp], epso=epsols[snp], epso_perind, seqerror=seqerrorls[snp], 
-            allelebalancemean=allelebalancemeanls[snp], allelebalancedisperse=allelebalancedispersels[snp],
-            alleledropout=alleledropoutls[snp], israndallele, issiteGT = issnpGT[snp])
+            epsf=epsfls[snp], epso=epsols[snp], epso_perind, baseerror=baseerrorls[snp], 
+            allelicbias=allelicbiasls[snp], allelicoverdispersion=allelicoverdispersionls[snp],
+            allelicdropout=allelicdropoutls[snp], israndallele, issiteGT = issnpGT[snp])
         # input fw_prob_logl refers to tseq[kk-1], output fw_prob_logl refers to tseq[kk]
         MagicReconstruct.calnextforward!(fw_prob_logl,tseq[kk-1],dataprobls,popmakeup, priorprocess)
         logbwprob = bwfile[string("t", tseq[kk])]       
@@ -160,10 +160,10 @@ function markerspace_chr_viterbi!(chrfhaplo::AbstractMatrix,chroffgeno::Abstract
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
     epso_perind::Union{Nothing,AbstractVector}, 
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     snporder::AbstractVector,    
     israndallele::Bool, 
     issnpGT::AbstractVector, 
@@ -185,7 +185,7 @@ function markerspace_chr_viterbi!(chrfhaplo::AbstractMatrix,chroffgeno::Abstract
     end
     # infer hidden origin states; results are saved in decodetempfile        
     MagicReconstruct.hmmdecode_chr(chrfhaplo,chroffgeno,popmakeup,priorprocess;
-        epsf,epso, epso_perind, seqerror,allelebalancemean,allelebalancedisperse,alleledropout,
+        epsf,epso, epso_perind, baseerror,allelicbias,allelicoverdispersion,allelicdropout,
         hmmalg="viterbi", decodetempfile, israndallele, issnpGT,snporder);
     # chrviterbi: nsnp x noff, row i = viterbi-path of input makrer index i
     chrviterbi = MagicReconstruct.get_chr_viterbi(decodetempfile, snporder)
@@ -269,6 +269,23 @@ function setdistanceat!(priorprocess::AbstractDict,tnow::Integer,tnowdis::Real)
     priorprocess
 end
 
+function repeat_trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.05)
+    msg = ""
+	ndel = 0
+	for _ in 1:5			
+		ndel2,msg_trim = trimchrend!(priorprocess; trimcm,trimfraction)	
+		ndel2 == 0 && break		
+		msg *= string(", #del_trim=",ndel2, "(", msg_trim,")")
+		ndel += ndel2
+	end
+	for _ in 1:5			
+		ndel2,msg_trim = trimchrend!(priorprocess; trimcm = 2*trimcm,trimfraction = 2*trimfraction)	
+		ndel2 == 0 && break		
+		msg *= string(", #del_trim2=",ndel2, "(", msg_trim,")")
+		ndel += ndel2
+	end
+	ndel,msg
+end	
 
 
 # trim left ( or right) end with gad to the rest.
@@ -289,9 +306,9 @@ function trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::R
         end
         round.(segdeltd,digits=3) 
     end for i in segls]   
-    msg_trim = string("seg=", segls,"; deltd=", join(trimdeltd,","))
+    msg_trim = string("seg=", dells,"; deltd=", join(trimdeltd,","))
     deltt = reduce(vcat, dells)
-    allunique(deltt) || @error string("overlapping segls=",segls)
+    allunique(deltt) || @error string("overlapping segls=",dells)
     isempty(deltt) || MagicReconstruct.setpriorprocess!(priorprocess,deltt)
     ndel = length(deltt)
     ndel,msg_trim

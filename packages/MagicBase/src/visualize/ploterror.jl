@@ -1,7 +1,7 @@
 
 
 function plotmarkererror(mapfile::AbstractString;
-    tukeyfence::Real=3.0,
+    tukeyfence::Real=1.5,
     missingstring=["NA","missing"],
     commentstring::AbstractString="##",
     workdir::AbstractString = pwd())
@@ -11,8 +11,8 @@ function plotmarkererror(mapfile::AbstractString;
 end
 
 function plotmarkererror(markermap::AbstractDataFrame;
-    tukeyfence::Real=3.0)
-    colls = [:foundererror,:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+    tukeyfence::Real=1.5)
+    colls = [:foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
     fencels = tukeyfence*ones(length(colls))
     b = [begin         
         isanymiss = any(ismissing.(markermap[!,i]))         
@@ -34,7 +34,7 @@ function plotmarkererror(markermap::AbstractDataFrame;
         row = !
         yls = Vector(markermap[row, col])
         yls[yls .== 0.0] .= 1e-6
-        if in(col, [:foundererror,:offspringerror,:seqerror,:allelebalancedisperse,:alleledropout]) 
+        if in(col, [:foundererror,:offspringerror,:baseerror,:allelicoverdispersion,:allelicdropout]) 
             @. yls = log10(yls)            
             ylabel = string("log10 ", col)
         else
@@ -67,7 +67,7 @@ end
 
 
 function plot_peroffspringerror(perofffile::AbstractString;
-    tukeyfence::Real=3.0,    
+    tukeyfence::Real=1.5,    
     workdir::AbstractString = pwd())
     peroffspringerr = CSV.read(getabsfile(workdir, perofffile),DataFrame)    
     plot_peroffspringerror(peroffspringerr; tukeyfence)
@@ -75,7 +75,7 @@ end
 
 
 function plot_peroffspringerror(peroffspringerr::AbstractDataFrame;
-    tukeyfence::Real=3.0)
+    tukeyfence::Real=1.5)
     whisker_range = tukeyfence
     colnames = names(peroffspringerr)
     colls = findall(occursin.(r"^peroffspringerr",colnames))
@@ -96,3 +96,42 @@ function plot_peroffspringerror(peroffspringerr::AbstractDataFrame;
     )   
     fig
 end
+
+
+
+
+function ploterrorcompare(truegeno, magicgeno)
+    colls = [:foundererror, :offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
+    gls = [begin 
+        trueerrls = reduce(vcat, [[ismissing(i) ? i : mean(i) for i in df[!,col]] for df in truegeno.markermap])
+        esterrls = reduce(vcat, [[ismissing(i) ? i : mean(i) for i in df[!,col]] for df in magicgeno.markermap])       
+        length(trueerrls) == length(esterrls) || error("inconsistent #markers")
+        b = .!(ismissing.(trueerrls) .|| ismissing.(esterrls))      
+        if any(b) && length(unique(esterrls[b])) > 1
+            r = cor(trueerrls[b],esterrls[b])
+            mtrue = round(mean(trueerrls[b]),digits=3)
+            mest = round(mean(esterrls[b]),digits=3)
+            @info string("col=", col, ",mtrue=",mtrue,",mest=",mest)
+            g = scatter(trueerrls[b],esterrls[b];
+                xlab = string("True ", col),
+                ylab = string("Est ", col),
+                label=string("r=", round(r,digits=3)),
+            )
+            g
+        else
+            nothing
+        end
+    end for col in colls]
+    deleteat!(gls, isnothing.(gls))
+    isempty(gls) && return nothing
+    nrow = ceil(Int,length(gls)/2)
+    ncol = length(gls) > 1 ? 2 : 1
+    fig = plot(gls...,
+        layout=(nrow,ncol),
+        size=(400*ncol,260*nrow),
+        leftmargin = 10Plots.mm,
+        bottommargin = 10Plots.mm,
+    )
+    fig
+end
+

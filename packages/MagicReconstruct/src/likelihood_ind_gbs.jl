@@ -1,10 +1,10 @@
 # genotypes represented as readcount
-function haplolike_depths(allelicdepths::AbstractVector, epsprob::Real,seqerror::Real)
+function haplolike_depths(allelicdepths::AbstractVector, epsprob::Real,baseerror::Real)
     allelicdepths == [0,0] && return [1.0 1.0]
     n1,n2 = allelicdepths
     logbinom = first(logabsbinomial(n1 + n2, n1))
-    logp1 = n1 * log(1-seqerror) +  n2 * log(seqerror) + logbinom
-    logp2 = n1 * log(seqerror) + n2 * log(1-seqerror) + logbinom
+    logp1 = n1 * log(1-baseerror) +  n2 * log(baseerror) + logbinom
+    logp2 = n1 * log(baseerror) + n2 * log(1-baseerror) + logbinom
     logp12 = n1 * log(0.5) + n2 * log(0.5) + logbinom
     logp12 > max(logp1,logp2)
     if logp12 > max(logp1,logp2)
@@ -24,8 +24,8 @@ function haplolike_depths(allelicdepths::AbstractVector, epsprob::Real,seqerror:
 end    
 
 # genotypes represented as readcount
-function haplolikeGBS(obsseq::AbstractVector, epsprob::Union{Real,AbstractVector},seqerror::Union{Real,AbstractVector})
-    res = haplolike_depths.(obsseq,epsprob,seqerror)
+function haplolikeGBS(obsseq::AbstractVector, epsprob::Union{Real,AbstractVector},baseerror::Union{Real,AbstractVector})
+    res = haplolike_depths.(obsseq,epsprob,baseerror)
     reduce(vcat,res)
 end
 
@@ -42,29 +42,29 @@ end
 # genotypes represented as readcount
 # allelebalance = probability of read being allele 1 given true genotype being heterozygous
 function diplolike_depths(allelicdepths::AbstractVector, epsprob::Real,
-    seqerror::Real,allelebalancemean::Real,allelebalancedisperse::Real,alleledropout::Real;
+    baseerror::Real,allelicbias::Real,allelicoverdispersion::Real,allelicdropout::Real;
     israndallele::Bool)
     allelicdepths == [0,0] && return [1.0 1.0 1.0 1.0]
     n1,n2 = allelicdepths
     logbinom = first(logabsbinomial(n1 + n2, n1))
-    logp11 = n1 * log(1-seqerror) +  n2 * log(seqerror) + logbinom
-    logp22 = n1 * log(seqerror) + n2 * log(1-seqerror) + logbinom    
-    if allelebalancedisperse < 1e-5
+    logp11 = n1 * log(1-baseerror) +  n2 * log(baseerror) + logbinom
+    logp22 = n1 * log(baseerror) + n2 * log(1-baseerror) + logbinom    
+    if allelicoverdispersion < 1e-5
         # no overdispersion
-        logp12 = n1 * log(allelebalancemean) + n2 * log(1-allelebalancemean) + logbinom
+        logp12 = n1 * log(allelicbias) + n2 * log(1-allelicbias) + logbinom
     else
-        alpha = allelebalancemean/allelebalancedisperse
-        beta = (1.0-allelebalancemean)/allelebalancedisperse
+        alpha = allelicbias/allelicoverdispersion
+        beta = (1.0-allelicbias)/allelicoverdispersion
         logp12 = logbeta(n1+alpha,n2+beta) - logbeta(alpha,beta) + logbinom
     end
-    if alleledropout > 1e-5
+    if allelicdropout > 1e-6
         # 0 and 1 inflated 
-        logpls = [logp11,logp22,logp12]
-        maxlogp = maximum(logpls)
-        @. logpls = exp(logpls - maxlogp)
-        p12 = (logpls[1] + logpls[2])* alleledropout/2 + logpls[3]*(1.0-alleledropout)
-        logp12 = log(p12) + maxlogp
-    end
+        ls = [logp11,logp12,logp22] 
+        logpmax =maximum(ls)
+        @. ls = exp(ls - logpmax)
+        p12 = (ls[1] + ls[3])* allelicdropout/2 + ls[2]*(1.0-allelicdropout)
+        logp12 = log(p12) + logpmax
+    end 
     maxlogp = max(logp11,logp22,logp12)
     p11 = exp(logp11-maxlogp)
     p22 = exp(logp22-maxlogp)
@@ -88,12 +88,12 @@ function diplolike_depths(allelicdepths::AbstractVector, epsprob::Real,
 end
 
 function diplolikeGBS(obsseq::AbstractVector,epsprob::Union{Real,AbstractVector},
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector};
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector};
     israndallele::Bool)
-    res = diplolike_depths.(obsseq,epsprob,seqerror,allelebalancemean,allelebalancedisperse,alleledropout; israndallele)
+    res = diplolike_depths.(obsseq,epsprob,baseerror,allelicbias,allelicoverdispersion,allelicdropout; israndallele)
     reduce(vcat,res)
 end
 
@@ -180,17 +180,17 @@ end
 function callinelikeGBS!(dataprobls::AbstractVector, fderive::AbstractMatrix, nzstate::AbstractVector, obsseq::AbstractVector;
     epsf::Union{Real,AbstractVector},
     epso::Union{Real,AbstractVector},
-    seqerror::Union{Real,AbstractVector},
-    allelebalancemean::Union{Real,AbstractVector},
-    allelebalancedisperse::Union{Real,AbstractVector},
-    alleledropout::Union{Real,AbstractVector},
+    baseerror::Union{Real,AbstractVector},
+    allelicbias::Union{Real,AbstractVector},
+    allelicoverdispersion::Union{Real,AbstractVector},
+    allelicdropout::Union{Real,AbstractVector},
     ishaploid::Bool=false,
     israndallele::Bool)
     if ishaploid
         if eltype(first(obsseq)) <: Integer
             # genofrmat = AD
             # haplotypic data do not depend on allelebalance
-            like = haplolikeGBS(obsseq,epso,seqerror)            
+            like = haplolikeGBS(obsseq,epso,baseerror)            
         else
             # genofrmat = GP
             like = haplolikeGBS(obsseq,epso)
@@ -217,7 +217,7 @@ function callinelikeGBS!(dataprobls::AbstractVector, fderive::AbstractMatrix, nz
         nznonibdls = nzstate[.!isnzibd]  
         if eltype(first(obsseq)) <: Integer            
             # genofrmat = AD            
-            like = diplolikeGBS(obsseq,epso,seqerror,allelebalancemean,allelebalancedisperse,alleledropout; israndallele)            
+            like = diplolikeGBS(obsseq,epso,baseerror,allelicbias,allelicoverdispersion,allelicdropout; israndallele)            
         else
             # genofrmat = GP
             like = diplolikeGBS(obsseq,epso; israndallele)                

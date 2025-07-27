@@ -37,9 +37,10 @@ function magicimpute(genofile::AbstractString,
     recomrate::Real=1.0, # 1 cM per Mbp    
     model::Union{AbstractString,AbstractVector}="jointmodel",
     mapfile::Union{Nothing, AbstractString}=nothing,   
-    likeparameters::LikeParameters=LikeParameters(), 
-    threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),
-    priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),        
+    likeparam::LikeParam=LikeParam(), 
+    softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam(),
+    threshlikeparam::ThreshLikeParam=ThreshLikeParam(),
+    priorlikeparam::PriorLikeParam=PriorLikeParam(),        
     israndallele::Bool=true, 
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
@@ -47,20 +48,19 @@ function magicimpute(genofile::AbstractString,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,                
     byfounder::Integer=0,
-    startbyhalf::Union{Nothing,Integer}=nothing,     
+    startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
     threshproposal::Real=0.7,
     isallowmissing::Bool=true,
     isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,         
-    isinferjunc::Union{Nothing, Bool} = nothing,     
+    isinferjunc::Union{Nothing, Bool} = false,     
     isbinning::Union{Nothing,Bool}=nothing,        
     bincm::Real=0.001, # successive markers with intermarker distance < bincm are binned    
     isinfererror::Union{Nothing, Bool} = true,               
-    tukeyfence::Real=3.0,     
-    minoutlier::Real=0.05, 
-    iscorrectfounder::Union{Nothing, Bool} = nothing,       
+    tukeyfence::Real=1.5,         
+    iscorrectfounder::Union{Nothing, Bool} = true,       
     phasealg::AbstractString="unphase", 
     isdelmarker::Bool= true,         
     delsiglevel::Real = 0.01,    
@@ -75,7 +75,7 @@ function magicimpute(genofile::AbstractString,
     orderactions::AbstractVector = ["inverse","permute"],  
     orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.85,
+    coolrate::Real=0.8,
     minaccept::Real=0.15,
     spacebyviterbi::Bool=false,     
     isparallel::Bool=true,    
@@ -154,13 +154,13 @@ function magicimpute(genofile::AbstractString,
     end
     magicimpute!(magicgeno;
         target, threshimpute, model, 
-        likeparameters, threshlikeparameters, priorlikeparameters,
+        likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam,
         chrsubset, snpsubset,isparallel, isparallelfounder, 
         byfounder,startbyhalf, isgreedy, threshproposal, isallowmissing,
         isrepeatimpute, nrepeatmin, nrepeatmax, 
         isdelmarker, delsiglevel,
         israndallele, isfounderinbred, 
-        isinferjunc, iscorrectfounder, phasealg,isinfererror, tukeyfence, minoutlier,         
+        isinferjunc, iscorrectfounder, phasealg,isinfererror, tukeyfence,          
         inputneighbor, inputbinning, isspacemarker, trimcm, trimfraction, skeletonsize, 
         isordermarker, slidewin_neighbor, slidewin, binriffle, orderactions, orderactions_neighbor, 
         inittemperature, coolrate, minaccept,spacebyviterbi,  
@@ -218,12 +218,14 @@ genotype imputation from magicgeno.
   "indepmodel", or "jointmodel". If model is a vector, the first element specifies the model 
   for founder imputation and the last element for offspring imputation. 
 
-`likeparameters::LikeParameters=LikeParameters()`: parameters for genotypic data model. 
+`likeparam::LikeParam=LikeParam()`: parameters for genotypic data model. 
   If isinfererror = true, parameters with values being nothing will be inferred. 
 
-`threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters()`: markers with inferred likeparameters values > threshlikeparameters values will be deleted. 
+`softthreshlikeparam::ThreshLikeParam=SoftThreshLikeParam()`: markers with inferred likeparam values > softthreshlikeparam values will be deleted only if they are also outliers. 
 
-`priorlikeparameters::PriorLikeParameters=PriorLikeParameters()`: priors for likelihood parameters
+`threshlikeparam::ThreshLikeParam=ThreshLikeParam()`: markers with inferred likeparam values > threshlikeparam values will be deleted. 
+
+`priorlikeparam::PriorLikeParam=PriorLikeParam()`: priors for likelihood parameters
 
 `israndallele::Bool=true`: if true, genotyping error model follows the random allelic model, and otherwise the random genotypic model. 
 
@@ -254,13 +256,11 @@ genotype imputation from magicgeno.
 `inputbinning::Union{Nothing,AbstractDict}=nothing`: a parition of markers into bins.  If it is not nothing, first impute founders for representative markers of each bin 
   and them impute founders for all markers. 
 
-`isinfererror::Bool = true`: if true, infer marker specific likelihood parameters that have values of nothing in likeparameters. 
+`isinfererror::Bool = true`: if true, infer marker specific likelihood parameters that have values of nothing in likeparam. 
 
-`tukeyfence::Real=3.0`: tukey fence for detecting outlier error rates (including foundererror, offspringerror, seqerror, and allelebalancemean). 
+`tukeyfence::Real=1.5`: tukey fence for detecting outlier error rates (including foundererror, offspringerror, baseerror, and allelicbias). 
 
-`minoutlier::Real=0.05`: markers with outlier error rates are removed only if their error rates > minoutlier. 
-
-`iscorrectfounder::Union{Nothing, Bool} = nothing`: if true, perform parental error correction.
+`iscorrectfounder::Union{Nothing, Bool} = true`: if true, perform parental error correction.
 
 `phasealg::AbstractString="unphase"`: if phasealg=forwardbackward, the output diplotype probabilities (in format GP), corresonding to the phased genotypes 0|0, 0|1, 1|0, and 1|1, are caculated based on the forward-backward algorithm, 
   and the output phased offspring genotypes (in format GT) are given by those with the largest diplotype probabilities if they are greater than threshcall. 
@@ -298,7 +298,7 @@ genotype imputation from magicgeno.
 
 `inittemperature::Real= isordermarker ? 2.0 : 0.0`: initial temperature of annealing algorithm for marker ordering.
 
-`coolrate::Real=0.85`: temperature is mutiplied by coolrate after each iteration of annealing agrogrithm.
+`coolrate::Real=0.8`: temperature is mutiplied by coolrate after each iteration of annealing agrogrithm.
 
 `minaccept::Real=0.15`: minimum accept rate for controlling the window size of ordering update.
 
@@ -327,9 +327,10 @@ function magicimpute!(magicgeno::MagicGeno;
     model::Union{AbstractString,AbstractVector}="jointmodel",
     inputneighbor::Union{Nothing,AbstractDict}=nothing,
     inputbinning::Union{Nothing,AbstractDict}=nothing,            
-    likeparameters::LikeParameters=LikeParameters(), 
-    threshlikeparameters::ThreshLikeParameters=ThreshLikeParameters(),    
-    priorlikeparameters::PriorLikeParameters=PriorLikeParameters(),    
+    likeparam::LikeParam=LikeParam(), 
+    softthreshlikeparam::SoftThreshLikeParam=SoftThreshLikeParam(),    
+    threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
+    priorlikeparam::PriorLikeParam=PriorLikeParam(),    
     israndallele::Bool=true, 
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
@@ -337,18 +338,17 @@ function magicimpute!(magicgeno::MagicGeno;
     target::AbstractString = "all",        
     threshimpute::Real=0.9,        
     byfounder::Integer=0,
-    startbyhalf::Union{Nothing,Integer}=nothing,     
+    startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
     threshproposal::Real=0.7,
     isallowmissing::Bool=true,
     isrepeatimpute::Union{Nothing,Bool}=false, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,     
-    isinferjunc::Union{Nothing, Bool} = nothing,     
+    isinferjunc::Union{Nothing, Bool} = false,     
     isinfererror::Union{Nothing, Bool} = true,                
-    tukeyfence::Real=3.0,    
-    minoutlier::Real=0.05, 
-    iscorrectfounder::Union{Nothing, Bool} = nothing,     
+    tukeyfence::Real=1.5,        
+    iscorrectfounder::Union{Nothing, Bool} = true,     
     phasealg::AbstractString="unphase", 
     isdelmarker::Bool= true,
     delsiglevel::Real = 0.01,                    
@@ -363,7 +363,7 @@ function magicimpute!(magicgeno::MagicGeno;
     orderactions::AbstractVector = ["inverse","permute"],  
     orderactions_neighbor::AbstractVector = ["inverse11","inverse01"],  
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
-    coolrate::Real=0.85,
+    coolrate::Real=0.8,
     minaccept::Real=0.15,
     spacebyviterbi::Bool=false,     
     isparallel::Bool=true,
@@ -378,10 +378,10 @@ function magicimpute!(magicgeno::MagicGeno;
     starttime = time()
     io = MagicBase.set_logfile_begin(logfile, workdir, "magicimpute!"; verbose,delim="=")
     isa(logfile, AbstractString) && printpkgst(io,verbose,"MagicImpute")    
-    seqerror = MagicBase.get_seqerror(likeparameters)
-	epsf = MagicBase.get_foundererror(likeparameters)
-	epso = MagicBase.get_offspringerror(likeparameters)	
-    MagicReconstruct.check_common_arg(model, epsf, epso, seqerror,
+    baseerror = MagicBase.get_likeproperty(likeparam, :baseerror)
+	epsf = MagicBase.get_likeproperty(likeparam, :foundererror)
+	epso = MagicBase.get_likeproperty(likeparam, :offspringerror)	
+    MagicReconstruct.check_common_arg(model, epsf, epso, baseerror,
         workdir, tempdirectory;chrsubset,snpsubset)
     check_impute_arg(threshimpute,byfounder,
         delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate; target,outext)            
@@ -397,7 +397,7 @@ function magicimpute!(magicgeno::MagicGeno;
     MagicBase.check_markerorder(magicgeno; io,verbose)    
     model = MagicBase.reset_model(magicgeno.magicped,model;io,verbose)    
     model_founderimpute = isa(model, AbstractVector) ? first(model) : model    
-    MagicBase.rawgenoprob!(magicgeno; targets=["founders"] , seqerror, isfounderinbred)
+    MagicBase.rawgenoprob!(magicgeno; targets=["founders"] , baseerror, isfounderinbred)
     MagicBase.rawgenocall!(magicgeno; targets=["founders"] , callthreshold = 0.95, isfounderinbred)        
     if target in ["all","founder"]
         # && mean(size.(magicgeno.markermap,1)) > 200      
@@ -413,13 +413,13 @@ function magicimpute!(magicgeno::MagicGeno;
             # maxiter = ceil(Int,-1*log(2*inittemperature)/log(coolrate))+2 # last temperature ~ 0.5            
             magicimpute_founder!(represent_magicgeno;
                 model = model_founderimpute,         
-                likeparameters, threshlikeparameters, priorlikeparameters, 
+                likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
                 israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, 
                 isrepeatimpute, nrepeatmin, nrepeatmax,
                 isdelmarker, delsiglevel, iscorrectfounder, threshproposal, isallowmissing,
-                isinferjunc, isinfererror, tukeyfence, minoutlier,                 
+                isinferjunc, isinfererror, tukeyfence,                  
                 inputneighbor=represent_neighbor, 
-                isspacemarker, trimcm, trimfraction, skeletonsize = binriffle < 0 ? skeletonsize : 10^6,
+                isspacemarker, trimcm, trimfraction, skeletonsize, 
                 isordermarker, slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
                 inittemperature, coolrate, minaccept, spacebyviterbi,                
                 isparallel=isparallelfounder, logfile=io,workdir,tempdirectory,
@@ -461,13 +461,13 @@ function magicimpute!(magicgeno::MagicGeno;
             end         
             magicimpute_founder!(magicgeno;
                 model = model_founderimpute,
-                likeparameters, threshlikeparameters,priorlikeparameters,
+                likeparam, softthreshlikeparam, threshlikeparam,priorlikeparam,
                 israndallele, isfounderinbred,byfounder,startbyhalf, isgreedy, 
                 isrepeatimpute = isbinning ? false : isrepeatimpute, 
                 nrepeatmin, nrepeatmax, 
                 isdelmarker, delsiglevel, 
                 isinferjunc, iscorrectfounder, threshproposal, isallowmissing,
-                isinfererror, tukeyfence, minoutlier,             
+                isinfererror, tukeyfence,              
                 inputneighbor = isbinning ? nothing : inputneighbor,  # if isbinning, neighbor-based order refinement is not performed
                 isordermarker = isbinning ? isordermarker && (binriffle > 1) : isordermarker, 
                 slidewin = isbinning ? binriffle : slidewin,                 
@@ -500,7 +500,7 @@ function magicimpute!(magicgeno::MagicGeno;
     if target in ["all","offspring"]        
         magicimpute_offspring!(magicgeno;
             model = isa(model, AbstractVector) ? last(model) : model, 
-            likeparameters, threshimpute, 
+            likeparam, threshimpute, 
             israndallele,isfounderinbred,phasealg, 
         	isparallel, workdir,tempdirectory,
             outstem, outext,logfile= io, verbose)
@@ -752,7 +752,7 @@ function merge_represent_magicgeno!(magicgeno::MagicGeno,
             end
         end
         # update marker-specific error rates
-        cols = [:foundererror,:offspringerror,:seqerror,:allelebalancemean,:allelebalancedisperse,:alleledropout]
+        cols = [:foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
         for col in cols
             ty = eltype(represent_map[!,col])
             ty <: Missing && continue
