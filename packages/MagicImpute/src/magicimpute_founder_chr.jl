@@ -18,7 +18,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	softthreshlikeparam::SoftThreshLikeParam,
 	threshlikeparam::ThreshLikeParam, 
 	priorlikeparam::PriorLikeParam,
-	tukeyfence::Real=1.5,				
+	tukeyfence::Real=2,				
 	isspacemarker::Bool = false,
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
@@ -32,7 +32,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.8,
     minaccept::Real=0.15,
-	spacebyviterbi::Bool=false, 
+	spacebyviterbi::Bool=true, 
     logio::Union{Nothing,AbstractString,IO},    		
 	maxiter::Integer = 50,		
 	imputetempfile::AbstractString, 
@@ -421,7 +421,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	softthreshlikeparam::SoftThreshLikeParam,
 	threshlikeparam::ThreshLikeParam, 
 	priorlikeparam::PriorLikeParam,
-	tukeyfence::Real=1.5,		
+	tukeyfence::Real=2,		
 	isspacemarker::Bool = false,
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
@@ -435,7 +435,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.8,
     minaccept::Real=0.15,
-	spacebyviterbi::Bool=false, 
+	spacebyviterbi::Bool=true, 
     logio::Union{Nothing,AbstractString,IO},
     imputetempfile::AbstractString,	
 	repeatrun::Union{Nothing,Integer}, 	
@@ -620,7 +620,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	isdelmarker::Bool, 
 	isspacemarker::Bool=false,
 	isordermarker::Bool=false, 
-	tukeyfence::Real=1.5,			
+	tukeyfence::Real=2,			
     delsiglevel::Real=0.01,    
 	trimcm::Real=20,
 	trimfraction::Real=0.05, 
@@ -835,7 +835,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 						likeerrortuple, offspringexcl, 							
 						snporder,issnpGT, isinferseq, 
 						decodetempfile = imputetempfile, skeletonsize, msg_repeatrun, 
-						chrid, startit=it+1, spacebyviterbi, verbose, io)
+						chrid, startit=it+1, spacebyviterbi=false, verbose, io)
 					rescalemap!(priorprocess,skeletonprior)			
 					
 					ndel3, msg_trim = repeat_trimchrend!(priorprocess; trimcm, trimfraction)
@@ -849,7 +849,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 							likeerrortuple, offspringexcl, 							
 							snporder,issnpGT, isinferseq, 
 							decodetempfile = imputetempfile, skeletonsize, msg_repeatrun, 
-							chrid, startit= newstartit, spacebyviterbi, verbose, io))
+							chrid, startit= newstartit, spacebyviterbi=false, verbose, io))
 						rescalemap!(priorprocess,skeletonprior)	
 					end
 				else

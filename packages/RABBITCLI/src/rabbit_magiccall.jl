@@ -76,19 +76,15 @@ function parse_commandline()
         "--tukeyfence"
         help = "tukeyfence for detecting outlier error rates"
         arg_type = Float64
-        default = 1.5          
+        default = 2   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool
         default = true 
-        "--threshfounder"
-        help = "founder genotypes are called if maximum posterior probability > threshfounder"
+        "--threshcall"
+        help = "genotypes are called if maximum posterior probability > threshcall"
         arg_type = AbstractString
-        default = "nothing"
-        "--threshoffspring"
-        help = "offspring genotypes are called if maximum posterior probability > threshoffspring"
-        arg_type = AbstractString
-        default = "nothing"
+        default = "nothing"        
         "--iscalloffspring"
         help = "if true, offspring genotypes are called"
         arg_type = Bool
@@ -196,7 +192,7 @@ function main(args::Vector{String})
         delete!(parsed_args, id2)
     end
 
-    for t in [:threshfounder,:threshoffspring]
+    for t in [:threshcall]
         reset_kwarg_nothing!(parsed_args,t,Float64)    
         isnothing(parsed_args[t]) && delete!(parsed_args, t)
     end

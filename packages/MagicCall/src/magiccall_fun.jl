@@ -31,11 +31,7 @@ single marker genotype call from genofile and pedinfo.
 
 `israwcall::Bool= false`: if true, perform raw genotype calling. 
 
-`threshfounder::Real = israwcall ? 0.95 : 0.7`: founder genotypes are called if 
-  maximum posterior probability > threshfounder.
-
-`threshoffspring::Real = israwcall ? 0.95 : 0.9`: offspring genotypes are called if 
-  maximum posterior probability > threshoffspring.
+`threshcall::Real = 0.95`: genotypes are called if maximum posterior probability > threshcall.
 
 `iscalloffspring::Bool=true`: if true, offspring genotypes are called.
 
@@ -49,7 +45,7 @@ single marker genotype call from genofile and pedinfo.
 
 `isinfererror::Bool = !israwcall`: if true, infer marker specific likelihood parameters that have values of nothing in likeparam. 
 
-`samplesize::Integer = 100`: number of posterior samples of founder genotypes
+`samplesize::Integer = 200`: number of posterior samples of founder genotypes
 
 `isparallel::Bool=true`: if true, parallel multicore computing over chromosomes.
 
@@ -73,10 +69,9 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     softthreshlikeparam::SoftThreshLikeParam = SoftThreshLikeParam(),
     threshlikeparam::Union{Nothing, ThreshLikeParam} = ThreshLikeParam(),
     priorlikeparam::Union{Nothing, PriorLikeParam} = PriorLikeParam(), 
-    tukeyfence::Real = 1.5,    
+    tukeyfence::Real=2,    
     israwcall::Bool= false, 
-    threshfounder::Real = israwcall ? 0.95 : 0.7,
-    threshoffspring::Real = israwcall ? 0.95 : 0.9,
+    threshcall::Real = 0.95,
     byfounder::Integer=0,
     iscalloffspring::Bool=true, 
     isdelmultiallelic::Bool=true,
@@ -84,7 +79,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < minmaf
     maxmiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 
-    samplesize::Integer = 100,
+    samplesize::Integer = 200,
     isparallel::Bool=true,    
     outstem::AbstractString = "outstem",
     outext::AbstractString = ".vcf.gz",
@@ -124,8 +119,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "isdelmonomorphic = ", isdelmonomorphic, "\n",        
         "minmaf = ", minmaf, "\n",        
         "maxmiss = ", maxmiss, "\n",                
-        "threshfounder = ", threshfounder, "\n",        
-        "threshoffspring = ", threshoffspring, "\n",        
+        "threshcall = ", threshcall, "\n",                
         "israwcall = ", israwcall, "\n",        
         "isinfererror = ", isinfererror, "\n",                
         "samplesize = ", samplesize, "\n",                
@@ -190,7 +184,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
                     likeparam, threshlikeparam, priorlikeparam, 
                     formatpriority, israndallele,isfounderinbred, byfounder, 
                     isdelmultiallelic, isdelmonomorphic, minmaf,maxmiss, 
-                    threshfounder, threshoffspring, israwcall, isinfererror,
+                    threshcall, israwcall, isinfererror,
                     iscalloffspring, samplesize, 
                     paragraphls,commentstring, nheader, workdir, verbose)            
             end
@@ -287,7 +281,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     isdelmonomorphic::Bool,
     minmaf::Real,
     maxmiss::Real,
-    threshfounder::Real, threshoffspring::Real,
+    threshcall::Real, 
     israwcall::Bool,
     isinfererror::Bool,
     iscalloffspring::Bool, samplesize::Integer, 
@@ -331,7 +325,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             rowstring = readline(inio,keep=false)
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
-                minmaf,maxmiss,threshfounder, threshoffspring, isinfererror, iscalloffspring, samplesize, 
+                minmaf,maxmiss,threshcall, isinfererror, iscalloffspring, samplesize, 
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl)        
             if res[1] == "maxmiss"
                 write(delio,res[2],"\n")
@@ -378,7 +372,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             multirows = [readline(inio,keep=false) for i in 1:nline]                        
             res = pmap(x-> magiccall_rowgeno(x,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
-                minmaf, maxmiss, threshfounder, threshoffspring, isinfererror,iscalloffspring, samplesize, 
+                minmaf, maxmiss, threshcall, isinfererror,iscalloffspring, samplesize, 
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl), multirows)            
             for i in res
                 if i[1] == "maxmiss"
@@ -460,8 +454,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     formatpriority::AbstractVector,
     minmaf::Real,
     maxmiss::Real,
-    threshfounder::Real, 
-    threshoffspring::Real,
+    threshcall::Real,     
     isinfererror::Bool,
     iscalloffspring::Bool, 
     samplesize::Integer, 
@@ -483,13 +476,13 @@ function magiccall_rowgeno(rowstring::AbstractString,
     # @info "test" fgeno founderformat offgeno offspringformat maxlog = 10
     # imputation/correction and error estimations    
     if israwcall                        
-        fhaplo_GT, fhaplo_GP = infer_fhaplo_rawcall(fgeno,founderformat; baseerror,isfounderinbred,threshfounder)                 
+        fhaplo_GT, fhaplo_GP = infer_fhaplo_rawcall(fgeno,founderformat; baseerror,isfounderinbred,threshcall)                 
         esterrors = infer_error_rawcall(offgeno,offspringformat; popmakeup, model,isinfererror,
             likeparam,priorlikeparam,israndallele)                        
     else        
         fhaplo_GT, fhaplo_GP, esterrors = infer_fhaploerror_singlesite(fgeno,founderformat, offgeno,offspringformat; 
             model, popmakeup, isfounderinbred, israndallele, isinfererror, byfounder, 
-            threshfounder, samplesize, likeparam, priorlikeparam)                    
+            threshcall, samplesize, likeparam, priorlikeparam)                    
     end                    
     add_error_info!(rowgeno,esterrors)    
     # update rowgeno for founder geno         
@@ -554,10 +547,11 @@ function magiccall_rowgeno(rowstring::AbstractString,
         if israwcall
             offpostprob = infer_offpostprob_rawcall(offgeno,offspringformat, esterrors,israndallele)
         else
-            offpostprob = infer_offpostprob_singlesite(fhaplo_GT,offgeno, offspringformat, popmakeup,esterrors,nstate,nfgl, 
-                israndallele,isfounderinbred)
+            offpostprob = infer_offpostprob_rawcall(offgeno,offspringformat, esterrors,israndallele)
+            # offpostprob = infer_offpostprob_singlesite(fhaplo_GT,offgeno, offspringformat, popmakeup,esterrors,nstate,nfgl, 
+            #     israndallele,isfounderinbred)
         end
-        offgeno_GT, offgeno_GP = postprob2vcfgeno(offpostprob; callthreshold=threshoffspring, digits=4)        
+        offgeno_GT, offgeno_GP = postprob2vcfgeno(offpostprob; callthreshold=threshcall, digits=4)        
         # filter by missing and minmaf
         noff = length(offgeno_GT)    
         alleles = reduce(vcat, split.(offgeno_GT,"/"))
@@ -602,13 +596,13 @@ function magiccall_rowgeno(rowstring::AbstractString,
 end
 
 function infer_fhaplo_rawcall(fgeno::AbstractVector, founderformat::String; 
-    baseerror::Real=0.001, isfounderinbred::Bool=false,threshfounder::Real=0.95)  
+    baseerror::Real=0.001, isfounderinbred::Bool=false,threshcall::Real=0.95)  
     if founderformat == "GT"
         alleledict = Dict("1"=>"0","2"=>"1","N"=>".")
         fhaplo_GT = [ismissing(i) ? "./." : join(replace(split(i,""),alleledict...),"/") for i in fgeno]
         fhaplo_GP = ["." for _ in eachindex(fgeno)]
     elseif founderformat == "GT_haplo"
-        haplodict = Dict("1"=>"0/0","2"=>"1/1","N"=>"./.",missing=>"./.")        
+        haplodict = Dict("1"=>"0|0","2"=>"1|1","N"=>".|.",missing=>".|.")        
         fhaplo_GT = [haplodict[i] for i in fgeno]
         fhaplo_GP = ["." for _ in eachindex(fgeno)]
     elseif founderformat == "GP"
@@ -627,7 +621,7 @@ function infer_fhaplo_rawcall(fgeno::AbstractVector, founderformat::String;
             # GP
             fhaplo_postprob = isfounderinbred ? MagicBase.genoprob2haploprob.(fgeno) : fgeno    
         end                 
-        fhaplo_GT, fhaplo_GP = postprob2vcfgeno(fhaplo_postprob; callthreshold=threshfounder, digits=2)
+        fhaplo_GT, fhaplo_GP = postprob2vcfgeno(fhaplo_postprob; callthreshold=threshcall, digits=2)
     else
         @error string("TODO rawcall with founderformat =",founderformat)            
     end
@@ -1044,25 +1038,25 @@ function callogl_singlesite_multiphase(inputfhaplols::AbstractVector,offgeno::Ab
     res
 end
 
-function get_subpop_polymorphic(fgeno::AbstractVector, offgeno::AbstractVector, popmakeup::AbstractDict;
-    minmaf::Real=0.05)
-    res = []
-    for popid in keys(popmakeup)
-        founders = popmakeup[popid]["founder"]
-        offspring = popmakeup[popid]["offspring"]
-        fmono = unique(split(join(fgeno[founders]),"")) in [["0"],["1"]]
-        if fmono
-            push!(res, popid)
-            continue
-        end
-        n1n2 = sum(i .> 0 for i in view(offgeno, offspring))
-        p = /(n1n2...)
-        if p < minmaf || p > 1 - minmaf
-            push!(res, popid)
-        end
-    end
-    setdiff(keys(popmakeup),res)
-end
+# function get_subpop_polymorphic(fgeno::AbstractVector, offgeno::AbstractVector, popmakeup::AbstractDict;
+#     minmaf::Real=0.05)
+#     res = []
+#     for popid in keys(popmakeup)
+#         founders = popmakeup[popid]["founder"]
+#         offspring = popmakeup[popid]["offspring"]
+#         fmono = unique(split(join(fgeno[founders]),"")) in [["0"],["1"]]
+#         if fmono
+#             push!(res, popid)
+#             continue
+#         end
+#         n1n2 = sum(i .> 0 for i in view(offgeno, offspring))
+#         p = /(n1n2...)
+#         if p < minmaf || p > 1 - minmaf
+#             push!(res, popid)
+#         end
+#     end
+#     setdiff(keys(popmakeup),res)
+# end
 
 function get_fixedfounders(magicped::MagicPed,offgeno::AbstractVector,offspringformat::AbstractString)
     p2off = MagicBase.get_founder2offspring(magicped;isindex = true)
@@ -1101,7 +1095,7 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     israndallele::Bool,    
     isinfererror::Bool,
     byfounder::Integer,
-    threshfounder::Real, 
+    threshcall::Real, 
     samplesize::Integer,      
     likeparam::LikeParam,        
     priorlikeparam::PriorLikeParam)    
@@ -1166,7 +1160,7 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     end    
     # average fhaplo    
     fhaplo_postprob = fhaplo_history_2postprob(fhaplo_history; isfounderinbred)
-    fhaplo_GT, fhaplo_GP = postprob2vcfgeno(fhaplo_postprob; callthreshold=threshfounder, digits=2)    
+    fhaplo_GT, fhaplo_GP = postprob2vcfgeno(fhaplo_postprob; callthreshold=threshcall, digits=2)    
     fhaplo_GT, fhaplo_GP, esterrors
 end    
 
@@ -1457,7 +1451,7 @@ function infer_offpostprob_rawcall(offgeno::AbstractVector, offspringformat::Abs
         like0 = MagicReconstruct.diplolikeGBS(offgeno,epso,baseerror,
             allelicbias,allelicoverdispersion,allelicdropout; israndallele)
     elseif offspringformat == "GT"
-        like = MagicReconstruct.diplolike_GT(offgeno,epso; israndallele)
+        like0 = MagicReconstruct.diplolike_GT(offgeno,epso; israndallele)
     else        
         # format = GP
         offspringformat == "GP" || @error string("unexpected offspringformat = ", offspringformat)

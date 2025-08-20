@@ -18,9 +18,9 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	iscorrectfounder::Union{Nothing, Bool} = true,    
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,    		
-	skeletonsize::Union{Nothing,Integer} = nothing, 	
+	skeletonsize::Union{Nothing,Integer} =  100, 	
 	isinfererror::Union{Nothing, Bool} = true,
-	tukeyfence::Real=1.5,							
+	tukeyfence::Real=2,							
 	isimputefounder::Union{Nothing,Bool}=nothing, 	
 	threshproposal::Real=0.7, 		
 	isallowmissing::Bool=true, 
@@ -35,7 +35,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.8,
     minaccept::Real=0.15,
-	spacebyviterbi::Bool=false, 
+	spacebyviterbi::Bool=true, 
 	isparallel::Bool=true,	
 	maxiter::Integer = 50,
     workdir::AbstractString=pwd(),
@@ -228,11 +228,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	describe_phase_msg(io, verbose,offspringformat)
 	MagicBase.info_magicgeno(magicgeno;io,verbose)		
 	# isimpute_afterrepeat = true
-	if isrepeatimpute2		
-		isordermarker_repeat = isordermarker
+	if isrepeatimpute2				
 		nrepeatimpute =  nrepeatmin == nrepeatmax  ? nrepeatmin : (nrepeatmin,nrepeatmax)
 		# isspacemarker=false, isordermarker=false: assuming input input markermap is good enough and founder imputation is roobust to the inital genetic map
-		# uickinfererror=true: skip estimations for some error rate parameters to speed up computation		
+		# quickinfererror=true: skip estimations for some error rate parameters to speed up computation		
 		partmagicgenols = MagicBase.splitby_connectedped(magicgeno);
 		# TODO: 
 		if length(partmagicgenols) == 1 || isordermarker 			
@@ -241,12 +240,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-				isdelmarker, isinfererror, 
-				isordermarker = isordermarker_repeat, isspacemarker= isordermarker_repeat ? isspacemarker : false,  quickinfererror = isordermarker_repeat, 
+				isdelmarker, isinfererror, isordermarker, isspacemarker, quickinfererror = false, 
 				delsiglevel, tukeyfence,  trimcm, trimfraction, skeletonsize, 
 				slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
-				inittemperature = isordermarker_repeat ? inittemperature : 0.0, 
-				coolrate, minaccept, spacebyviterbi,
+				inittemperature, coolrate, minaccept, spacebyviterbi,
 				isparallel, maxiter, workdir,tempdirectory,
 				io, verbose,more_verbose
 			)
@@ -265,12 +262,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, isinfererror, 
-					isordermarker = isordermarker_repeat, isspacemarker= isordermarker_repeat ? isspacemarker : false,  quickinfererror = isordermarker_repeat, 
+					isdelmarker, isinfererror, isordermarker, isspacemarker, quickinfererror = false, 
 					delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
 					slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
-					inittemperature = isordermarker_repeat ? inittemperature : 0.0, 
-					coolrate, minaccept,spacebyviterbi,                
+					inittemperature, coolrate, minaccept,spacebyviterbi,                
 					isparallel, maxiter, workdir,tempdirectory,
 					io, verbose,more_verbose
 				)
@@ -578,10 +573,10 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
 	delsiglevel::Real = 0.01,    		
-	tukeyfence::Real=1.5,			
+	tukeyfence::Real=2,			
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
-	skeletonsize::Union{Nothing,Integer} = nothing, 	
+	skeletonsize::Union{Nothing,Integer} =  100, 	
 	slidewin::Union{Nothing,Integer} = nothing, 
 	slidewin_neighbor::Union{Nothing,Integer} = 200,
 	orderactions::AbstractVector = ["inverse","permute"],  
@@ -589,7 +584,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.8,
     minaccept::Real=0.15,
-	spacebyviterbi::Bool=false, 
+	spacebyviterbi::Bool=true, 
 	isparallel::Bool=true,	
 	maxiter::Integer = 50,
     workdir::AbstractString=pwd(),
@@ -741,10 +736,10 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
 	delsiglevel::Real = 0.01,    		
-	tukeyfence::Real=1.5,				
+	tukeyfence::Real=2,				
     trimcm::Real=20,
 	trimfraction::Real=0.05,  #cM
-	skeletonsize::Union{Nothing,Integer} = nothing, 	
+	skeletonsize::Union{Nothing,Integer} =  100, 	
 	slidewin::Union{Nothing,Integer} = nothing, 
 	slidewin_neighbor::Union{Nothing,Integer} = 200,
 	orderactions::AbstractVector = ["inverse","permute"],  
@@ -752,7 +747,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
     inittemperature::Real= isordermarker ? 2.0 : 0.0,
     coolrate::Real=0.8,
     minaccept::Real=0.15,
-	spacebyviterbi::Bool=false, 
+	spacebyviterbi::Bool=true, 
 	isparallel::Bool=true,	
 	maxiter::Integer = 50,
     workdir::AbstractString=pwd(),

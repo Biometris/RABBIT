@@ -22,7 +22,7 @@ Base.@kwdef struct LikeParam
     foundererror::Union{Nothing,Float64} = 0.005    
     offspringerror::Union{Nothing,Float64} = nothing    
     peroffspringerror::Union{Nothing,Float64} = 0.0    
-    baseerror::Union{Nothing,Float64} = nothing    
+    baseerror::Union{Nothing,Float64} = 0.001    
     allelicbias::Union{Nothing,Float64} = nothing    
     allelicoverdispersion::Union{Nothing,Float64} = nothing    
     allelicdropout::Union{Nothing,Float64} = 0.0
@@ -82,7 +82,7 @@ In magiccall and magicimpute, markers with the inferred parameter values being g
 In magicimpue, offspring with the inferred parameter values being greater than the thresholds will be excluded only if they are also outerliers. 
 
 SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.05, offspringerror=0.05, 
-peroffspringerror=0.05, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
+peroffspringerror=0.05, baseerror=0.01, allelicbias=0.75, allelicoverdispersion=0.5, allelicdropout=0.01). 
 
 """
 Base.@kwdef struct SoftThreshLikeParam    
@@ -90,7 +90,7 @@ Base.@kwdef struct SoftThreshLikeParam
     offspringerror::Float64 = 0.05
     peroffspringerror::Float64 = 0.05
     baseerror::Float64 = 0.01
-    allelicbias::Float64 = 0.67
+    allelicbias::Float64 = 0.75
     allelicoverdispersion::Float64 = 0.5
     allelicdropout::Float64 = 0.01
 end
@@ -103,7 +103,7 @@ In magiccall and magicimpute, markers with the inferred parameter values being g
 In magicimpue, offspring with the inferred parameter values being greater than the thresholds will be excluded. 
 
 ThreshLikeParam() is equivalent to ThreshLikeParam(foundererror=0.25, offspringerror=0.25, 
-peroffspringerror=0.25, baseerror=0.05, allelicbias=0.9, allelicoverdispersion=1.0, allelicdropout=0.05). 
+peroffspringerror=0.25, baseerror=0.05, allelicbias=0.9, allelicoverdispersion=1.0, allelicdropout=0.1). 
 
 """
 Base.@kwdef struct ThreshLikeParam    
@@ -113,7 +113,7 @@ Base.@kwdef struct ThreshLikeParam
     baseerror::Float64 = 0.05
     allelicbias::Float64 = 0.9
     allelicoverdispersion::Float64 = 1.0
-    allelicdropout::Float64 = 0.05
+    allelicdropout::Float64 = 0.1
 end
 
 """

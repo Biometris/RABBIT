@@ -9,7 +9,7 @@ dataid="sim"
 fhaplofile = "sim_fhaplo.vcf.gz"
 ncluster = 2
 nsnpchr = 200
-nparent = 2
+nparent = 8
 isfounderinbred = true
 
 @time simfhaplo(;
@@ -28,8 +28,8 @@ magicped = formmagicped(designinfo,200)
 pedfile = dataid*"_ped.csv"
 savemagicped(pedfile,magicped)
 
-epsf = 0.05
-epso = 0.05
+epsf = 0.01
+epso = 0.01
 baseerror = 0.005
 missfreq = 0.1
 depth = 20
@@ -40,7 +40,7 @@ depth = 20
     foundermiss = Beta(1,1/missfreq-1),
     offspringmiss = Beta(1,1/missfreq-1),    
     error_randallele = 1.0, 
-    seqfrac = 1.0,    
+    seqfrac = 0.0,    
     allelicbias = Beta(3,3),
     allelicoverdispersion = Exponential(0.3),
     baseerror = Beta(1,1/baseerror-1),

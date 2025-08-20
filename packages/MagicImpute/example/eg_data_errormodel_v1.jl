@@ -18,8 +18,9 @@ isfounderinbred = false
     nparent,
     chrlen=100*ones(ncluster),
     # chrlen = [100,200,50,150,120], 
-    outfile=fhaplofile
+    outfile=fhaplofile,
 )
+
 
 designcode = isfounderinbred ? string(nparent, "star-self1") : string(nparent, "star-self0")
 # designcode = string(naprent, "ril-self6")
@@ -28,11 +29,11 @@ magicped = formmagicped(designinfo,200)
 pedfile = dataid*"_ped.csv"
 savemagicped(pedfile,magicped)
 
-epsf = 0.02
-epso = 0.02
+epsf = 0.01
+epso = 0.01
 baseerror = 0.002
-missfreq = 0.1
-depth = 40
+missfreq = 0.05
+depth = 10
 @time magicsimulate(fhaplofile,pedfile;    
     isfounderinbred,
     foundererror = Beta(1, 1/epsf-1.0),
@@ -43,6 +44,7 @@ depth = 40
     seqfrac = 1.0,    
     allelicbias = Beta(3,3),
     allelicoverdispersion = Exponential(0.3),
+    allelicdropout = Beta(1,1/0.01-1),
     baseerror = Beta(1,1/baseerror-1),
     seqdepth = Gamma(1,depth),
     outstem= dataid,    
@@ -52,3 +54,4 @@ depth = 40
 #  clear up
 rm(fhaplofile)
 rm.(filter(x->occursin("fgl.",x), readdir()))
+

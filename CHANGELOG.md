@@ -40,8 +40,9 @@
 * magiccall: reset defaults: likeparameters, priorlikeparametes, threshoffspring
 * magicbase: minfreq = 0.3 for mapcorkendall
 * magicmap: default isdupebinning = false for outbred; minfreq = 0.3 for setting minsilhouette 
-* magicimpute: add SoftThreshLikeparameters and reset default of priorlikeparametes; reset tukeyfence= 1.5, startbyhalf = 5. 
-* MagicCall: new keyargs softthreshlikeparameters and tukeyfence
+* magicimpute: add SoftThreshLikeparameters and reset default of priorlikeparametes; reset startbyhalf = 5,spacebyviterbi=true. 
+* maigcimpute/magicreconstruct/magiccall: reset tukeyfence= 2
+* magiccall: new keyargs softthreshlikeparameters and tukeyfence
 * Rename: change Parameters into Params in the structs such as LikeParameters and ThreshParameters. 
 * Rename: change seqerror => baseerror, allelebalancemean => allelicbais, allelebalancedisperse => allelicoverdispersion, alleledropout => allelicdropout
 

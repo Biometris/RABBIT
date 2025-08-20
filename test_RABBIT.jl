@@ -13,7 +13,7 @@ try
         "MagicCall",
         "MagicMap",
         "MagicScan",
-        "RABBITCLI"
+        # "RABBITCLI"
     ]
     Pkg.activate()
     @time for pn in pnls        

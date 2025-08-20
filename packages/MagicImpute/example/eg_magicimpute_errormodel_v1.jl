@@ -16,8 +16,7 @@ likeparasls = [
     LikeParam(allelicbias=0.5, allelicoverdispersion=0.0,baseerror=0.001),        
     LikeParam(allelicoverdispersion=0.0,baseerror=0.001),  
     LikeParam(baseerror=0.001),
-    LikeParam(),                          
-    LikeParam(offspringerror=0.005)
+    LikeParam(baseerror =nothing),     
 ]
 
 function plotacc(resaccls, accnames)
@@ -29,24 +28,25 @@ function plotacc(resaccls, accnames)
         ylabel= join(accnames,"/"), 
         xticks=(xls, string.("M",eachindex(xls) .- 1)),
         legend= false,        
-        yrange = (minimum(yls) * 0.9,maximum(yls)*1.05+ 0.01),
+        yrange = (minimum(yls) * 0.0,maximum(yls)*1.05+ 0.01),
     )
 end
 
-isfounderinbred = false
+# isfounderinbred = false
 
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
 
-
+tukeyfence = 2
 resaccls = []
 for likeindex in eachindex(likeparasls)
     outstem = string(dataid,"_output_M", likeindex-1)
     @time magicimpute(genofile,pedfile;
         isfounderinbred,      
         likeparam = likeparasls[likeindex],
+        tukeyfence, 
         outstem,
     );    
     truegeno = formmagicgeno(dataid*"_magicsimulate_truegeno.csv.gz",pedfile; isfounderinbred);
@@ -70,8 +70,8 @@ fig=plot(gls...;
     left_margin = 10Plots.mm,
     bottom_margin = 10Plots.mm,
 )
-outid = string("res_errormodel_depth",depth, "_eps",epsf, 
-    isfounderinbred ? "_inbred" : "_outbred", "_baseerror", baseerror)
+outid = string("res_errormodel_depth",depth, "_tukey",tukeyfence, 
+    isfounderinbred ? "_inbred" : "_outbred")
 savefig(outid*"_acc_out.png")
 fig
 
@@ -84,4 +84,3 @@ fig
 
 # dataid = "outstem"
 # rm.(filter(x->occursin(dataid, x), readdir()))
-

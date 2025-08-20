@@ -183,7 +183,7 @@ function parse_commandline()
         "--tukeyfence"
         help = "tukeyfence for detecting outlier error rates"
         arg_type = Float64
-        default = 1.5              
+        default = 2              
         "--isordermarker"
         help = "if true, refine local marker ordering. If it is nothing, isordermarker=true only if mapfile exists."
         arg_type = AbstractString
@@ -207,7 +207,7 @@ function parse_commandline()
         "--skeletonsize"
         help = "number of skeleton markers for piecewisely re-scaling inter-marker distances. If it is nothing, skeletonsize is set to the number of marers with distinct positions. "
         arg_type = AbstractString
-        default = "nothing"
+        default = "100"
         "--nworker"
         help = "number of parallel workers for computing among chromosomes"
         arg_type = Int

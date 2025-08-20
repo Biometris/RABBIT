@@ -4,6 +4,7 @@ function imputeaccuracy(truegenofile::AbstractString,
     pedinfo::Union{Integer,MagicBase.JuncDist, AbstractString};
     isfounderinbred::Bool=true,
     isphysmap_true::Bool=false, 
+    isphysmap_imputed::Bool=false, 
     alignfounder::Bool=true,
     formatpriority::AbstractVector=["GT","GP", "AD"],
     threshcall::Real=0.95,
@@ -20,7 +21,8 @@ function imputeaccuracy(truegenofile::AbstractString,
     )    
     MagicBase.rawgenoprob!(truegeno; targets = ["founders","offspring"], baseerror = 0.001, isfounderinbred)
     MagicBase.rawgenocall!(truegeno; targets = ["founders","offspring"], callthreshold = threshcall, isfounderinbred)
-    magicgeno = formmagicgeno(imputed_genofile,pedinfo; isfounderinbred,formatpriority,workdir)
+    magicgeno = formmagicgeno(imputed_genofile,pedinfo; 
+        isfounderinbred,formatpriority,isphysmap=isphysmap_imputed,workdir)
     MagicBase.rawgenocall!(magicgeno; targets = ["founders","offspring"], callthreshold = threshcall, isfounderinbred)
     facc = imputeaccuracy!(truegeno,magicgeno; 
         isfounderinbred, alignfounder, targetfounder=true)

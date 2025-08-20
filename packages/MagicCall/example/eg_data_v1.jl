@@ -31,7 +31,7 @@ savemagicped(pedfile,magicped)
 epsf = 0.02
 epso = 0.02
 baseerror = 0.002
-missfreq = 0.1
+missfreq = 0.2
 depth = 40
 @time magicsimulate(fhaplofile,pedfile;    
     isfounderinbred,
@@ -40,9 +40,10 @@ depth = 40
     foundermiss = Beta(1,1/missfreq-1),
     offspringmiss = Beta(1,1/missfreq-1),    
     error_randallele = 1.0, 
-    seqfrac = 1.0,    
+    seqfrac = 0.0,    
     allelicbias = Beta(3,3),
     allelicoverdispersion = Exponential(0.3),
+    # allelicdropout = Beta(1,1/0.02-1),
     baseerror = Beta(1,1/baseerror-1),
     seqdepth = Gamma(1,depth),
     outstem= dataid,    

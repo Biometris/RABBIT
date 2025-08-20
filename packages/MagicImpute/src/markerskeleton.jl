@@ -49,7 +49,7 @@ function markerskeleton_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix
     msg_repeatrun::AbstractString, 
     chrid::AbstractString="", 
     startit::Integer=1,
-    spacebyviterbi::Bool=false,     
+    spacebyviterbi::Bool=true,     
     verbose::Bool=true,
     io::Union{Nothing,IO}=nothing)
     (;epsfls, epsols, epsols_perind, baseerrorls,allelicbiasls,allelicoverdispersionls, allelicdropoutls) = likeerrortuple
@@ -180,7 +180,7 @@ function getskeleton_seg(errorls::AbstractVector, isinferseq::Bool,
     skeletonsize::Union{Nothing,Integer})
     if isinferseq
         epsols, baseerrorls, allelicbiasls, allelicoverdispersionls, allelicdropoutls = errorls
-        tterrorls=[epsols[i] + baseerrorls[i] + 0.001 * (abs(allelicbiasls[i] - 0.5) + allelicoverdispersionls[i] + allelicdropoutls[i]) for i in snporder]
+        tterrorls=[epsols[i] + baseerrorls[i] + 0.01 * (abs(allelicbiasls[i] - 0.5) + allelicoverdispersionls[i] + allelicdropoutls[i]) for i in snporder]
     else
         epsols = first(errorls)
         tterrorls=epsols[snporder]
