@@ -484,7 +484,7 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             msg = cc*"INFO=<ID=ALLELICDROPOUT,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
             occursin("<ID=ALLELICDROPOUT",commentlines) || write(io, msg,"\n")
         end
-        if keepcomment
+        if keepcomment && !isempty(commentlines)
             write(io,commentlines,"\n")            
         end
     else

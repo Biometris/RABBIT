@@ -40,11 +40,6 @@ function simfhaplo(;
     end
     try
         myopen(outfile2, "w") do io
-            commentstring = "##"        
-            write(io, commentstring*"fileformat=",fileext,"\n")
-            filedate = string(commentstring*"fileDate=",replace(string(Date(now())),"-"=>""))
-            write(io, filedate,"\n")
-            write(io, commentstring*"source=MagicSimulate\n")
             nsnpls = round.(Int,nsnp .* (chrlen ./ sum(chrlen)))
             nsnpls[1] += nsnp - sum(nsnpls)
             for chr in 1:length(chrlen)

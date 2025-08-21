@@ -42,3 +42,4 @@ julia "%RABBITDIR%rabbit_magicreconstruct.jl" -g %OUTSTEM%_magicimpute_geno.vcf.
 julia "%RABBITDIR%rabbit_magicscan.jl" -g %OUTSTEM%_magicreconstruct_ancestry.csv.gz -p %OUTSTEM%_magicsimulate_pheno.csv ^
   -o %OUTSTEM%
 
+

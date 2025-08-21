@@ -49,6 +49,6 @@
 ## RABBIT v1.3.4
 * reset default theshcall = 0.9
 * MagicBase: fix commentlines of vcf
-* MagicImpute: reset default trimfraction = 0.025
+* MagicImpute: reset default trimfraction = 0.025, spacebyviterbi = false (if true, under-estimate distances)
 
 

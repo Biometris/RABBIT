@@ -49,7 +49,7 @@ function markerskeleton_chr(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix
     msg_repeatrun::AbstractString, 
     chrid::AbstractString="", 
     startit::Integer=1,
-    spacebyviterbi::Bool=true,     
+    spacebyviterbi::Bool=false,     
     verbose::Bool=true,
     io::Union{Nothing,IO}=nothing)
     (;epsfls, epsols, epsols_perind, baseerrorls,allelicbiasls,allelicoverdispersionls, allelicdropoutls) = likeerrortuple

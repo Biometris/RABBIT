@@ -20,7 +20,7 @@ simfhaplo(;
     nsnp = 400, 
     nparent = isstar ? 3 : 4,
     chrlen = 100*ones(4),
-    outfile = fhaplofile
+    outfile = fhaplofile,    
 )
 
 # S1_2 Simulate pedigree information
@@ -54,6 +54,7 @@ magicsimulate(fhaplofile,pedfile;
     pheno_h2= 0.5,
     nplot_subpop = 10, 
     outstem,
+    outext = ".vcf",
 )   
 
 # plot(Beta(10,10))
