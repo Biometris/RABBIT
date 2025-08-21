@@ -82,7 +82,7 @@ In magiccall and magicimpute, markers with the inferred parameter values being g
 In magicimpue, offspring with the inferred parameter values being greater than the thresholds will be excluded only if they are also outerliers. 
 
 SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.025, offspringerror=0.025, 
-peroffspringerror=0.025, baseerror=0.01, allelicbias=0.75, allelicoverdispersion=0.5, allelicdropout=0.01). 
+peroffspringerror=0.025, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
 
 """
 Base.@kwdef struct SoftThreshLikeParam    
@@ -90,7 +90,7 @@ Base.@kwdef struct SoftThreshLikeParam
     offspringerror::Float64 = 0.025
     peroffspringerror::Float64 = 0.025
     baseerror::Float64 = 0.01
-    allelicbias::Float64 = 0.75
+    allelicbias::Float64 = 0.67
     allelicoverdispersion::Float64 = 0.5
     allelicdropout::Float64 = 0.01
 end
