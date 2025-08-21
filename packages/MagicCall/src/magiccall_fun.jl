@@ -31,7 +31,7 @@ single marker genotype call from genofile and pedinfo.
 
 `israwcall::Bool= false`: if true, perform raw genotype calling. 
 
-`threshcall::Real = 0.95`: genotypes are called if maximum posterior probability > threshcall.
+`threshcall::Real = 0.9`: genotypes are called if maximum posterior probability > threshcall.
 
 `iscalloffspring::Bool=true`: if true, offspring genotypes are called.
 
@@ -71,7 +71,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     priorlikeparam::Union{Nothing, PriorLikeParam} = PriorLikeParam(), 
     tukeyfence::Real=2,    
     israwcall::Bool= false, 
-    threshcall::Real = 0.95,
+    threshcall::Real = 0.9,
     byfounder::Integer=0,
     iscalloffspring::Bool=true, 
     isdelmultiallelic::Bool=true,
@@ -130,29 +130,33 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "workdir = ", workdir, "\n",
         "verbose = ", verbose)
     printconsole(logio,verbose,msg)    
-    if isnothing(threshlikeparam)
-        threshlikeparam = ThreshLikeParam()
-        msg = string("reset threshlikeparam = ", threshlikeparam)
-        printconsole(logio,verbose,msg)
-    end    
-    if isnothing(priorlikeparam)
-        priorlikeparam = PriorLikeParam()
-        msg = string("reset priorlikeparam = ", priorlikeparam)
-        printconsole(logio,verbose,msg)
-    end    
-    ischangedls, priorlikeparam = reset_priorlikeparam(priorlikeparam)
-    if any(ischangedls)
-        msg = MagicBase.get_info_likeparam(priorlikeparam; ismultiline=true)
-        printconsole(logio,verbose,msg)        
-    end    
-    if isnothing(likeparam)
-        likeparam = LikeParam()
-        msg = string("reset likeparam = ", likeparam)
-        printconsole(logio,verbose,msg)
-    end    
-    msg = MagicBase.get_info_likeparam(likeparam; isinfererror, ismultiline=true)
-    printconsole(logio,verbose,msg)            
-    
+    if israwcall
+       msg = string("baseerror=", MagicBase.get_likeproperty(likeparam, :baseerror))
+       printconsole(logio,verbose,msg)
+    else
+        if isnothing(threshlikeparam) 
+            threshlikeparam = ThreshLikeParam()
+            msg = string("reset threshlikeparam = ", threshlikeparam)
+            printconsole(logio,verbose,msg)
+        end    
+        if isnothing(priorlikeparam) 
+            priorlikeparam = PriorLikeParam()
+            msg = string("reset priorlikeparam = ", priorlikeparam)
+            printconsole(logio,verbose,msg)
+        end    
+        ischangedls, priorlikeparam = reset_priorlikeparam(priorlikeparam)
+        if any(ischangedls)
+            msg = MagicBase.get_info_likeparam(priorlikeparam; ismultiline=true)
+            printconsole(logio,verbose,msg)        
+        end    
+        if isnothing(likeparam)
+            likeparam = LikeParam()
+            msg = string("reset likeparam = ", likeparam)
+            printconsole(logio,verbose,msg)
+        end        
+        msg = MagicBase.get_info_likeparam(likeparam; isinfererror, ismultiline=true)
+        printconsole(logio,verbose,msg)            
+    end
     genofile2 = MagicBase.getabsfile(workdir,genofile)
     isfile(genofile2) || error(string("Could not find ",genofile2))    
     lastcomment = MagicBase.findlastcomment(genofile2; commentstring)
@@ -206,7 +210,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     if !israwcall
         for (i,mapfile) in enumerate([outfile2])                
             try 
-                figerr = plotmarkererror(mapfile;tukeyfence=1.5, workdir)
+                figerr = plotmarkererror(mapfile;tukeyfence, workdir)
                 if !isnothing(figerr)                        
                     markererrfile = string(outstem, i==1 ? "" : "_delmarker", "_inferred_error.png")
                     try 
@@ -596,7 +600,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
 end
 
 function infer_fhaplo_rawcall(fgeno::AbstractVector, founderformat::String; 
-    baseerror::Real=0.001, isfounderinbred::Bool=false,threshcall::Real=0.95)  
+    baseerror::Real=0.001, isfounderinbred::Bool,threshcall::Real)  
     if founderformat == "GT"
         alleledict = Dict("1"=>"0","2"=>"1","N"=>".")
         fhaplo_GT = [ismissing(i) ? "./." : join(replace(split(i,""),alleledict...),"/") for i in fgeno]

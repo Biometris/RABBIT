@@ -21,7 +21,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	tukeyfence::Real=2,				
 	isspacemarker::Bool = false,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM
+	trimfraction::Real=0.025,  #cM
 	skeletonsize::Union{Nothing,Integer},
 	isordermarker::Bool = false,
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
@@ -424,7 +424,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	tukeyfence::Real=2,		
 	isspacemarker::Bool = false,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM
+	trimfraction::Real=0.025,  #cM
 	skeletonsize::Union{Nothing,Integer},
 	isordermarker::Bool = false,
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
@@ -623,7 +623,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	tukeyfence::Real=2,			
     delsiglevel::Real=0.01,    
 	trimcm::Real=20,
-	trimfraction::Real=0.05, 
+	trimfraction::Real=0.025, 
     inittemperature::Real=0.0,
 	coolrate::Real=0.8,
 	skeletonsize::Union{Nothing,Integer},		

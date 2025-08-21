@@ -21,7 +21,7 @@ genetic map construction from genofile and pedinfo.
 
 `likeparam::LikeParam=LikeParam()`: specifies default genotyping error rates. 
 
-`threshcall::Real = model == "depmodel" ? 0.95 : 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
+`threshcall::Real = 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
 
 `israndallele::Bool=true`: if true, genotyping error model follows the random allelic model, and otherwise the random genotypic model. 
 
@@ -108,7 +108,7 @@ function magicmap(genofile::AbstractString,
     model::AbstractString="jointmodel",
     likeparam::LikeParam=LikeParam(),            
     israndallele::Bool=true, 
-    threshcall::Real = (model == "depmodel" || !israndallele) ? 0.95 : 0.9, 
+    threshcall::Real = 0.9, 
     isfounderinbred::Bool = true,        
     markerthin::Integer=1,
     ispermmarker::Bool=true,

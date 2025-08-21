@@ -67,7 +67,7 @@ function magicimpute(genofile::AbstractString,
     isordermarker::Bool = !isnothing(mapfile),        
     isspacemarker::Bool= !isnothing(mapfile) || isordermarker || isphysmap,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM    
+	trimfraction::Real=0.025,  #cM    
     skeletonsize::Union{Nothing,Integer} = 100,  
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	            
@@ -355,7 +355,7 @@ function magicimpute!(magicgeno::MagicGeno;
     isordermarker::Bool = !isnothing(inputneighbor) ,
     isspacemarker::Bool= !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM    
+	trimfraction::Real=0.025,  #cM    
     skeletonsize::Union{Nothing,Integer} = 100,     
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	        

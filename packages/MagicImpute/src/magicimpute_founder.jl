@@ -27,7 +27,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	isordermarker::Bool = !isnothing(inputneighbor),
 	isspacemarker::Bool = !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM
+	trimfraction::Real=0.025,  #cM
 	slidewin::Union{Nothing,Integer} = nothing, 
 	slidewin_neighbor::Union{Nothing,Integer} = 200,
 	orderactions::AbstractVector = ["inverse","permute"],  
@@ -575,7 +575,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	delsiglevel::Real = 0.01,    		
 	tukeyfence::Real=2,			
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM
+	trimfraction::Real=0.025,  #cM
 	skeletonsize::Union{Nothing,Integer} =  100, 	
 	slidewin::Union{Nothing,Integer} = nothing, 
 	slidewin_neighbor::Union{Nothing,Integer} = 200,
@@ -738,7 +738,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	delsiglevel::Real = 0.01,    		
 	tukeyfence::Real=2,				
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM
+	trimfraction::Real=0.025,  #cM
 	skeletonsize::Union{Nothing,Integer} =  100, 	
 	slidewin::Union{Nothing,Integer} = nothing, 
 	slidewin_neighbor::Union{Nothing,Integer} = 200,

@@ -46,3 +46,9 @@
 * Rename: change Parameters into Params in the structs such as LikeParameters and ThreshParameters. 
 * Rename: change seqerror => baseerror, allelebalancemean => allelicbais, allelebalancedisperse => allelicoverdispersion, alleledropout => allelicdropout
 
+## RABBIT v1.3.4
+* reset default theshcall = 0.9
+* MagicBase: fix commentlines of vcf
+* MagicImpute: reset default trimfraction = 0.025
+
+

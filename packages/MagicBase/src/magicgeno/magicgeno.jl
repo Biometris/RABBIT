@@ -449,7 +449,15 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             end
             cc = commentstring # comment string = "##" for vcf genofile
             
-            occursin("fileformat=",commentlines) || write(io, cc*"fileformat=VCFv4.3\n")
+            if occursin("fileformat=",commentlines) 
+                linels = split(commentlines,"\n")
+                formatline = findfirst(x->occursin("fileformat=",x),linels)                 
+                write(io, linels[formatline], "\n")
+                deleteat!(linels,formatline)
+                commentlines = join(linels,"\n")                
+            else
+                write(io, cc*"fileformat=VCFv4.3\n")
+            end
             filedate = string(cc*"filedate=",string(now()))
             write(io, filedate,"\n")
             write(io, cc*"source=RABBIT\n")
@@ -465,16 +473,19 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             occursin("<ID=POSCM",commentlines) || write(io, msg,"\n")
             msg = cc*"INFO=<ID=FOUNDERERROR,Number=1,Type=Float,Description=\"Founder allelic error rate\">"
             occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=FOUNDERERROR,Number=1,Type=Float,Description=\"Offspring allelic error rate\">"
-            occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=OFFSPRINGERROR,Number=1,Type=Float,Description=\"Offspring allelic error rate\">"
+            occursin("<ID=OFFSPRINGERROR",commentlines) || write(io, msg,"\n")
             msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing base error rate\">"
             occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
-            occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=ALLELICBIAS,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
+            occursin("<ID=ALLELICBIAS",commentlines) || write(io, msg,"\n")
             msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
             occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
-            occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
+            msg = cc*"INFO=<ID=ALLELICDROPOUT,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
+            occursin("<ID=ALLELICDROPOUT",commentlines) || write(io, msg,"\n")
+        end
+        if keepcomment
+            write(io,commentlines,"\n")            
         end
     else
         if typeof(sink) <: AbstractString
@@ -483,13 +494,14 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             write(io, filedate,"\n")
             write(io, commentstring*"source=RABBIT\n")
         end
-    end
-    if keepcomment
-        if haskey(magicgeno.misc,"filecomment")
-            commentlines = join(magicgeno.misc["filecomment"][!,:commentlines],"\n")
-            write(io,commentlines,"\n")
+        if keepcomment
+            if haskey(magicgeno.misc,"filecomment")
+                commentlines = join(magicgeno.misc["filecomment"][!,:commentlines],"\n")
+                write(io,commentlines,"\n")
+            end
         end
     end
+
     colnames = geno_colnames(magicgeno,isvcf,target)
     write(io, join(colnames,delim2),"\n")
     nchr = length(magicgeno.markermap)

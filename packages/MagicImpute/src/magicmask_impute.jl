@@ -38,7 +38,7 @@ function magicmask_impute(genofile::AbstractString,
     isordermarker::Bool = !isnothing(mapfile),        
     isspacemarker::Bool= !isnothing(mapfile) || isordermarker == true,
     trimcm::Real=20,
-	trimfraction::Real=0.05,  #cM            
+	trimfraction::Real=0.025,  #cM            
     skeletonsize::Union{Nothing,Integer} =  100,      
     slidewin::Union{Nothing,Integer} = nothing,
 	slidewin_neighbor::Union{Nothing,Integer} = 200,

@@ -269,7 +269,7 @@ function setdistanceat!(priorprocess::AbstractDict,tnow::Integer,tnowdis::Real)
     priorprocess
 end
 
-function repeat_trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.05)
+function repeat_trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.025)
     msg = ""
 	ndel = 0
 	for _ in 1:5			
@@ -289,7 +289,7 @@ end
 
 
 # trim left ( or right) end with gad to the rest.
-function trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.05)
+function trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.025)
     pri1=first(values(priorprocess))
     tseq = findall(pri1.markerincl);    
     deltd = pri1.markerdeltd[tseq[1:end-1]]        
@@ -364,7 +364,7 @@ end
 
 # trim left ( or right) end with gad to the rest.
 # also trim middel seg with gad to both sides.
-# function trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.05)
+# function trimchrend!(priorprocess::AbstractDict; trimcm::Real=20,trimfraction::Real=0.025)
 #     pri1=first(values(priorprocess))
 #     tseq = findall(pri1.markerincl);
 #     tmax = last(tseq)

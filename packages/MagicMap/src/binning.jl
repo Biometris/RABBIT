@@ -3,7 +3,7 @@ function binning(genofile::AbstractString,
     pedinfo::Union{MagicBase.JuncDist,AbstractString};
     isdepmodel::Bool=false,    
     formatpriority::AbstractVector=["GT","AD"],
-    threshcall::Real = isdepmodel ? 0.95 : 0.9,   
+    threshcall::Real =0.9,   
     isfounderinbred::Bool=true,
     baseerror::Real=0.001,
     markerthin::Integer=1,

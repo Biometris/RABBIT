@@ -54,10 +54,10 @@ function parse_commandline()
     mapfilehelp *=  "If there exist columns \"binno\" and \"represent\", markers with the same \"binno\" are binned with the represent being the marker with non-zero \"represent\". "
     mapfilehelp *=  "All the rest columns are ignored. "
     phasealg_help = "If phasealg=forwardbackward, the output diplotype probabilities (in format GP), corresonding to the phased genotypes 0|0, 0|1, 1|0, and 1|1, are caculated based on the forward-backward algorithm"
-    phasealg_help *= ", and the output phased offspring genotypes (in format GT) are given by those with the largest diplotype probabilities if they are greater than threshcall. "
+    phasealg_help *= ", and the output phased offspring genotypes (in format GT) are given by those with the largest diplotype probabilities if they are greater than threshimpute. "
     phasealg_help *= "If phasealg=viterbi, the output diplotype probabilities (GP) are set to those of phasealg=forwardbackward, and the output phased genotypes (GT) are caculated based on the Viterbi algorithm. "
     phasealg_help *= "If phasealg=unphase, the output genotype probabilities (GP), corresonding to the unphased genotypes 0/0, 0/1, and 1/1, are calculated by transforming the posterior diplotype probabilities of phasealg=forwardbackward"
-    phasealg_help *= ", and the output unphased genotypes (GT) are given by those with the largest genotype probabilities if they are greater than threshcall. "
+    phasealg_help *= ", and the output unphased genotypes (GT) are given by those with the largest genotype probabilities if they are greater than threshimpute. "
     @add_arg_table! s begin
         "--genofile", "-g"
         help = "filename for genotypic data file"

@@ -1,7 +1,7 @@
 name = "MagicLD"
 uuid = "0c97556f-f1e7-4237-8a80-7e7d9b59bb26"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.1.0"
+version = "1.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

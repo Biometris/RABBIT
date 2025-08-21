@@ -34,7 +34,7 @@ function magicfilter(genofile::AbstractString,
     recomrate::Real=1.0,
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,    
-    threshcall::Real = 0.95, 
+    threshcall::Real = 0.9, 
     isdelmultiallelic::Bool=true,
     isdelinconsistent::Bool = false,    
     minsubpop::Integer = 1, 
@@ -143,7 +143,7 @@ It must be "depmodel", "indepmodel", or "jointmodel".
   `nothing` denotes all markers. Marker indices that are larger than the number of markers
   within the chromosome are deleted.
 
-`threshcall::Real = model == "depmodel" ? 0.95 : 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
+`threshcall::Real = 0.9`: threshold for genotype calling. The filtering is based on called genotypes. 
   
 `minsubpop::Integer = 1`: delete subpopulations with size < minsubpop.
 
@@ -192,7 +192,7 @@ function magicfilter!(magicgeno::MagicGeno;
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,        
-    threshcall::Real = 0.95, 
+    threshcall::Real = 0.9, 
     minsubpop::Integer = 1, 
     minnprogeny::Integer = 1,    
     minmonotest::Integer = 20,	    

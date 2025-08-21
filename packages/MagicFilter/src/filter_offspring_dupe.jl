@@ -2,7 +2,7 @@
 function filter_offspring_dupe!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
     isfounderinbred::Bool=true,
-    threshcall::Real = model == "depmodel" ? 0.95 : 0.9,
+    threshcall::Real = 0.9,
     offspring_maxcorr::Real = 0.99,
     offspring_cutcorr::Real = 0.4,
 	isparallel::Bool=false,

@@ -2,7 +2,7 @@
 function filter_offspring_missing!(magicgeno::MagicGeno;
     model::AbstractString="jointmodel",
     isfounderinbred::Bool=true,
-    threshcall::Real = model == "depmodel" ? 0.95 : 0.9,
+    threshcall::Real = 0.9,
     offspring_maxmiss::Real = 0.99,
     outstem::AbstractString= "outstem",
     logfile::Union{AbstractString,IO} = outstem*"_purify_missing.log",

@@ -14,13 +14,14 @@ pwd()
 using Plots
 using StatsBase
 
+ferr = 0.005
 fixepso = 0.005
 
 likeparasls = [    
-    LikeParam(offspringerror=fixepso,allelicbias=0.5, allelicoverdispersion=0.0,baseerror=0.001),        
-    LikeParam(offspringerror=fixepso,allelicoverdispersion=0.0,baseerror=0.001),  
-    LikeParam(offspringerror=fixepso,baseerror=0.001),
-    LikeParam(offspringerror=fixepso,baseerror=nothing),
+    LikeParam(foundererror=ferr, offspringerror=fixepso,allelicbias=0.5, allelicoverdispersion=0.0,baseerror=0.001),        
+    LikeParam(foundererror=ferr, offspringerror=fixepso,allelicoverdispersion=0.0,baseerror=0.001),  
+    LikeParam(foundererror=ferr, offspringerror=fixepso,baseerror=0.001),
+    LikeParam(foundererror=ferr, offspringerror=fixepso,baseerror=nothing),
 ]
 
 function plotacc(resaccls, accnames)
@@ -52,8 +53,7 @@ for likeindex in eachindex(likeparasls)
         isfounderinbred,              
         israwcall,
         likeparam = likeparasls[likeindex],        
-        threshfounder = israwcall ? 0.95 : thresh, 
-        threshoffspring = israwcall ? 0.95 : thresh,
+        threshcall = thresh,         
         tukeyfence = 2,
         outstem,
     );    

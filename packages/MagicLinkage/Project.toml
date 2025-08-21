@@ -1,7 +1,7 @@
 name = "MagicLinkage"
 uuid = "7e46d71e-e3ca-4f00-8e51-0df20d7851f3"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.1.0"
+version = "1.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
