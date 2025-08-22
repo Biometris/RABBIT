@@ -233,14 +233,16 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		# isspacemarker=false, isordermarker=false: assuming input input markermap is good enough and founder imputation is roobust to the inital genetic map
 		# quickinfererror=true: skip estimations for some error rate parameters to speed up computation		
 		partmagicgenols = MagicBase.splitby_connectedped(magicgeno);
-		# TODO: 
-		if length(partmagicgenols) == 1 || isordermarker 			
+		# if length(partmagicgenols) == 1 || isordermarker 			
+		if length(partmagicgenols) == 1 
 			printconsole(io,verbose, string("\nstart founder imputation with nrepeatmin = ", nrepeatmin, " and nrepeatmax = ",nrepeatmax))						
 			magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-				isdelmarker, isinfererror, isordermarker, isspacemarker, quickinfererror = false, 
+				isdelmarker, isinfererror, quickinfererror = true, 
+				isspacemarker = isspacemarker && spacebyviterbi, 
+				isordermarker = false, 
 				delsiglevel, tukeyfence,  trimcm, trimfraction, skeletonsize, 
 				slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
 				inittemperature, coolrate, minaccept, spacebyviterbi,
@@ -262,7 +264,9 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, isinfererror, isordermarker, isspacemarker, quickinfererror = false, 
+					isdelmarker, isinfererror, quickinfererror = true, 
+					isspacemarker = isspacemarker && spacebyviterbi, 
+					isordermarker = false, 
 					delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
 					slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
 					inittemperature, coolrate, minaccept,spacebyviterbi,                
