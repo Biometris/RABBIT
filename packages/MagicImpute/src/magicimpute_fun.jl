@@ -68,7 +68,7 @@ function magicimpute(genofile::AbstractString,
     isspacemarker::Bool= !isnothing(mapfile) || isordermarker || isphysmap,
     trimcm::Real=20,
 	trimfraction::Real=0.025,  #cM    
-    skeletonsize::Union{Nothing,Integer} = 100,  
+    skeletonsize::Union{Nothing,Integer}=nothing,  
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	            
     binriffle::Union{Nothing,Integer} = (!isnothing(mapfile) && isfounderinbred) ? -1 : nothing,  
@@ -279,7 +279,7 @@ genotype imputation from magicgeno.
 `trimcm::Real=20`: remove markers of each segment with distances to the flanking markers > trimcm.
   The number of markers of each segment must be less than 5% total number of markers.
 
-`skeletonsize::Union{Nothing,Integer} = 100`: number of skeleton markers for piecewisely re-scaling inter-marker distances. 
+`skeletonsize::Union{Nothing,Integer}=nothing`: number of skeleton markers for piecewisely re-scaling inter-marker distances. 
   If it is nothing, skeletonsize is set to the number of distint positions in the genetic map before re-scaling. 
 
 `slidewin_neighbor::Union{Nothing,Integer} = 200`: max sliding window size for neighbor-based marker order refinement. 
@@ -356,7 +356,7 @@ function magicimpute!(magicgeno::MagicGeno;
     isspacemarker::Bool= !isnothing(inputneighbor) || isordermarker,
     trimcm::Real=20,
 	trimfraction::Real=0.025,  #cM    
-    skeletonsize::Union{Nothing,Integer} = 100,     
+    skeletonsize::Union{Nothing,Integer}=nothing,     
     slidewin_neighbor::Union{Nothing,Integer} = 200,
     slidewin::Union{Nothing,Integer} = nothing,	        
     binriffle::Union{Nothing,Integer} = (!isnothing(inputneighbor) && isfounderinbred) ? -1 : nothing,  

@@ -17,14 +17,19 @@ pkgls = [
     "RABBITCLI"        
 ]
 Pkg.activate()    
-st = 0
-@time for pkg in pkgls
-    println("-------------remove ",pkg, "-------------")
-    try 
-        Pkg.rm(pkg)   
-    catch err     
-        st = -1       
-        @error err
+try 
+    res = 0
+    @time for pkg in pkgls
+        println("-------------remove ",pkg, "-------------")
+        try 
+            Pkg.rm(pkg)   
+        catch err     
+            res = -1       
+            @error err        
+        end
     end
+    res
+catch err
+    -1
 end
-st
+
