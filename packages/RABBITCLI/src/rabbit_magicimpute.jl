@@ -200,7 +200,7 @@ function parse_commandline()
         "--skeletonsize"
         help = "number of skeleton markers for piecewisely re-scaling inter-marker distances. If it is nothing, skeletonsize is set to the number of marers with distinct positions. "
         arg_type = AbstractString
-        default = "nothing"
+        default = "100"
         "--nworker"
         help = "number of parallel workers for computing among chromosomes"
         arg_type = Int

@@ -5,7 +5,7 @@
 ## RABBIT v1.3.4
 * reset default theshcall = 0.9
 * MagicBase: fix commentlines of vcf
-* MagicImpute: reset default trimfraction = 0.025, default skeletonsize = nothing
+* MagicImpute: reset default trimfraction = 0.025, default skeletonsize = 100
 
 ## RABBIT v1.3.3
 * magiccall: reset defaults: likeparameters, priorlikeparametes, threshoffspring
