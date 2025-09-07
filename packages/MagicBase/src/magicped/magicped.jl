@@ -43,6 +43,10 @@ mutable struct MagicPed
     end
 end
 
+function MagicPed(designinfo,offspringinfo)
+    founderinfo = get_founderinfo(designinfo)
+    MagicPed(designinfo,founderinfo,offspringinfo)
+end
 
 function formmagicped(genofile::AbstractString,pedinfo::AbstractString;    
     ishomozygous::Bool=false, 
@@ -125,7 +129,6 @@ function formmagicped(designinfo::DesignInfo,popsize::Integer;
         0
     end 
 end
-
 """
     formmagicped(pedigree, popsize)
 
@@ -152,11 +155,11 @@ function formmagicped(pedigree::Pedigrees.Pedigree,popsize::Integer;
         :isfglexch=>isfglexch,
         :gender=>pedigree.gender[subpopls[i]]) for i=1:nsubpop]...)
     # founderinfo 
-    nf = pedigree.nfounder
-    founderinfo = DataFrame(:individual=>pedigree.member[1:nf],
-        :gender=>pedigree.gender[1:nf])
+    founderinfo = get_founderinfo(pedigree)    
     MagicPed(pedigree,founderinfo,offspringinfo)
 end
+
+
 
 """
     formmagicped(designcode, popsize)
