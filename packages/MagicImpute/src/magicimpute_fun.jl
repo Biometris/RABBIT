@@ -393,7 +393,7 @@ function magicimpute!(magicgeno::MagicGeno;
     if !isnothing(inputneighbor) && !isnothing(inputbinning)
         issubset(keys(inputbinning),keys(inputneighbor)) || @error "inconsistent inputneighbor and inputbinning"
     end
-    MagicBase.check_required_geneticmap(magicgeno; io)
+    isnothing(mapfile) && MagicBase.check_required_geneticmap(magicgeno; io)
     MagicBase.check_markerorder(magicgeno; io,verbose)    
     model = MagicBase.reset_model(magicgeno.magicped,model;io,verbose)    
     model_founderimpute = isa(model, AbstractVector) ? first(model) : model    
