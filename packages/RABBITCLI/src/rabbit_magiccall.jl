@@ -76,7 +76,7 @@ function parse_commandline()
         "--tukeyfence"
         help = "tukeyfence for detecting outlier error rates"
         arg_type = Float64
-        default = 2   
+        default = 3   
         "--isfounderinbred"
         help = "if true, founders are inbred, and otherwise outbred"
         arg_type = Bool

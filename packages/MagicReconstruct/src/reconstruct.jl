@@ -378,7 +378,7 @@ function reconstruct_chr!(magicgeno::MagicGeno,chr::Integer,
 end
 
 function get_outerlier_indices(ls::AbstractVector; 
-	tukeyfence::Real=2, side::String="both")		
+	tukeyfence::Real=3, side::String="both")		
     q1,q3=quantile(ls,[0.25,0.75])
 	if side in ["lower","both"]
 		lowbound= q1-tukeyfence*(q3-q1)
@@ -394,7 +394,7 @@ function get_outerlier_indices(ls::AbstractVector;
 end
 
 function del_error_indices(errorls::AbstractVector;
-	tukeyfence::Real=2, 
+	tukeyfence::Real=3, 
 	softthresh=0.05,hardthresh::Real=0.25)
 	ls = logit.(errorls)
     q1,q3 = quantile(ls,[0.25,0.75])

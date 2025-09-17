@@ -225,7 +225,7 @@ end
 
 
 function detect_outlier!(magicancestry::MagicAncestry;
-    tukeyfence::Real=2,istransform::Bool=false)
+    tukeyfence::Real=3,istransform::Bool=false)
     offinfo = magicancestry.magicped.offspringinfo 
     postls = offinfo[!,:posterior_recomnum]
     prils = offinfo[!,:prior_recomden]
@@ -248,7 +248,7 @@ function detect_outlier!(magicancestry::MagicAncestry;
 end
 
 # function detect_outlier!(magicancestry::MagicAncestry;
-#     minprob::Real= 0.7,tukeyfence::Real=2,istransform::Bool=false)
+#     minprob::Real= 0.7,tukeyfence::Real=3,istransform::Bool=false)
 #     nrecom= calnumrecom(magicancestry; minprob)
 #     anscombe = istransform ? nrecom : 2 * (sqrt.(nrecom .+ 3.0/8))    
 #     q1,q3 = quantile(anscombe,[0.25,0.75])

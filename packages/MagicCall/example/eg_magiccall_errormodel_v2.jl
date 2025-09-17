@@ -22,6 +22,7 @@ likeparasls = [
     LikeParam(foundererror=ferr, offspringerror=fixepso,allelicoverdispersion=0.0,baseerror=0.001),  
     LikeParam(foundererror=ferr, offspringerror=fixepso,baseerror=0.001),
     LikeParam(foundererror=ferr, offspringerror=fixepso,baseerror=nothing),
+    # LikeParam(foundererror=ferr, offspringerror=nothing,baseerror=nothing)
 ]
 
 function plotacc(resaccls, accnames)
@@ -45,16 +46,18 @@ pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
 
 resaccls = []
-israwcall = true
+israwcall = false
+isinfererror = !israwcall
 thresh= 0.9
 for likeindex in eachindex(likeparasls)
     outstem = string(dataid,"_output_M", likeindex-1)
     @time magiccall(genofile,pedfile;
         isfounderinbred,              
         israwcall,
+        isinfererror, 
         likeparam = likeparasls[likeindex],        
         threshcall = thresh,         
-        tukeyfence = 2,
+        tukeyfence = 100,
         outstem,
     );    
     truegeno = formmagicgeno(dataid*"_magicsimulate_truegeno.csv.gz",pedfile; isfounderinbred);

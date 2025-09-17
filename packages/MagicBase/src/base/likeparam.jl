@@ -5,12 +5,12 @@
 keyword-based struct for the parameters of likelihood function. 
 
 LikeParam() is equivalent to LikeParam(foundererror=0.005, offspringerror=nothing, peroffspringerror=0.0, 
-baseerror=nothing, allelicbias=nothing, allelicoverdispersion=nothing, allelicdropout=0.0). 
+baseerror=0.001, allelicbias=nothing, allelicoverdispersion=nothing, allelicdropout=0.0). 
 The `peroffspringerror` refers to error rate per offspring, and the other parameters refer to error rate per marker. 
 
-If genotype format is not "AD", the parameters `baseerror`, `allelicbias`, `allelicoverdispersion`, and `allelicdropout` are irrelevant. 
+If genotype format is not "AD", parameters `baseerror`, `allelicbias`, `allelicoverdispersion`, and `allelicdropout` are irrelevant. 
 
-If `model="depmodel"`, the parameters `allelicbias`, `allelicoverdispersion`, and `allelicdropout` are irrelevant. 
+If `model="depmodel"`, parameters `allelicbias`, `allelicoverdispersion`, and `allelicdropout` are irrelevant. 
 
 If there exists keyarg `isinfererror` and `isinfererror` = true, the parameters 
 with values being nothing will be inferred and the other parameters will be fixed.  
@@ -81,14 +81,14 @@ keyword-based struct for the thresholds of the likelihood parameters.
 In magiccall and magicimpute, markers with the inferred parameter values being greater than the thresholds will be deleted only if they are also outerliers. 
 In magicimpue, offspring with the inferred parameter values being greater than the thresholds will be excluded only if they are also outerliers. 
 
-SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.025, offspringerror=0.025, 
-peroffspringerror=0.025, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
+SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.05, offspringerror=0.05, 
+peroffspringerror=0.05, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
 
 """
 Base.@kwdef struct SoftThreshLikeParam    
-    foundererror::Float64 = 0.025
-    offspringerror::Float64 = 0.025
-    peroffspringerror::Float64 = 0.025
+    foundererror::Float64 = 0.05
+    offspringerror::Float64 = 0.05
+    peroffspringerror::Float64 = 0.05
     baseerror::Float64 = 0.01
     allelicbias::Float64 = 0.67
     allelicoverdispersion::Float64 = 0.5

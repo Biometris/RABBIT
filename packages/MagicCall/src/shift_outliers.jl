@@ -1,6 +1,6 @@
 
 function shift_outliers(calledgenofile, outgenofile, delgenofile; 
-    tukeyfence::Real=2, 
+    tukeyfence::Real=3, 
     softthreshlikeparam::SoftThreshLikeParam= SoftThreshLikeParam(), 
     threshlikeparam::ThreshLikeParam= ThreshLikeParam(),     
     commentstring::AbstractString="##",    
@@ -60,7 +60,7 @@ function shift_outlier_line(inio::IO,outio::IO,delio::IO; nheader, outliers::Abs
 end    
 
 function get_outlier_markers(mapfile::AbstractString;
-    tukeyfence::Real=2, 
+    tukeyfence::Real=3, 
     softthreshlikeparam::SoftThreshLikeParam= SoftThreshLikeParam(), 
     threshlikeparam::ThreshLikeParam= ThreshLikeParam(), 
     missingstring::AbstractString="NA",
@@ -74,7 +74,7 @@ end
 
 
 function get_outlier_markers(markermap::MagicBase.AbstractDataFrame; 
-    tukeyfence::Real=2, 
+    tukeyfence::Real=3, 
     softthreshlikeparam::SoftThreshLikeParam= SoftThreshLikeParam(), 
     threshlikeparam::ThreshLikeParam= ThreshLikeParam(), 
     )    
@@ -107,7 +107,7 @@ end
 
 
 function del_error_indices2(errorls::AbstractVector;	
-	tukeyfence::Real=2,
+	tukeyfence::Real=3,
 	softthresh=0.05,
 	hardthresh=0.25,
 	errorscale::Function)	

@@ -69,7 +69,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     softthreshlikeparam::SoftThreshLikeParam = SoftThreshLikeParam(),
     threshlikeparam::Union{Nothing, ThreshLikeParam} = ThreshLikeParam(),
     priorlikeparam::Union{Nothing, PriorLikeParam} = PriorLikeParam(), 
-    tukeyfence::Real=2,    
+    tukeyfence::Real=3,    
     israwcall::Bool= false, 
     threshcall::Real = 0.9,
     byfounder::Integer=0,
@@ -130,10 +130,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "workdir = ", workdir, "\n",
         "verbose = ", verbose)
     printconsole(logio,verbose,msg)    
-    if israwcall
-       msg = string("baseerror=", MagicBase.get_likeproperty(likeparam, :baseerror))
-       printconsole(logio,verbose,msg)
-    else
+    if isinfererror       
         if isnothing(threshlikeparam) 
             threshlikeparam = ThreshLikeParam()
             msg = string("reset threshlikeparam = ", threshlikeparam)
@@ -155,7 +152,10 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
             printconsole(logio,verbose,msg)
         end        
         msg = MagicBase.get_info_likeparam(likeparam; isinfererror, ismultiline=true)
-        printconsole(logio,verbose,msg)            
+        printconsole(logio,verbose,msg)           
+    else
+        msg = string("baseerror=", MagicBase.get_likeproperty(likeparam, :baseerror))
+        printconsole(logio,verbose,msg)    
     end
     genofile2 = MagicBase.getabsfile(workdir,genofile)
     isfile(genofile2) || error(string("Could not find ",genofile2))    
@@ -1405,8 +1405,9 @@ function infer_error_rawcall(offgeno::AbstractVector,offspringformat::AbstractSt
     if model == "depmodel"
         setdiff!(liketargetls,["allelicbias","allelicoverdispersion","allelicdropout"])
     end        
-    olderror = [epsf,epso, 0, baseerror,allelicbias, allelicoverdispersion, allelicdropout]    
-    isinfererror || return olderror    
+    olderror = [epsf,epso, epso_perind, baseerror,allelicbias, allelicoverdispersion, allelicdropout]    
+    olderror[1:3] .= 0.0
+    isinfererror || return olderror        
     logl = oldlogl = -Inf
     maxit = 25
     for it in 1:maxit
@@ -1443,13 +1444,13 @@ function infer_error_rawcall(offgeno::AbstractVector,offspringformat::AbstractSt
         end        
         isinfererror || break
     end
-    peroffspringerror = 0
-    esterrors = [epsf,epso, peroffspringerror, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
+    epso_perind = 0
+    esterrors = [epsf,epso, epso_perind, baseerror,allelicbias, allelicoverdispersion, allelicdropout]
     esterrors
 end    
 
 function infer_offpostprob_rawcall(offgeno::AbstractVector, offspringformat::AbstractString,esterrors::AbstractVector,israndallele::Bool)
-    _,epso,_, baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors    
+    _,epso,_, baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors        
     if offspringformat == "AD"
         # format = AD
         like0 = MagicReconstruct.diplolikeGBS(offgeno,epso,baseerror,

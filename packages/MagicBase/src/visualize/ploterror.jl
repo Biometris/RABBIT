@@ -1,7 +1,7 @@
 
 
 function plotmarkererror(mapfile::AbstractString;
-    tukeyfence::Real=2,
+    tukeyfence::Real=3,
     missingstring=["NA","missing"],
     commentstring::AbstractString="##",
     workdir::AbstractString = pwd())
@@ -11,7 +11,7 @@ function plotmarkererror(mapfile::AbstractString;
 end
 
 function plotmarkererror(markermap::AbstractDataFrame;
-    tukeyfence::Real=2)
+    tukeyfence::Real=3)
     colls = [:foundererror,:offspringerror,:baseerror,:allelicbias,:allelicoverdispersion,:allelicdropout]
     fencels = tukeyfence*ones(length(colls))
     b = [begin         
@@ -67,7 +67,7 @@ end
 
 
 function plot_peroffspringerror(perofffile::AbstractString;
-    tukeyfence::Real=2,    
+    tukeyfence::Real=3,    
     workdir::AbstractString = pwd())
     peroffspringerr = CSV.read(getabsfile(workdir, perofffile),DataFrame)    
     plot_peroffspringerror(peroffspringerr; tukeyfence)
@@ -75,7 +75,7 @@ end
 
 
 function plot_peroffspringerror(peroffspringerr::AbstractDataFrame;
-    tukeyfence::Real=2)
+    tukeyfence::Real=3)
     whisker_range = tukeyfence
     colnames = names(peroffspringerr)
     colls = findall(occursin.(r"^peroffspringerr",colnames))
