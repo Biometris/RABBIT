@@ -81,14 +81,14 @@ keyword-based struct for the thresholds of the likelihood parameters.
 In magiccall and magicimpute, markers with the inferred parameter values being greater than the thresholds will be deleted only if they are also outerliers. 
 In magicimpue, offspring with the inferred parameter values being greater than the thresholds will be excluded only if they are also outerliers. 
 
-SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.05, offspringerror=0.05, 
-peroffspringerror=0.05, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
+SoftThreshLikeParam() is equivalent to SoftThreshLikeParam(foundererror=0.025, offspringerror=0.025, 
+peroffspringerror=0.025, baseerror=0.01, allelicbias=0.67, allelicoverdispersion=0.5, allelicdropout=0.01). 
 
 """
 Base.@kwdef struct SoftThreshLikeParam    
-    foundererror::Float64 = 0.05
-    offspringerror::Float64 = 0.05
-    peroffspringerror::Float64 = 0.05
+    foundererror::Float64 = 0.025
+    offspringerror::Float64 = 0.025
+    peroffspringerror::Float64 = 0.025
     baseerror::Float64 = 0.01
     allelicbias::Float64 = 0.67
     allelicoverdispersion::Float64 = 0.5
