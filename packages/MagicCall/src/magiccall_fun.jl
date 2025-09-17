@@ -47,6 +47,8 @@ single marker genotype call from genofile and pedinfo.
 
 `samplesize::Integer = 200`: number of posterior samples of founder genotypes
 
+`burnin::Integer = 20`: number of initial iterations to be discarded. 
+
 `isparallel::Bool=true`: if true, parallel multicore computing over chromosomes.
 
 `outstem::Union{Nothing,AbstractString}="outstem"`: stem of output filenames.
@@ -80,6 +82,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     maxmiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 
     samplesize::Integer = 200,
+    burnin::Integer=20,
     isparallel::Bool=true,    
     outstem::AbstractString = "outstem",
     outext::AbstractString = ".vcf.gz",
@@ -122,7 +125,8 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "threshcall = ", threshcall, "\n",                
         "israwcall = ", israwcall, "\n",        
         "isinfererror = ", isinfererror, "\n",                
-        "samplesize = ", samplesize, "\n",                
+        "samplesize = ", samplesize, "\n",             
+        "burnin = ", burnin, "\n",             
         "isparallel = ", isparallel, isparallel ? string("(nworker=",nworkers(),")") : "", "\n",
         "outstem = ", outstem, "\n",
         "outext = ", outext, "\n",
@@ -189,7 +193,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
                     formatpriority, israndallele,isfounderinbred, byfounder, 
                     isdelmultiallelic, isdelmonomorphic, minmaf,maxmiss, 
                     threshcall, israwcall, isinfererror,
-                    iscalloffspring, samplesize, 
+                    iscalloffspring, samplesize, burnin, 
                     paragraphls,commentstring, nheader, workdir, verbose)            
             end
         end        
@@ -288,7 +292,9 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     threshcall::Real, 
     israwcall::Bool,
     isinfererror::Bool,
-    iscalloffspring::Bool, samplesize::Integer, 
+    iscalloffspring::Bool, 
+    samplesize::Integer, 
+    burnin::Integer,
     paragraphls::Union{Nothing,AbstractVector},    
     commentstring::AbstractString,
     nheader::Integer,     
@@ -329,7 +335,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             rowstring = readline(inio,keep=false)
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
-                minmaf,maxmiss,threshcall, isinfererror, iscalloffspring, samplesize, 
+                minmaf,maxmiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl)        
             if res[1] == "maxmiss"
                 write(delio,res[2],"\n")
@@ -376,7 +382,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             multirows = [readline(inio,keep=false) for i in 1:nline]                        
             res = pmap(x-> magiccall_rowgeno(x,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
-                minmaf, maxmiss, threshcall, isinfererror,iscalloffspring, samplesize, 
+                minmaf, maxmiss, threshcall, isinfererror,iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl), multirows)            
             for i in res
                 if i[1] == "maxmiss"
@@ -462,6 +468,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     isinfererror::Bool,
     iscalloffspring::Bool, 
     samplesize::Integer, 
+    burnin::Integer,
     likeparam::LikeParam,    
     threshlikeparam::ThreshLikeParam,    
     priorlikeparam::PriorLikeParam,    
@@ -486,7 +493,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     else        
         fhaplo_GT, fhaplo_GP, esterrors = infer_fhaploerror_singlesite(fgeno,founderformat, offgeno,offspringformat; 
             model, popmakeup, isfounderinbred, israndallele, isinfererror, byfounder, 
-            threshcall, samplesize, likeparam, priorlikeparam)                    
+            threshcall, samplesize, burnin,likeparam, priorlikeparam)                    
     end                    
     add_error_info!(rowgeno,esterrors)    
     # update rowgeno for founder geno         
@@ -1101,6 +1108,7 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     byfounder::Integer,
     threshcall::Real, 
     samplesize::Integer,      
+    burnin::Integer,
     likeparam::LikeParam,        
     priorlikeparam::PriorLikeParam)    
     liketargetls, epsf, epso, pereoffspringerror, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		        
@@ -1119,8 +1127,7 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     findexlist = calfindexlist(byfounder,fhaploset, popmakeup; isfounderinbred)        
     fhaplo_history = []
     error_history = []    
-    maxit = 10+samplesize
-    burnin = 10
+    maxit = burnin+samplesize    
     # dataprobls = MagicReconstruct.init_dataprobls_singlephase(popmakeup)    
     for it in 1:maxit            
         if in(founderformat, ["AD"])

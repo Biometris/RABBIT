@@ -7,7 +7,7 @@
 * MagicImpute: reset default trimfraction = 0.025, default skeletonsize = 100
 * MagicImpute: set tukeyfence = 2 for MagicImpute, and 3 for others (MagicCall and MagicReconstruct). 
 * MagicBase: new function plotmissing
-
+* MagicCall: add option burnin = 20
 
 ## RABBIT v1.3.3
 * magiccall: reset defaults: likeparameters, priorlikeparametes, threshoffspring
