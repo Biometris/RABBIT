@@ -211,7 +211,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     printconsole(logio,verbose,msg)        
     msg = string("save delmarker_genofile: ", delmarkerfile)
     printconsole(logio,verbose,msg)       
-    if !israwcall
+    if isinfererror
         for (i,mapfile) in enumerate([outfile2])                
             try 
                 figerr = plotmarkererror(mapfile;tukeyfence, workdir)
@@ -1115,7 +1115,8 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
     fhaploset,fhaploweight = priorfhaplo_singlesite(fgeno,founderformat; foundererror=epsf, 
         baseerror, allelicbias,allelicoverdispersion,allelicdropout, israndallele
     )
-    fhaplo = map((x,y)->x[rand(Categorical(y))], fhaploset, fhaploweight)        
+    # fhaplo = map((x,y)->x[rand(Categorical(y))], fhaploset, fhaploweight)        
+    fhaplo = map((x,y)->x[argmax(y)], fhaploset, fhaploweight)        
     setdiff!(liketargetls, ["foundererror", "peroffspringerror"])
     if occursin(r"^GT",offspringformat)
         setdiff!(liketargetls,["baseerror","allelicbias","allelicoverdispersion","allelicdropout"])
@@ -1135,14 +1136,15 @@ function infer_fhaploerror_singlesite(fgeno::AbstractVector, founderformat::Abst
                 baseerror, allelicbias,allelicoverdispersion,allelicdropout, israndallele
             )
         end
+        # epsf = 0.0: assuming each fhaplo of fhaplols is the hidden true value, epsf is accounted for by fhaploweight 
         update_fhaplo_singlesite!(fhaplo, fhaploset, fhaploweight, findexlist, offgeno; 
-            popmakeup, epsf,epso, baseerror,allelicbias, allelicoverdispersion, 
+            popmakeup, epsf = 0.0, epso, baseerror,allelicbias, allelicoverdispersion, 
             allelicdropout,offspringformat,israndallele
         )                    
         it > burnin && push!(fhaplo_history, isfounderinbred ? copy(fhaplo) : copy.(fhaplo))
         if isinfererror2
             for target in liketargetls
-                est = first(infer_error_singlesite(target, offgeno; fhaplo, popmakeup, epsf,epso, baseerror,
+                est = first(infer_error_singlesite(target, offgeno; fhaplo, popmakeup, epsf=0.0, epso, baseerror,
                     allelicbias, allelicoverdispersion, allelicdropout, offspringformat, 
                     priorlikeparam,israndallele,temperature = it<=1 ? 0 : 1))   # temperature = 1: posterior sampling, 0 = optimize
                 if target == "offspringerror"
@@ -1186,8 +1188,8 @@ end
 
 function update_fhaplo_singlesite!(fhaplo::AbstractVector, fhaploset::AbstractVector, fhaploweight::AbstractVector,
     findexlist::AbstractVector, offgeno::AbstractVector;        
-    popmakeup::AbstractDict,
-    epsf::Real,
+    popmakeup::AbstractDict,    
+    epsf::Real, 
     epso::Real,
     baseerror::Real,
     allelicbias::Real,
@@ -1197,7 +1199,7 @@ function update_fhaplo_singlesite!(fhaplo::AbstractVector, fhaploset::AbstractVe
     israndallele::Bool)        
     for findex in findexlist
         fhaplols = getfhaplols(findex,fhaplo,fhaploset)
-        in(fhaplo, fhaplols) || @error string("current fhaplo is not in the full list!")
+        in(fhaplo, fhaplols) || @error string("current fhaplo is not in the full list!")        
         logpls = callogl_singlesite_multiphase(fhaplols, offgeno; popmakeup, epsf,epso, baseerror,
             allelicbias, allelicoverdispersion, allelicdropout,offspringformat,israndallele) 
         logpls .+= [callogpri_fhaplo(fhaplo2, fhaploset, fhaploweight) for fhaplo2 in fhaplols]

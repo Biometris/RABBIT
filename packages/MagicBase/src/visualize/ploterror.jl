@@ -54,6 +54,9 @@ function plotmarkererror(markermap::AbstractDataFrame;
             legend=false, 
             title = string(col, ": tukeyfence=",whisker_range)
         )   
+        if col == :allelicbias
+            plot!(x->0.5, line=(2,:dash,:gray), legend=false) # no allelic bias
+        end
         g
     end for c in eachindex(colls)]
     nchr = length(unique(markermap[!,:linkagegroup]))
