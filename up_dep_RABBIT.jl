@@ -41,8 +41,7 @@ try
     end
     Pkg.activate()         
     0
-catch err
-    # @error ]err
+catch err    
     rethrow(err)
     -1
 finally

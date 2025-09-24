@@ -26,7 +26,7 @@ try
     @info rabbitversion()
     0
 catch err
-    @error err
+    rethrow(err)
     -1
 end
 
