@@ -1,6 +1,10 @@
 
 # Changelog
 
+## RABBIT v1.3.5
+* MagicFilter: if mono2miss = true, do nothing for too small subpopulation sizes
+* MagicFilter: reset default isdelinconsistent = true
+
 ## RABBIT v1.3.4
 * reset default theshcall = 0.9
 * MagicBase: fix commentlines of vcf

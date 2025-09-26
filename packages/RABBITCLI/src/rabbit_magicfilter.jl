@@ -89,7 +89,7 @@ function parse_commandline()
         "--isdelinconsistent"
         help = "if true, delete markers with inconsistent changes of founder genotypes."
         arg_type = Bool
-        default = false
+        default = true
         "--minsubpop"
         help = "delete subpopulaions with size < minsubpop"
         arg_type = Int
@@ -99,7 +99,7 @@ function parse_commandline()
         arg_type = Int
         default =1
         "--minmonotest"
-        help = "monomorphic test for a subpopulation at a marker only if #observed genotypes >= minmonotest."
+        help = "monomorphic test for a subpopulation at a marker is performed if #observed genotypes >= minmonotest and its minor allele frequency >=  minmaf"
         arg_type = Int
         default =20        
         "--mono2miss"

@@ -36,7 +36,7 @@ function magicfilter(genofile::AbstractString,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,    
     threshcall::Real = 0.9, 
     isdelmultiallelic::Bool=true,
-    isdelinconsistent::Bool = false,    
+    isdelinconsistent::Bool = true,    
     minsubpop::Integer = 1, 
     minnprogeny::Integer = 1,
     minmaf::Real=0.05,            
@@ -149,14 +149,14 @@ It must be "depmodel", "indepmodel", or "jointmodel".
 
 `minnprogeny::Integer = 1`: delete founder and their progeny if the number of progeny < minnprogeny.
 
-`minmonotest::Integer = 20`: a subpopulation is tested for monomorphic at a marker only if the number of observed genotypes >= snp\\_mono\\_subpop.
+`minmonotest::Integer = 20`: monomorphic test for a subpopulation at a marker is performed if #observed genotypes >= minmonotest and its minor allele frequency >=  minmaf
 
 `mono2miss::Union{Nothing,Bool} = true`: if true, all offspring genotypes in a monomorphic subpopulation are set to missing, 
 and otherwise only inconsistent offspring genotypes are set to missing. And if nothing, offspring genotypes are not changed.
 
-`isdelinconsistent::Bool = false`: if true, delete markers with inconsistent changes of founder genotypes. 
+`isdelinconsistent::Bool = true`: if true, delete markers with inconsistent changes of founder genotypes. 
 
-`minmaf::Real = 0.05`: keep only markers if maf >= snp\\_min\\_maf; maf denotes minor allele frequency.
+`minmaf::Real = 0.05`: keep only markers if maf >=  minmaf; maf denotes minor allele frequency.
 
 `missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0`: keep only markers if missfilter(fmiss, omiss);
 fmiss denotes missing fraction in founders, and omiss for offspring.
@@ -197,7 +197,7 @@ function magicfilter!(magicgeno::MagicGeno;
     minnprogeny::Integer = 1,    
     minmonotest::Integer = 20,	    
     mono2miss::Union{Nothing,Bool} = true,	 
-    isdelinconsistent::Bool = false,    
+    isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
     isfilterdupe::Bool=false,

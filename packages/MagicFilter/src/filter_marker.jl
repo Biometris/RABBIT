@@ -9,7 +9,7 @@ function filter_marker(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
     commentstring::AbstractString="##",    
     minmonotest::Integer = 20,
     mono2miss::Union{Nothing,Bool} = true,	        
-    isdelinconsistent::Bool = false,    
+    isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,        
     isparallel::Bool=false,
@@ -50,7 +50,7 @@ function filter_marker!(magicgeno::MagicGeno;
     threshcall::Real = 0.9,
     minmonotest::Integer = 20,	    
     mono2miss::Union{Nothing,Bool} = true,	    
-    isdelinconsistent::Bool = false,    
+    isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,    
     isparallel::Bool=false,
@@ -110,7 +110,7 @@ function filter_marker!(magicgeno::MagicGeno;
 end
 
 function filter_marker!(magicgeno::MagicGeno,snpsumfile::AbstractString;    
-    isdelinconsistent::Bool = false,
+    isdelinconsistent::Bool = true,
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,    
     minmaf::Real=0.05,                
     isparallel::Bool=false,    
@@ -164,7 +164,7 @@ function filter_marker!(magicgeno::MagicGeno,snpsumfile::AbstractString;
 end
 
 function filter_marker_chr!(magicgeno::MagicGeno,snpsum_gdf::GroupedDataFrame, chr::Integer;   
-    isdelinconsistent::Bool = false,
+    isdelinconsistent::Bool = true,
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,    
     logio::Union{Nothing,IO} = nothing,
@@ -476,18 +476,18 @@ function test_monomorphic_chr!(magicgeno::MagicGeno, chr::Integer,
                         continue
                     else    
                         if n1+n2 < 2*min_popsize                        
-                            if !isnothing(mono2miss) && mono2miss 
-                                misscode = MagicBase.get_missingcode(offformatls[snp])   
-                                for i in offspring
-                                    offgeno[snp,i] = misscode
-                                end
-                                if 0 in [n1,n2]                                
-                                    n1n2dict[popid] = [[0,0]]
-                                else
-                                    n1n2dict[popid] = [[n1,n2],[0,0]]
-                                end                      
-                                nnonmiss_mono2miss -= n11 + n12 + n22 # removing nonmiss from monomorphic subpopulations
-                            end                            
+                            # if !isnothing(mono2miss) && mono2miss 
+                            #     misscode = MagicBase.get_missingcode(offformatls[snp])   
+                            #     for i in offspring
+                            #         offgeno[snp,i] = misscode
+                            #     end
+                            #     if 0 in [n1,n2]                                
+                            #         n1n2dict[popid] = [[0,0]]
+                            #     else
+                            #         n1n2dict[popid] = [[n1,n2],[0,0]]
+                            #     end                      
+                            #     nnonmiss_mono2miss -= n11 + n12 + n22 # removing nonmiss from monomorphic subpopulations
+                            # end                            
                             continue
                         end
                     end
@@ -916,7 +916,7 @@ end
 
 function plot_missing_maf(snpsumfile::AbstractString;
     mono2miss::Union{Nothing,Bool}=true,
-    isdelinconsistent::Bool = false,
+    isdelinconsistent::Bool = true,
     minmaf::Real=0.05,
     commentstring::AbstractString = "##", 
     outstem::AbstractString= "outstem",    
@@ -952,7 +952,7 @@ end
 
 function plot_missdist(snpsumdf::AbstractDataFrame;        
     mono2miss::Union{Nothing,Bool}=true,
-    isdelinconsistent::Bool = false,
+    isdelinconsistent::Bool = true,
     annotate_foundermiss::Union{Nothing,Real}=nothing,
     annotate_offspringmiss::Union{Nothing,Real}=nothing)
     col = :founder_miss
@@ -1037,7 +1037,7 @@ end
 
 function plot_mafdist(snpsumdf::AbstractDataFrame;    
     mono2miss::Union{Nothing,Bool}=true,
-    isdelinconsistent::Bool = false,
+    isdelinconsistent::Bool = true,
     annotate_MAF::Union{Nothing,Real}=nothing)
     col = (!isnothing(mono2miss) && mono2miss)  ? :freqA2_mono2miss : :freqA2        
     if isdelinconsistent 
