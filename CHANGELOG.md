@@ -2,7 +2,7 @@
 # Changelog
 
 ## RABBIT v1.3.5
-* MagicFilter: if mono2miss = true, do nothing for too small subpopulation sizes
+* MagicFilter: if mono2miss = true, do nothing at a marker for a subpop with #obs < minmontest 
 * MagicFilter: reset default isdelinconsistent = true
 
 ## RABBIT v1.3.4

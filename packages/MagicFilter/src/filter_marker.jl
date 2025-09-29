@@ -9,6 +9,7 @@ function filter_marker(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
     commentstring::AbstractString="##",    
     minmonotest::Integer = 20,
     mono2miss::Union{Nothing,Bool} = true,	        
+    maxinconsistent::Real=0.05, 
     isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,        
@@ -32,7 +33,7 @@ function filter_marker(genofile::AbstractString,pedinfo::Union{Integer,AbstractS
         commentstring, missingstring="NA", workdir)
     outstem *= "_filter_marker"    
     filter_marker!(magicgeno; model, isfounderinbred, threshcall,
-        minmonotest,epso,mono2miss,
+        minmonotest,epso,mono2miss,maxinconsistent, 
         isdelinconsistent,minmaf, missfilter, 
         isparallel, outstem, logfile=logio, workdir, verbose)
     outfile = outstem*".vcf.gz"
@@ -50,6 +51,7 @@ function filter_marker!(magicgeno::MagicGeno;
     threshcall::Real = 0.9,
     minmonotest::Integer = 20,	    
     mono2miss::Union{Nothing,Bool} = true,	    
+    maxinconsistent::Real=0.05, 
     isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> fmiss<=1.0 && omiss<=1.0,    
@@ -90,7 +92,7 @@ function filter_marker!(magicgeno::MagicGeno;
     end    
     printconsole(logio,verbose,"-----monomorphic test for each subpopulation at each marker")
     outfiles = test_monomorphic!(magicgeno; model, epso,isfounderinbred, threshcall, 
-        minmonotest,marker_mono_correct,mono2miss,
+        minmonotest,marker_mono_correct,mono2miss, maxinconsistent, 
         minmaf, 
         isparallel, outstem, logio, workdir, verbose)
     MagicBase.info_missing(magicgeno;io=logio,verbose)    
@@ -258,6 +260,7 @@ function test_monomorphic!(magicgeno::MagicGeno;
     isfounderinbred::Bool=true,    
     threshcall::Real = 0.9,
     minmonotest::Integer = 20,	        
+    maxinconsistent::Real=0.05, 
     marker_mono_correct::Bool = true,
     mono2miss::Union{Nothing,Bool} = true,	    
     minmaf::Real=0.05,            
@@ -336,7 +339,7 @@ function test_monomorphic!(magicgeno::MagicGeno;
         GC.gc()
         resls = pmap(x-> test_monomorphic_chr!(x, 1, model,magicprior; 
             epso,isfounderinbred, threshcall, minmaf, marker_mono_prob, 
-            minmonotest,marker_mono_correct,mono2miss,
+            minmonotest,marker_mono_correct,mono2miss,maxinconsistent, 
             logio=nothing,outstem,workdir,verbose), magicgenols)
         magicgenols .= first.(resls)
         magicgeno.markermap = [i.markermap[1] for i in magicgenols]
@@ -367,7 +370,7 @@ function test_monomorphic!(magicgeno::MagicGeno;
         changecounts = Vector(undef, nchr)
         for chr in 1:nchr
             _, changecounts[chr],_, chroutfiles = test_monomorphic_chr!(magicgeno, chr, model,magicprior; 
-                epso,isfounderinbred, threshcall, minmaf, marker_mono_prob,
+                epso,isfounderinbred, threshcall, minmaf, marker_mono_prob, maxinconsistent, 
                 minmonotest,marker_mono_correct,mono2miss,
                 logio,outstem,workdir,verbose
             )
@@ -410,6 +413,7 @@ function test_monomorphic_chr!(magicgeno::MagicGeno, chr::Integer,
     minmonotest::Integer = 20,	        
     marker_mono_correct::Bool = true,
     mono2miss::Union{Nothing,Bool} = true,	    
+    maxinconsistent::Real=0.05, 
     logio::Union{Nothing,IO}=nothing,
     outstem::AbstractString= "outstem",
     workdir::AbstractString=pwd(),
@@ -455,51 +459,49 @@ function test_monomorphic_chr!(magicgeno::MagicGeno, chr::Integer,
                 founderchanges = Vector()                    
                 n1n2dict = OrderedDict{String,Vector{Vector{Int}}}()
                 for popinfo in popinfols                    
-                    popid, ishaploid, founders, offspring, freq_a2, min_popsize = popinfo                    
+                    popid, ishaploid, founders, offspring, freq_a2, min_popsize,inbredcoef = popinfo                    
                     offseq = calledgeno[snp,offspring]
                     if ishaploid
-                        n1 = 2*sum(offseq .== "11")
-                        n2 = 2*sum(offseq .== "22")
-                        n11 = n1; 
-                        n22 = n2
+                        n11 = sum(offseq .== "11")
+                        n22 = sum(offseq .== "22")
                         n12 = 0 
+                        n1 = 2*n11
+                        n2 = 2*n22
+                        # n1indep = n11
+                        # n2indep = n22
                     else
                         n11 = sum(offseq .== "11")
                         n12 = sum(offseq .== "12")
                         n22 = sum(offseq .== "22")
                         n1 = 2*n11+n12+sum(offseq .== "1N")
-                        n2 = 2*n22+n12+sum(offseq .== "2N")                        
+                        n2 = 2*n22+n12+sum(offseq .== "2N")          
+                        # n1indep = n11*(2-inbredcoef) + n12
+                        # n2indep = n22*(2-inbredcoef) + n12              
                     end            
-                    push!(n1n2dict, popid=>[[n1,n2]])                    
+                    push!(n1n2dict, popid=>[[n1,n2]])          
+                    length(offspring) < min_popsize && continue          
                     nnonmiss_mono2miss += n11 + n12 + n22
-                    if length(popinfols)==1 || (1-minmaf >= n1/(n1+n2) >= minmaf)
+                    if length(popinfols)==1 || (1-minmaf >= n1/(n1+n2) >= minmaf) || (n1 + n2 < 2*minmonotest)
+                        # conditions of min_popsize is to save time, since the monotest would be alway fase if size < min_popsize 
                         continue
-                    else    
-                        if n1+n2 < 2*min_popsize                        
-                            # if !isnothing(mono2miss) && mono2miss 
-                            #     misscode = MagicBase.get_missingcode(offformatls[snp])   
-                            #     for i in offspring
-                            #         offgeno[snp,i] = misscode
-                            #     end
-                            #     if 0 in [n1,n2]                                
-                            #         n1n2dict[popid] = [[0,0]]
-                            #     else
-                            #         n1n2dict[popid] = [[n1,n2],[0,0]]
-                            #     end                      
-                            #     nnonmiss_mono2miss -= n11 + n12 + n22 # removing nonmiss from monomorphic subpopulations
-                            # end                            
-                            continue
-                        end
                     end
-                    prob_post = cal_post_prob(n1,n2,freq_a2)                        
                     ischange = true
+                    prob_post = cal_post_prob(n1/2,n2/2,freq_a2)
                     if last(prob_post) > marker_mono_prob                        
                         newgeno = isfounderinbred ? "2" : "22"
                     elseif first(prob_post) > marker_mono_prob                        
                         newgeno = isfounderinbred ? "1" : "11"
                     else
                         ischange = false
-                    end        
+                    end                
+                    # if (n1indep + n2indep < min_popsize) && ischange
+                    #     @info " " ischange min_popsize length(offspring) n1indep n2indep prob_post freq_a2
+                    # end
+                    # if !ischange
+                    #     strprobpost = join(round.(prob_post,digits=2),"|")
+                    #     strfreqa2 = join(round.(freq_a2,digits=3),"|")
+                    #     @info " " ischange min_popsize length(offspring) n1indep n2indep strprobpost strfreqa2 maxlog=20
+                    # end
                     if ischange                            
                         # TODO: for outbred founders
                         # booking monomorphic
@@ -517,16 +519,18 @@ function test_monomorphic_chr!(magicgeno::MagicGeno, chr::Integer,
                 if !isempty(founderchanges)  
                     founderchanges2 = permutedims(reduce(hcat,founderchanges))
                     fchangedf = DataFrame(founderchanges2,colnames)                    
-                    MagicFilter.set_mono_inconsistent!(fchangedf)                    
-                    inconsistls = Vector{Bool}(fchangedf[!,:marker_inconsistent])  
-                    marker_inconsistent = any(inconsistls) 
+                    MagicFilter.set_mono_inconsistent!(fchangedf)                
+                    b = [any(df[!,:marker_inconsistent]) for df in groupby(fchangedf,:ind_index)]
+                    marker_inconsistent = mean(b) > maxinconsistent
+                    # @info " " length(inconsistls) sum(inconsistls) marker_inconsistent size(foundergeno,2) maxlog = 20
                     # set founder genotypes to missing if they have marker_inconsistent imputations or corrections                            
-                    if marker_inconsistent 
-                        nmarker_inconsist += 1 
+                    inconsistls = Vector{Bool}(fchangedf[!,:marker_inconsistent])  
+                    if any(b) 
+                        nmarker_inconsist += marker_inconsistent 
                         fchangedf_inconsist = fchangedf[inconsistls,:]
                         inconsistent_founder_2miss!(foundergeno,fchangedf_inconsist)                            
                     end
-                    # founder imputation or correction
+                    # founder imputation or correction                    
                     fchangedf_consist = fchangedf[.!inconsistls,:]
                     if !isempty(fchangedf_consist)
                         nimpute, ncorrect = change_founder!(foundergeno,fchangedf_consist,isfounderinbred,marker_mono_correct)                        
@@ -670,9 +674,10 @@ function get_popinfols(popmakeup::AbstractDict;
         initprob = popmakeup[popid]["initprob"]
         nzorigin = popmakeup[popid]["nzorigin"]
         ishaploid = popmakeup[popid]["ishaploid"]
+        inbredcoef = ishaploid ? 1.0 : dot(allequal.(nzorigin), initprob)
         freq_a2 = possible_freq_a2(ishaploid,nzorigin, fgls,initprob,epso)
         min_popsize = cal_min_popsize(freq_a2, marker_mono_prob; minmonotest)    
-        (popid, ishaploid, founders, offspring, freq_a2, min_popsize)
+        (popid, ishaploid, founders, offspring, freq_a2, min_popsize,inbredcoef)
     end for popid in keys(popmakeup)]
     res
 end
@@ -685,7 +690,7 @@ function set_mono_inconsistent!(fchangedf::DataFrame)
     b = len .> 1    
     if any(b)        
         for df in  gdf[b]
-            df[!,:marker_inconsistent] .= true            
+            df[!,:marker_inconsistent] .= true
         end
     end    
     fchangedf
@@ -817,24 +822,14 @@ function possible_freq_a2(ishaploid::Bool, nzorigin::AbstractVector,
 end
 
 
-function cal_post_prob(n1::Integer, n2::Integer,freq_a2::AbstractVector)
-    # logl = [begin
-    #     if f_a2 <= 0.5
-    #         alpha = 1.0
-    #         beta = alpha/f_a2 - alpha
-    #     else
-    #         beta = 1.0
-    #         alpha = beta/(1-f_a2) - beta
-    #     end
-    #     logbeta(n2+alpha,n1+beta) - logbeta(alpha,beta)
-    # end for f_a2  in freq_a2]
+function cal_post_prob(n1::Real, n2::Real,freq_a2::AbstractVector)
     logl = [n1*log(1-i)+n2*log(i) for i in freq_a2]
     prob_post = normalize(exp.(logl .- max(logl...)),1)
     prob_post
 end
 
 function cal_min_popsize(freq_a2::AbstractVector,marker_mono_prob::Real;
-    minmonotest::Integer=20)
+    minmonotest::Integer=5)
     function f(n2,freq_a2, marker_mono_prob)
         prob_post = cal_post_prob(n1,n2,freq_a2)
         d = last(prob_post) - marker_mono_prob
@@ -854,7 +849,7 @@ function cal_min_popsize(freq_a2::AbstractVector,marker_mono_prob::Real;
             break
         end
     end
-    max(minmonotest,n1+n2)
+    max(minmonotest,n1+n2-1)
 end
 
 function get_pop2offindices(magicped::MagicPed)

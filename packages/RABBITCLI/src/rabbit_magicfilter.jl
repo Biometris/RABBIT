@@ -101,7 +101,7 @@ function parse_commandline()
         "--minmonotest"
         help = "monomorphic test for a subpopulation at a marker is performed if #observed genotypes >= minmonotest and its minor allele frequency >=  minmaf"
         arg_type = Int
-        default =20        
+        default = 20        
         "--mono2miss"
         help = "if true, offspring genotypes in each monomorphic subpopulation are set to missing, and otherwise only inconsistent offspring genotypes are corrected. And if it is nothing, offspring genotypes are not changed."        
         arg_type = AbstractString

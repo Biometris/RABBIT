@@ -37,10 +37,11 @@ function magicfilter(genofile::AbstractString,
     threshcall::Real = 0.9, 
     isdelmultiallelic::Bool=true,
     isdelinconsistent::Bool = true,    
+    maxinconsistent::Real=0.05, 
     minsubpop::Integer = 1, 
     minnprogeny::Integer = 1,
     minmaf::Real=0.05,            
-    minmonotest::Integer = max(20,round(Int,1/minmaf)),	    
+    minmonotest::Integer = 20,	    
     mono2miss::Union{Nothing,Bool} = true,	    
     missfilter::Union{NamedTuple,Function}= (fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
     isfilterdupe::Bool=false,
@@ -82,7 +83,7 @@ function magicfilter(genofile::AbstractString,
     magicfilter!(magicgeno; model, likeparam,
         isfounderinbred,  threshcall,
         chrsubset,snpsubset,      
-        minsubpop,minnprogeny,
+        minsubpop,minnprogeny,maxinconsistent, 
         minmonotest, isdelinconsistent,mono2miss,
         missfilter,minmaf, 
         offspring_maxmiss,
@@ -154,6 +155,10 @@ It must be "depmodel", "indepmodel", or "jointmodel".
 `mono2miss::Union{Nothing,Bool} = true`: if true, all offspring genotypes in a monomorphic subpopulation are set to missing, 
 and otherwise only inconsistent offspring genotypes are set to missing. And if nothing, offspring genotypes are not changed.
 
+`maxinconsistent::Real=0.05`: deleate a marker if isdelinconsistent = true and if the ratio of the number of founders with inconsistent genotype estimations 
+ to the number of founders with estimations > maxinconsistent. 
+
+
 `isdelinconsistent::Bool = true`: if true, delete markers with inconsistent changes of founder genotypes. 
 
 `minmaf::Real = 0.05`: keep only markers if maf >=  minmaf; maf denotes minor allele frequency.
@@ -197,6 +202,7 @@ function magicfilter!(magicgeno::MagicGeno;
     minnprogeny::Integer = 1,    
     minmonotest::Integer = 20,	    
     mono2miss::Union{Nothing,Bool} = true,	 
+    maxinconsistent::Real=0.05, 
     isdelinconsistent::Bool = true,    
     minmaf::Real=0.05,            
     missfilter::Function=(fmiss,omiss)-> omiss <= 1.0 || fmiss < 0.0,
@@ -249,7 +255,7 @@ function magicfilter!(magicgeno::MagicGeno;
     end
     filter_marker!(magicgeno; model, isfounderinbred, threshcall,
         minmonotest, epso,
-        isdelinconsistent,mono2miss,
+        isdelinconsistent,mono2miss, maxinconsistent, 
         missfilter, minmaf,
         outstem, logfile=logio, 
         isparallel, workdir, verbose)

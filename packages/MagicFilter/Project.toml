@@ -1,7 +1,7 @@
 name = "MagicFilter"
 uuid = "8c7048f2-57fb-40e0-917f-e21f0131532e"
 authors = ["Zheng, Chaozhi <chaozhi@gmail.com>"]
-version = "1.2.2"
+version = "1.2.3"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
