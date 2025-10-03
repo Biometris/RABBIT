@@ -2,7 +2,7 @@ function tryusing(pkgname::AbstractString)
     try 
         @eval using $(Symbol(pkgname))
     catch       
-        Pkg.add($pkgname)
+        Pkg.add(pkgname)
         @eval using $(Symbol(pkgname))
     end
 end
