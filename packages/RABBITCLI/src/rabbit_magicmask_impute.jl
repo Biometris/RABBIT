@@ -1,16 +1,13 @@
 function tryusing(pkgname::AbstractString)
-    try
-        # @eval using Pkg
-        # Pkg.update(pkgname)
+    try        
         @eval using $(Symbol(pkgname))
     catch
-        @eval using Pkg
-        @eval Pkg.add($pkgname)
+        Pkg.add($pkgname)
         @eval using $(Symbol(pkgname))
     end
 end
 
-
+using Pkg
 tryusing("ArgParse")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
@@ -29,8 +26,7 @@ try
         throw(error(string("inconsistent package directories: ", repodir, " vs ", repodir2)))
     end
 catch err
-    @warn err        
-    @eval using Pkg
+    @warn err            
     @info string("Install MagicImpute and its dependencies from ",repodir)
     for pn in ["HMM", "Pedigrees","MagicBase","MagicPrior","MagicReconstruct","MagicImpute"]
         Pkg.develop(path=joinpath(repodir,pn))

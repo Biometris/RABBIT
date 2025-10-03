@@ -1,17 +1,15 @@
 function tryusing(pkgname::AbstractString)
     try
-        # @eval using Pkg
-        # Pkg.update(pkgname)
         @eval using $(Symbol(pkgname))
-    catch
-        @eval using Pkg
-        @eval Pkg.add($pkgname)
+    catch        
+        Pkg.add($pkgname)
         @eval using $(Symbol(pkgname))
     end
 end
 
 # mapfilehelp *= "If there exist columns "binno" and "represent", markers with the same binno are binned; the represent being given by the marker with non-zero value in column "represent".  All the reset columns are ignored. "
 
+using Pkg
 tryusing("ArgParse")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
@@ -32,8 +30,7 @@ catch err
     @warn err    
     # installfile = joinpath(repodir, "install_RABBIT.jl")
     # isfile(installfile) || @error string(installfile, "does not exist")
-    # include(installfile)
-    @eval using Pkg
+    # include(installfile)    
     @info string("Install MagicImpute and its dependencies from ",repodir)
     for pn in ["HMM", "Pedigrees","MagicBase","MagicPrior","MagicReconstruct","MagicImpute"]
         Pkg.develop(path=joinpath(repodir,pn))

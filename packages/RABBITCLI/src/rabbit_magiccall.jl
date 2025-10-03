@@ -1,16 +1,13 @@
 function tryusing(pkgname::AbstractString)
-    try
-        # @eval using Pkg
-        # Pkg.update(pkgname)
+    try        
         @eval using $(Symbol(pkgname))
     catch
-        @eval using Pkg
-        @eval Pkg.add($pkgname)
+        Pkg.add($pkgname)
         @eval using $(Symbol(pkgname))
     end
 end
 
-
+using Pkg
 tryusing("ArgParse")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
@@ -32,7 +29,6 @@ catch err
     # installfile = joinpath(repodir, "install_RABBIT.jl")
     # isfile(installfile) || @error string(installfile, "does not exist")
     # include(installfile)
-    @eval using Pkg
     @info string("Install MagicCall and its dependencies from ",repodir)
     for pn in ["HMM", "Pedigrees","MagicBase","MagicPrior","MagicReconstruct","MagicCall"]
         Pkg.develop(path=joinpath(repodir,pn))
