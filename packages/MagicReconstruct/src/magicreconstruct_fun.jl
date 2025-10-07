@@ -43,7 +43,7 @@ function magicreconstruct(genofile::AbstractString,
     posteriordigits::Integer = 4, 
     thincm::Real = 0, 
     tukeyfence::Real=3,
-    isparallel::Bool=true,
+    isparallel::Bool=false,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
     commentstring::AbstractString="##",
@@ -121,7 +121,7 @@ haplotype reconstruction from magicgeno.
 
 `thincm::Real = 0`: thin ancestry results so that inter-marker distances > thincm. 
 
-`isparallel::Bool=true`: if true, multicore computing over chromosomes.
+`isparallel::Bool=false`: if true, multicore computing over chromosomes.
 
 `workdir::AbstractString=pwd()`: working directory for input and output files.
 
@@ -156,7 +156,7 @@ function magicreconstruct!(magicgeno::MagicGeno;
     posteriordigits::Integer = 4, 
     thincm::Real = 0, 
     tukeyfence::Real=3,
-    isparallel::Bool=true,
+    isparallel::Bool=false,
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString = tempdir(),
     outstem::Union{Nothing,AbstractString}="outstem",
