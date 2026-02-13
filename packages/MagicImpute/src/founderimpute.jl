@@ -105,10 +105,11 @@ function get_bdiff(oldchrfhaplo, newchrfhaplo, snpincl)
     bdiff
 end
 
-function get_fmissls(fhaplosetpp::AbstractVector)
+function get_fmissls(fhaplosetpp::AbstractVector; isfounderinbred=true)
+    nc = isfounderinbred ? 2 : 4 
     [begin 
         len = length.(fhaplosetpp[i])         
-        mean(len .>= 2)
+        mean(len .>= nc)
     end for i in eachindex(fhaplosetpp)]
 end
 

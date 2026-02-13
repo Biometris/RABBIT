@@ -320,7 +320,7 @@ function inverse_parsegenomtx!(genomtx::AbstractMatrix, formatvec::AbstractVecto
                 uni_subres = unique(subres)                
                 d = setdiff(uni_subres, first.(rule))
                 if !isempty(d) 
-                    error(string("unknown genotypes = ",d, " for format=", format))
+                    error(string("unknown genotypes = ",d, " for format=", format, ", uni_subres=",uni_subres))
                 end
                 replace!(subres,rule...)
             elseif format == "GT_unphased"

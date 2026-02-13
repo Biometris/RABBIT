@@ -10,6 +10,7 @@ end
 
 using Pkg
 tryusing("ArgParse")
+tryusing("Distributed")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
 
@@ -205,8 +206,7 @@ function main(args::Vector{String})
     # set up parallel
     nworker = parsed_args[:nworker]
     isparallel = nworker <= 1 ? false : true
-    if isparallel
-        tryusing("Distributed")
+    if isparallel        
         if nworkers()>1
             pids = workers()
             @info string("remove current workers ", pids)

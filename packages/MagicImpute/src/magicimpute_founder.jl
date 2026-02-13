@@ -10,12 +10,13 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	byfounder::Integer=0,	
 	startbyhalf::Union{Nothing,Integer}=5, 
 	isgreedy::Bool=false,
-	isrepeatimpute::Union{Nothing,Bool}=false, 
+	isrepeatimpute::Union{Nothing,Bool}=nothing, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,     
 	inputneighbor::Union{Nothing,AbstractDict}=nothing,
 	isinferjunc::Union{Nothing, Bool} = false, 
 	iscorrectfounder::Union{Nothing, Bool} = true,    
+	isdelmono::Bool=true, 
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,    		
 	skeletonsize::Union{Nothing,Integer}=100, 	
@@ -52,7 +53,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	epso = MagicBase.get_likeproperty(likeparam, :offspringerror)	
 	MagicReconstruct.check_common_arg(model, epsf, epso, baseerror,
         workdir, tempdirectory)
-	check_impute_arg(0.9,byfounder,
+	check_impute_arg(0.9,0.3,byfounder,
         delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate)
     model = MagicBase.reset_model(magicgeno.magicped,model;io,verbose)
     isparallel = isparallel && nprocs() > 1	&& (length(magicgeno.markermap) > 1 || nrepeatmax == nrepeatmin > 1)	
@@ -74,7 +75,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		"nrepeatmax = ", nrepeatmax, "\n",	
 		"inputneighbor = ", isnothing(inputneighbor) ? "nothing" : string("dict of size ",length(inputneighbor)), "\n",
 		"isinferjunc = ", isinferjunc, "\n",
-		"iscorrectfounder = ", iscorrectfounder, "\n",		
+		"iscorrectfounder = ", iscorrectfounder, "\n",	
+		"isdelmono = ", isdelmono, "\n",	
         "isdelmarker = ", isdelmarker, "\n",
         "delsiglevel = ", delsiglevel, "\n",
         "isinfererror = ", isinfererror, "\n",				
@@ -213,7 +215,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		if isimputefounder === false
 			isrepeatimpute2 = false 
 		else
-			isrepeatimpute2 = get_isrepeat_impute(magicgeno; isfounderinbred,maxfmiss=0.5)		
+			isrepeatimpute2 = get_isrepeat_impute(magicgeno; isfounderinbred,maxfmiss=0.6)		
 		end
 		printconsole(io,verbose, string("reset isrepeatimpute = ", isrepeatimpute2))	
 	else
@@ -240,7 +242,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-				isdelmarker, isinfererror, quickinfererror = true, 
+				isdelmono, isdelmarker, isinfererror, quickinfererror = true, 
 				isspacemarker = false, 
 				isordermarker = false, 
 				delsiglevel, tukeyfence,  trimcm, trimfraction, skeletonsize, 
@@ -253,7 +255,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 			# length(partmagicgenols) > 1 && !isordermarker 			
 			for partmagicgeno in partmagicgenols
 				if isnothing(isrepeatimpute)
-					isrepeatimpute_sub = get_isrepeat_impute(partmagicgeno; isfounderinbred,maxfmiss=0.5)		
+					isrepeatimpute_sub = get_isrepeat_impute(partmagicgeno; isfounderinbred,maxfmiss=0.6)		
 					isrepeatimpute_sub || continue				
 				end
 				subpopls = unique(partmagicgeno.magicped.offspringinfo[!,:member])								
@@ -264,7 +266,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, isinfererror, quickinfererror = true, 
+					isdelmono, isdelmarker, isinfererror, quickinfererror = true, 
 					isspacemarker = false, 
 					isordermarker = false, 
 					delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
@@ -310,7 +312,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, quickinfererror=false, 
 		israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy,
 		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,	threshproposal, 
-		isdelmarker, isinfererror, isordermarker, isspacemarker, 
+		isdelmono, isdelmarker, isinfererror, isordermarker, isspacemarker, 
 		delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
 		slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
 		inittemperature, coolrate, minaccept,spacebyviterbi,                 
@@ -497,9 +499,9 @@ function get_isrepeat_impute_old(magicgeno::MagicGeno,chr::Integer;
     model::AbstractString,     
     isfounderinbred::Bool,
     byfounder::Integer=0,
-    maxfmiss=0.5)
+    maxfmiss=0.6)
 	fhaplosetpp = MagicImpute.calfhaploprior(magicgeno,chr)		
-	fmissls = get_fmissls(fhaplosetpp) 	
+	fmissls = get_fmissls(fhaplosetpp; isfounderinbred) 	
     popmakeup = MagicReconstruct.calpopmakeup(magicgeno,chr,model, magicprior; isfounderinbred)    	
 	founderformat = unique(magicgeno.markermap[chr][!,:founderformat])	
 	isfounderphased = issubset(["GT_phased"], founderformat)
@@ -510,19 +512,15 @@ end
 
 
 function get_isrepeat_impute(magicgeno::MagicGeno,chr::Integer;        
-    isfounderinbred::Bool, maxfmiss=0.5)
-	if isfounderinbred
-		fhaplosetpp = MagicImpute.calfhaploprior(magicgeno,chr)		
-		fmissls = get_fmissls(fhaplosetpp) 	    
-		maximum(fmissls) > maxfmiss					
-	else
-		true
-	end	
+    isfounderinbred::Bool, maxfmiss=0.6)
+	fhaplosetpp = MagicImpute.calfhaploprior(magicgeno,chr)		
+	fmissls = get_fmissls(fhaplosetpp; isfounderinbred) 	    				
+	maximum(fmissls) > maxfmiss						
 end
 
 function get_isrepeat_impute(magicgeno::MagicGeno;     
     isfounderinbred::Bool,    
-    maxfmiss=0.5)    
+    maxfmiss=0.6)    
     nchr = length(magicgeno.markermap)
     any([get_isrepeat_impute(magicgeno,chr; isfounderinbred,maxfmiss) for chr in 1:nchr])
 end
@@ -572,6 +570,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool,
 	threshproposal::Real, 
+	isdelmono::Bool=true, 
     isdelmarker::Bool = true,    
 	isinfererror::Bool = false,	
 	isordermarker::Bool = !isnothing(inputneighbor),
@@ -652,7 +651,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 					model,israndallele, isfounderinbred,
 					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, delsiglevel,
+					isdelmono, isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin, slidewin_neighbor,orderactions, orderactions_neighbor,
@@ -688,7 +687,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 					model,israndallele, isfounderinbred,
 					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, delsiglevel,
+					isdelmono, isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,
@@ -735,6 +734,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool, 
 	threshproposal::Real, 
+	isdelmono::Bool=true, 
     isdelmarker::Bool = true,    
 	isinfererror::Bool = false,	
 	isordermarker::Bool = !isnothing(inputneighbor),
@@ -832,7 +832,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 					model,israndallele, isfounderinbred,
 					byfounder, startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, delsiglevel,
+					isdelmono, isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin, slidewin_neighbor,orderactions, orderactions_neighbor,
@@ -868,7 +868,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 					model,israndallele, isfounderinbred,
 					byfounder,startbyhalf, isgreedy, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-					isdelmarker, delsiglevel,
+					isdelmono, isdelmarker, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
 					isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 					isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,

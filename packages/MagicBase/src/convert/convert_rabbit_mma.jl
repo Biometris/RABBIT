@@ -67,6 +67,7 @@ convert input genofile of Mathematica-version RABBIT into genofile for Julia-ver
 
 """
 function rabbitgeno_mma2jl(mmagenofile::AbstractString;
+    isfounderphased::Bool=false,
     outfile::AbstractString = "outstem_geno.vcf.gz",
     workdir::AbstractString=pwd())
     ext = last(splitext(mmagenofile))
@@ -84,7 +85,14 @@ function rabbitgeno_mma2jl(mmagenofile::AbstractString;
     if issubset(gset,["1","2","N"])
         fformat = "GT_haplo"    
     elseif issubset(gset,["NN", "N1", "1N", "N2", "2N", "11", "12", "21", "22"])
-        fformat = "GT_unphased"
+        if isfounderphased
+            fformat = "GT_phased"
+            for j in 1:nf
+                genodf[!,j] .= [join(split(i,""),"|") for i in genodf[!,j]]
+            end
+        else
+            fformat = "GT_unphased"        
+        end        
     elseif all([sum(i .== "|")==1 for i in split.(gset,"")])
         fformat = "AD"
     else
@@ -115,4 +123,95 @@ function rabbitgeno_mma2jl(mmagenofile::AbstractString;
     magicgeno = MagicBase.formmagicgeno!(resdf, magicped;isfounderinbred, isphysmap=false)
     outfile2 = getabsfile(workdir, outfile)
     savegenodata(outfile2,magicgeno; delim='\t',commentstring = "##",workdir)
+end
+
+
+
+function magicgeno_2rabbitmma(genofile::AbstractString,pedinfo::AbstractString;
+    isfounderinbred::Bool=true,
+    formatpriority::AbstractVector=["AD","GT"],    
+    isphysmap::Bool=false,
+    recomrate::Real=1.0,
+    isdelmultiallelic::Bool=true,
+    commentstring::AbstractString="##",
+    missingstring=["NA","missing"],    
+    outstem::AbstractString = "outstem",
+    workdir::AbstractString=pwd())
+    magicgeno = formmagicgeno(genofile, pedinfo; isphysmap,recomrate,formatpriority,isfounderinbred, isdelmultiallelic, commentstring, missingstring, workdir); 
+    magicgeno_2rabbitmma(magicgeno; outstem, workdir)
+end
+
+
+function magicgeno_2rabbitmma(magicgeno::MagicGeno; 
+    outstem::AbstractString = "outstem",
+    workdir::AbstractString=pwd())    
+    fls = magicgeno.magicped.founderinfo[!,:individual]
+    offfls = magicgeno.magicped.offspringinfo[!,:individual]
+    nfounder = length(fls)
+    samplels = vcat(fls,offfls)
+    outfile = joinpath(workdir, string(outstem,"_mma_geno.csv"))
+    open(outfile,"w") do io    
+        delim2 = ','
+        write(io, string("nfounder,",nfounder),"\n")
+        # save markermap
+        markermap = reduce(vcat, magicgeno.markermap)
+        markermap2 = markermap[!,1:3]
+        mapmtx = hcat(reshape(names(markermap2),:,1),permutedims(Matrix(markermap2)))
+        writedlm(io,mapmtx,delim2)    
+        # save genodata    
+        colls = _col_1stsample:(_col_1stsample + length(samplels) -1)
+        resmtx = reduce(hcat,[begin 
+            mtx = togenomtx(magicgeno, chr; isvcf=false, missingstring = "NA", target="all")            
+            mtx2 = permutedims(mtx[:,colls])
+            for i in eachindex(mtx2)
+                g = mtx2[i]
+                if occursin("&",g)
+                    mtx2[i] = replace(g, "&"=>"|")
+                elseif occursin("|",g)
+                    ls = split(g, "|")
+                    mtx2[i] = join(replace(x-> x== "0" ? "1" : "2", ls))
+                elseif occursin("/",g)                    
+                    ls = split(g, "/")
+                    mtx2[i] = join(replace(x-> x== "0" ? "1" : "2", ls))
+                elseif in(g, ["11","12","21","22","N1","1N","N2","2N","NN","1","2","N"])
+                    0 # do nothing
+                else
+                    @error string("unknown genotype = ", g) maxlog=10                    
+                end
+            end
+            mtx2
+        end for chr in eachindex(magicgeno.markermap)])    
+        resmtx = hcat(reshape(samplels, :,1), resmtx)
+        writedlm(io,resmtx,delim2)
+        flush(io)    
+    end    
+    ped =  magicgeno.magicped.designinfo
+    if !isa(ped,Pedigree) 
+        @error "designinfo is not Pedigree type"
+        return outfile, nothing
+    end
+    df = Pedigrees.ped2df(ped)
+    df = df[!,[:generation, :member, :gender,:mother,:father]]
+    df[!,:gender] .= [if i == "notapplicable" 
+        0
+    elseif i == "female" 
+        1
+    elseif i == "male"
+        2
+    else
+        @error string("failed to parse gender=", i)
+    end for i in df[!, :gender]]
+    rename!(df, ["gender" => "Female=1/Male=2/Hermaphrodite=0"])
+    outpedfile = joinpath(workdir, string(outstem,"_mma_ped.csv"))
+    open(outpedfile,"w") do io    
+        delim2 = ','
+        write(io, string("Pedigree-Information, pedinfo\n"))
+        CSV.write(io, df; delim=delim2, writeheader=true,append=true)
+        write(io, "Pedigree-Information, offspringinfo\n")
+        offinfo  = magicgeno.magicped.offspringinfo[!,1:2]
+        code = join(1:nfounder,"-")
+        insertcols!(offinfo,3,:FunnelCode => code) 
+        CSV.write(io, offinfo; delim=delim2, writeheader=true,append=true)
+    end
+    outfile,outpedfile
 end

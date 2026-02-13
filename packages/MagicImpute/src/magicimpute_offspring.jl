@@ -5,6 +5,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,		
 	threshimpute::Real=0.7,			
+	threshar2::Real=0, 
 	phasealg::AbstractString="unphase", 
 	isparallel::Bool=true,
     workdir::AbstractString=pwd(),
@@ -23,6 +24,9 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	if !(0<=threshimpute<=1)
         @error string("threshimpute=", threshimpute, " is not in [0,1]")
     end
+	if !(0<=threshar2<=1)
+        @error string("threshar2=", threshar2, " is not in [0,1]")
+    end
 	if !in(phasealg, ["viterbi","forwardbackward"]) && !occursin(r"^unphas",phasealg)
 		@error string("unknown phasealg=",phasealg)
 	end
@@ -33,6 +37,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 		"likeparam = ", likeparam, "\n",		
 		"isfounderinbred = ", isfounderinbred,"\n",		
 		"threshimpute = ", threshimpute,"\n",		
+		"threshar2 = ", threshar2,"\n",		
 		"phasealg = ", phasealg,"\n",
         "isparallel = ", isparallel, isparallel ? string("(nworkers=",nworkers(),")") : "", "\n",
         "workdir = ",workdir,"\n",
@@ -86,7 +91,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 			tempid = tempname(jltempdir,cleanup=true)
 			logfilels = [string(tempid, "_chr",chr,".log") for chr in 1:nchr]				
 			try
-		        pmap((x,y,z)->impute_offspring_chr!(x, model,magicprior; likeparam, threshimpute,
+		        pmap((x,y,z)->impute_offspring_chr!(x, model,magicprior; likeparam, threshimpute,threshar2, 
 					israndallele, isfounderinbred, phasealg, tempfile=y, logio=z,verbose),
 					genofilels[chroo],tempfilels[chroo],logfilels[chroo])
 			catch err
@@ -113,7 +118,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 			end					
 		else
 			for chr in eachindex(genofilels)
-				impute_offspring_chr!(genofilels[chr], model,magicprior; likeparam, threshimpute, 
+				impute_offspring_chr!(genofilels[chr], model,magicprior; likeparam, threshimpute, threshar2, 
 					israndallele, isfounderinbred,phasealg, tempfile = tempfilels[chr], logio=io,verbose)
 			end
 		end
@@ -188,6 +193,8 @@ function save_imputed_gtgp(outfile::AbstractString,
 		write(io, msg,"\n")
 		msg = cc*"INFO=<ID=IMPUTETHRESH,Number=1,Type=Float,Description=\"Threshold of imputing offspring genotypes\">"
 		write(io, msg,"\n")
+		msg = cc*"INFO=<ID=AR2,Number=1,Type=Float,Description=\"Allelic R-Squared: estimated squared correlation between most probable REF dose and true REF dose\">"
+		write(io, msg,"\n")
 		colnames = MagicBase.geno_colnames(magicgeno,isvcf,"all")
 	    write(io, join(colnames,delim),"\n")
 		nchr = length(tempfilels)
@@ -212,6 +219,7 @@ function impute_offspring_chr!(genofile::AbstractString,
     magicprior::NamedTuple;
 	likeparam::LikeParam,    
 	threshimpute::Real,
+	threshar2::Real, 
 	israndallele::Bool,
     isfounderinbred::Bool,	
 	phasealg::AbstractString,
@@ -271,12 +279,16 @@ function impute_offspring_chr!(genofile::AbstractString,
 			end
 			offformat =  isphaseoffspring ? "GT_phased"  : "GT_unphased" 
 			magicgeno.markermap[chr][!,:offspringformat] .= offformat				
+
+			# tempfile: marker genoprob for each offspring -> prob_matrix (nsnp x noff)		
+			magicgeno_gp = deepcopy(magicgeno)
+			gtgp2tempfile!(magicgeno_gp,threshimpute,threshar2,tempfile)		# Bealge AR2 is calculated and saved in the info column			
+			magicgeno.markermap[chr][!,:info] .= magicgeno_gp.markermap[chr][!,:info] 			
+			filterby_ar2!(magicgeno,chr; threshar2, io,verbose)
 			savemagicgeno(genofile,magicgeno)			
 		finally			
 			rm(chrdecodefile; force=true)
-		end
-		# tempfile: marker genoprob for each offspring -> prob_matrix (nsnp x noff)		
-		gtgp2tempfile!(magicgeno,threshimpute,tempfile)				
+		end		
 		nsnp = size(magicgeno.markermap[chr],1)
 		chrid = magicgeno.markermap[chr][1,:linkagegroup]
 		mem1 = round(Int, memoryuse()/10^6)
@@ -293,7 +305,7 @@ function impute_offspring_chr!(genofile::AbstractString,
 	end
 end
 
-function gtgp2tempfile!(magicgeno::MagicGeno, threshimpute::Real,tempfile::AbstractString)	
+function gtgp2tempfile!(magicgeno::MagicGeno, threshimpute::Real,threshar2::Real, tempfile::AbstractString)	
 	fformat = unique(magicgeno.markermap[1][!,:founderformat])
 	fformat in [["GT_haplo"],["GT_phased"]] || @error string("unexpected founder format: ",fformat)
 	calledmtx = MagicBase.togenomtx(magicgeno, 1; isvcf=true, target="all")	
@@ -306,7 +318,14 @@ function gtgp2tempfile!(magicgeno::MagicGeno, threshimpute::Real,tempfile::Abstr
 	            @error string("postprob of offspring =",off," not exist")
 	        end
 	    end
-	end	
+	end		
+	ar2ls = cal_bealge_AR2.(eachrow(magicgeno.offspringgeno[1]))
+	threshinfo = string("IMPUTETHRESH=",Float32(threshimpute))
+	if any(isnothing.(ar2ls))
+		magicgeno.markermap[1][!,:info] .= map(x -> x=="." ? threshinfo : string(y, ";",threshinfo), magicgeno.markermap[1][!,:info])		
+	else
+		magicgeno.markermap[1][!,:info] .= map((x,y) -> y=="." ? string(threshinfo, ";AR2=",x) : string(y, ";",threshinfo,";AR2=",x), ar2ls, magicgeno.markermap[1][!,:info])		
+	end
 	# togenomtx requires appropriate offspringformat!
 	magicgeno.markermap[1][!,:offspringformat] .= "GP"	
 	probmtx = MagicBase.togenomtx(magicgeno, 1; isvcf=true, target="all")			
@@ -315,14 +334,75 @@ function gtgp2tempfile!(magicgeno::MagicGeno, threshimpute::Real,tempfile::Abstr
 	gp = view(probmtx,:,10+nf:size(probmtx,2))	
 	gp[1][1:2] == ".:" || @error string("unexpected offspring genotype ",gp[1])
 	map!((x,y)->string(x,chop(y,head=1,tail=0)),gp,gt,gp)	
-	# vcf colnames = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
-	threshinfo = string("IMPUTETHRESH=",Float32(threshimpute))
-	probmtx[:,8] .= [i=="." ? threshinfo : i*";"*threshinfo for i in probmtx[:,8]]
+	# filter by AR2	
+	if threshar2 <= 0
+		probmtx2 =probmtx
+	else
+		b = [isnan(i) || i < threshar2 for i in ar2ls]
+		probmtx2 = any(b) ? probmtx[.!b, :] : probmtx	
+	end
 	chrid = magicgeno.markermap[1][1,:linkagegroup]
 	jldopen(tempfile, "w") do file
 		write(file,"chr",chrid)
-		write(file, "postprob_mtx",probmtx)
+		write(file, "postprob_mtx",probmtx2)
 	end
+end
+
+function filterby_ar2!(magicgeno::MagicGeno, chr::Integer; threshar2::Real=0,io::Union{IO,Nothing}=nothing,verbose::Bool=true)	
+    nchr = length(magicgeno.markermap)
+    if !(1<=chr<=nchr)
+        @error string("chr=", chr, "; chr must be 1 <= chr <=",nchr)
+        return magicgeno
+    end
+    chrmap = magicgeno.markermap[chr]
+    infols = chrmap[!,:info]
+    b = occursin.("AR2=",infols)
+    if !all(b) 
+		@error string("no AR2 for ", sum(b), " out of ", length(b), " markers")
+		return magicgeno
+	end
+    ar2ls = [parse(Float64,replace(first(filter(x->occursin("AR2=",x), split(i, ";"))),"AR2="=>"")) for i in infols]
+	# cacculate statistics of AR2
+	threshls = [0.3,0.5,0.8]
+	resls = [sum([isnan(i) || i < thresh for i in ar2ls]) for thresh in threshls]		
+	msg = string("chr=", chr, ", #marker=", length(ar2ls), ", #marker=", resls,  " with AR2 being NaN or less than thresh=", threshls)
+	printconsole(io,verbose,msg)	
+	threshar2 <= 0 && return magicgeno
+
+    delsnps = findall([isnan(i) || i < threshar2 for i in ar2ls])
+    if !isempty(delsnps)
+        deletiondf = deepcopy(magicgeno.markermap[chr][delsnps,:])
+        MagicBase.pushmisc!(magicgeno, "deletion"=>deletiondf)
+        msg = string("chr=", chr, ", delete ",length(delsnps), " markers with AR2 being NaN or < ",threshar2)
+        printconsole(io,verbose,msg)
+        # keep un-deleted markers
+        keepsnps = setdiff(1:length(ar2ls),delsnps)
+        magicgeno.foundergeno[chr] = magicgeno.foundergeno[chr][keepsnps,:]
+        magicgeno.offspringgeno[chr] = magicgeno.offspringgeno[chr][keepsnps,:]
+        magicgeno.markermap[chr] = magicgeno.markermap[chr][keepsnps,:]    
+    end
+    magicgeno
+end
+
+# assume biallelic markers; problsls: a ist of probvec for each individual at a given marker
+function cal_bealge_AR2(problsls::AbstractVector; digits=6)
+    z = argmax.(problsls) .- 1 # dosage
+    allequal(z) && return NaN
+	ndose = maximum(length.(problsls))
+	if ndose > 3
+		@error string("TODO for ndose=",ndose) maxlog = 10
+		return nothing
+	end
+	u = [length(i) == 2 ? i[2] : i[2] + 2*i[3] for i in problsls]
+	w = [length(i) == 2 ? i[2] : i[2] + 4*i[3] for i in problsls]    	
+    usum = sum(u)
+    wsum = sum(w)
+    zsum = sum(z)
+    n = length(problsls)
+    R2 = (sum(z .* u) .- (usum * zsum)/n)^2
+    R2 /= wsum - usum^2/n
+    R2 /= sum(z .^ 2) - zsum^2/n
+    round(R2,digits=6)
 end
 
 function callfrompostprob!(res::AbstractMatrix, tempfile::AbstractString,threshimpute::Real)	

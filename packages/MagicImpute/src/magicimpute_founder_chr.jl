@@ -10,6 +10,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool, 
 	threshproposal::Real,
+	isdelmono::Bool=true, 
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -74,7 +75,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 						model,israndallele, isfounderinbred,
 						byfounder,startbyhalf, isgreedy, 
 						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, threshproposal,
-						isdelmarker, delsiglevel,
+						isdelmono, isdelmarker, delsiglevel,
 						isspacemarker, trimcm, trimfraction,skeletonsize,
 						isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 						isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,
@@ -413,6 +414,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool,
 	threshproposal::Real, 
+	isdelmono::Bool=true, 
     isdelmarker::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
@@ -463,7 +465,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			israndallele, inputneighbor, byfounder,	startbyhalf, isgreedy,		
 			likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal,
-			isinfererror, isdelmarker, isspacemarker, isordermarker, 
+			isinfererror, isdelmono, isdelmarker, isspacemarker, isordermarker, 
 			tukeyfence,  
 			inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 			skeletonsize, slidewin, slidewin_neighbor,
@@ -505,6 +507,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	isallowmissing::Bool,
 	threshproposal::Real,
 	isinfererror::Bool, 
+	isdelmono::Bool, 
 	isdelmarker::Bool, 
 	isspacemarker::Bool,
 	isordermarker::Bool,
@@ -568,7 +571,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 		popmakeup, priorprocess, fhaplosetpp;
 		isfounderinbred, isfounderphased, byfounder, startbyhalf, isgreedy, 
 		israndallele, issnpGT,issnpAD,  chrid,  			
-		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmarker, isspacemarker,isordermarker,
+		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmono, isdelmarker, isspacemarker,isordermarker,
 		liketargetls, likeerrortuple, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence, 
 		inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 		skeletonsize, slidewin, slidewin_neighbor,
@@ -617,6 +620,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	threshproposal::Real,
 	iscorrectfounder::Bool, 
 	isinfererror::Bool, 
+	isdelmono::Bool, 
 	isdelmarker::Bool, 
 	isspacemarker::Bool=false,
 	isordermarker::Bool=false, 
@@ -644,7 +648,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	chrstartt = time()
 	# founder partition and initialization	
 	minfmiss = isallowmissing ? 1e-4 : 0.0
-	chrfhaplo,fmissls, isimputefounder = MagicImpute.get_initfhaplo(fhaplosetpp; minfmiss, isimputefounder)	    
+	chrfhaplo,fmissls, isimputefounder = MagicImpute.get_initfhaplo(fhaplosetpp; minfmiss, isimputefounder,isfounderinbred)	    
 	avgfmiss = mean(fmissls)
 	defaultby = MagicBase.get_partition_defaultby(isfounderinbred,isfounderphased)	
 	findexlist = MagicBase.getfindexlist(byfounder,fmissls, popmakeup;defaultby,minfmiss)			
@@ -748,7 +752,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 			likeerrortuple, snporder, issnpGT, 
 			softthreshlikeparam, threshlikeparam, priorlikeparam, liketargetls, tukeyfence, offspringexcl, 											
 			temperature, reversechr,isallowmissing, threshproposal, startbyhalf, 
-			delsiglevel, priorlength, trimcm, trimfraction, 
+			isdelmono, delsiglevel, priorlength, trimcm, trimfraction, 
 			chrneighbor, minaccept,nbrmaxwin, slidewinsize, maxwinsize, orderactions,orderactions_neighbor, 
 			chrlenls, ndiffls, deltloglls, ncorrectls, merrorlsls, actionlsls, 
 			alwaysacceptls, imputestuckls, upbyhalf, 
@@ -984,6 +988,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	issnpGT::AbstractVector, 	
 	tukeyfence::Real,		
     reversechr::Bool,
+	isdelmono::Bool, 
     delsiglevel::Real,
     priorlength::Real,
     trimcm::Real,
@@ -1146,16 +1151,24 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		monosnps = findall([unique(i) in [["1"],["2"],["N"]] for i in eachrow(chrfhaplo)])
 		intersect!(monosnps,snpincl)
 		if !isempty(monosnps) && length(snpincl) - length(monosnps) >= 2 
-			msg *= string(", #del_mono=",length(monosnps))
-			MagicReconstruct.setpriorprocess!(priorprocess, snporder,monosnps)			
+			if isdelmono
+				msg *= string(", #del_mono=",length(monosnps))
+				MagicReconstruct.setpriorprocess!(priorprocess, snporder,monosnps)			
+			else
+				msg *= string(", #mono=",length(monosnps))
+			end
 		end		        
 		if  !isfounderinbred && isconnectf1 
 			snpincl = snporder[first(values(priorprocess)).markerincl]		
 			uninfo = findall([all(allequal.(Iterators.partition(i,2))) for i in eachrow(chrfhaplo)])				
 			intersect!(uninfo,snpincl)
 			if !isempty(uninfo) && length(snpincl) - length(uninfo) >= 2 
-				msg *= string(", #del_uninfo=",length(uninfo))
-				MagicReconstruct.setpriorprocess!(priorprocess, snporder,uninfo)			
+				if isdelmono
+					msg *= string(", #del_uninfo=",length(uninfo))
+					MagicReconstruct.setpriorprocess!(priorprocess, snporder,uninfo)			
+				else
+					msg *= string(", #uninfo=",length(uninfo))
+				end
 			end	
 		end
 	end

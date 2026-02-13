@@ -11,6 +11,7 @@ end
 
 using Pkg
 tryusing("ArgParse")
+tryusing("Distributed")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
 
@@ -122,6 +123,10 @@ function parse_commandline()
         help = "impute offspring if maximum posterior probability > threshimpute"
         arg_type = Float64
         default = 0.9
+        "--threshar2"
+        help = "delete markers with AR2 being NaN or < threshar2. No deletion if threshar2 ≈ 0"
+        arg_type = Float64
+        default = 0
         "--byfounder"
         help = byfounder_help
         arg_type = Int
@@ -346,8 +351,7 @@ function main(args::Vector{String})
     # setup parallel
     nworker = parsed_args[:nworker]
     isparallel = nworker <= 1 ? false : true
-    if isparallel
-        tryusing("Distributed")
+    if isparallel        
         nprocs() < nworker+1 && addprocs(nworker+1-nprocs())
         @info string("nworker = ", nworkers())
         @eval @everywhere using MagicImpute

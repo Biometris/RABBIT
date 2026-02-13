@@ -414,6 +414,7 @@ save genotypic data of magicgeno::MagicGeno into outfile
 function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
     target::AbstractString="all",
     keepcomment::Bool=true,
+    infocomment::Bool=true, 
     workdir::AbstractString = pwd(),
     delim::AbstractChar = ',',
     commentstring::AbstractString="##",
@@ -458,31 +459,33 @@ function savegenodata(sink::Union{IO,AbstractString},magicgeno::MagicGeno;
             else
                 write(io, cc*"fileformat=VCFv4.3\n")
             end
-            filedate = string(cc*"filedate=",string(now()))
+            filedate = string(cc*"filedate=",string(now()))            
             write(io, filedate,"\n")
             write(io, cc*"source=RABBIT\n")
-            msg = cc*"FORMAT=<ID=GP,Number=.,Type=Integer,Description=\"Probabilities of bi-allelic genotypes [0/0,1/1] (or [0/0,0/1,1/1] or [0/0,0/1,1/0,1/1]) for the vector length of 2 (or 3 or 4)\">"
-            occursin("<ID=GP",commentlines) || write(io, msg,"\n")
-            msg = cc*"FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed\">"
-            occursin("<ID=AD",commentlines) || write(io, msg,"\n")
+            msg = cc*"FORMAT=<ID=GP,Number=.,Type=Float,Description=\"Probabilities of bi-allelic genotypes [0/0,1/1] (or [0/0,0/1,1/1] or [0/0,0/1,1/0,1/1]) for the vector length of 2 (or 3 or 4)\">"
+            (keepcomment && occursin("<ID=GP",commentlines)) || write(io, msg,"\n")
+            msg = cc*"FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed\">"
+            (keepcomment && occursin("<ID=AD",commentlines)) || write(io, msg,"\n")
             msg = cc*"FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">"
-            occursin("<ID=GT",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=LINKAGEGROUP,Number=1,Type=String,Description=\"Linkage group in genetic map\">"
-            occursin("<ID=LINKAGEGROUP",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=POSCM,Number=1,Type=Float,Description=\"Genetic marker position in centiMorgan\">"
-            occursin("<ID=POSCM",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=FOUNDERERROR,Number=1,Type=Float,Description=\"Founder allelic error rate\">"
-            occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=OFFSPRINGERROR,Number=1,Type=Float,Description=\"Offspring allelic error rate\">"
-            occursin("<ID=OFFSPRINGERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing base error rate\">"
-            occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELICBIAS,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
-            occursin("<ID=ALLELICBIAS",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
-            occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
-            msg = cc*"INFO=<ID=ALLELICDROPOUT,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
-            occursin("<ID=ALLELICDROPOUT",commentlines) || write(io, msg,"\n")
+            (keepcomment && occursin("<ID=GT",commentlines)) || write(io, msg,"\n")
+            if infocomment                
+                msg = cc*"INFO=<ID=LINKAGEGROUP,Number=1,Type=String,Description=\"Linkage group in genetic map\">"
+                occursin("<ID=LINKAGEGROUP",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=POSCM,Number=1,Type=Float,Description=\"Genetic marker position in centiMorgan\">"
+                occursin("<ID=POSCM",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=FOUNDERERROR,Number=1,Type=Float,Description=\"Founder allelic error rate\">"
+                occursin("<ID=FOUNDERERROR",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=OFFSPRINGERROR,Number=1,Type=Float,Description=\"Offspring allelic error rate\">"
+                occursin("<ID=OFFSPRINGERROR",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=BASEERROR,Number=1,Type=Float,Description=\"sequencing base error rate\">"
+                occursin("<ID=BASEERROR",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=ALLELICBIAS,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
+                occursin("<ID=ALLELICBIAS",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=ALLELICOVERDISPERSION,Number=1,Type=Float,Description=\"sequencing allele balance at each marker ~ Beta(alpha,beta) where allelicbias = alpha/(alpha+beta) and allelicoverdispersion = 1/(alpha+beta)\">"
+                occursin("<ID=ALLELICOVERDISPERSION",commentlines) || write(io, msg,"\n")
+                msg = cc*"INFO=<ID=ALLELICDROPOUT,Number=1,Type=Float,Description=\"probability of one of alleles being dropout for a heterzygous genotype at each marker\">"
+                occursin("<ID=ALLELICDROPOUT",commentlines) || write(io, msg,"\n")
+            end
         end
         if keepcomment && !isempty(commentlines)
             write(io,commentlines,"\n")            

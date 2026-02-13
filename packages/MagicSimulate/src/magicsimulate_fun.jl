@@ -171,6 +171,9 @@ function magicsimulate(fhaplofile::AbstractString,
     # 
     tused = @elapsed begin 
         tused = @elapsed magicped = pedinfo2magicped(pedinfo; popsize,isfounderinbred, workdir) 
+        if isa(magicped.designinfo,Pedigree)
+            magicped.offspringinfo[!,:isfglexch] .= false
+        end
         nfounder = size(magicped.founderinfo,1)
         founderhaplo = MagicBase.formfhaplo(fhaplofile; 
             formatpriority = ["GT"], isphysmap=false, 

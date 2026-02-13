@@ -12,12 +12,11 @@ function imputeaccuracy(truegenofile::AbstractString,
     outstem::AbstractString="outstem",
     io::Union{Nothing,IO}= nothing, 
     verbose::Bool=true)
-    isdir(workdir) || @error string(workdir, " is not a directory")
-    truegenofile2 = getabsfile(workdir,truegenofile)
+    isdir(workdir) || @error string(workdir, " is not a directory")    
     # ext = last(splitext(truegenofile2))
     # MagicBase.alignchromosome! will set the chromosomes of truegeno if they are missing
-    truegeno = formmagicgeno(truegenofile2,pedinfo;
-        isfounderinbred,formatpriority,isphysmap = isphysmap_true, recomrate = 1, 
+    truegeno = formmagicgeno(truegenofile,pedinfo;
+        isfounderinbred,formatpriority,isphysmap = isphysmap_true, recomrate = 1, workdir,
     )    
     MagicBase.rawgenoprob!(truegeno; targets = ["founders","offspring"], baseerror = 0.001, isfounderinbred)
     MagicBase.rawgenocall!(truegeno; targets = ["founders","offspring"], callthreshold = threshcall, isfounderinbred)
@@ -38,7 +37,7 @@ function imputeaccuracy(truegenofile::AbstractString,
         ]
         for i in eachindex(descripls)
             write(outio, string("##col_",i,", ", descripls[i],"\n"))
-        end        
+        end         
         CSV.write(outio,facc; append=true, header=true)
     end
     printconsole(io, verbose, string("founder accuracy: ", facc))
@@ -112,6 +111,7 @@ function accuracy_mask_impute_founder!(truegeno::MagicGeno, magicgeno::MagicGeno
             trueg = join.(chrtrue[:,f][isnonmiss])
             estg = join.(chrest[:,f][isnonmiss])
             nmask = length(trueg)
+            nswitcherr,nheteroerr = [0,0], [0,0]
             if nmask == 0                
                 nnonimpute = 0
                 ncorrectimpute = 0
@@ -125,14 +125,18 @@ function accuracy_mask_impute_founder!(truegeno::MagicGeno, magicgeno::MagicGeno
                     trueg2 = replace(trueg,"21"=>"12")
                     estg2 = replace(estg,"21"=>"12")
                     ncorrectimpute = sum(estg2 .== trueg2)
+                    if estformat == "GT_phased"
+                        # phased
+                        nswitcherr,nheteroerr = calphaseacc(split.(trueg,""), split.(estg,""))                        
+                    end
                 
                 end                
             end
-            [nsnp, nmissing, nmask, nnonimpute, ncorrectimpute]
+            [nsnp, nmissing, nmask, nnonimpute, ncorrectimpute,nswitcherr,nheteroerr]
         end for f in 1:nfounder]
         chrres
     end for chr in 1:nchr])
-    resdf  = DataFrame(reduce(hcat,res)', [:nmarker, :nmissing, :nmask,:nnonimpute, :ncorrectimpute])
+    resdf  = DataFrame(reduce(hcat,res)', [:nmarker, :nmissing, :nmask,:nnonimpute, :ncorrectimpute,:nswitcherr,:nheteroerr])
     freq_nonimpute = resdf[!,:nnonimpute] ./ resdf[!,:nmask]
     freq_correctimpute = resdf[!,:ncorrectimpute] ./ (resdf[!,:nmask] - resdf[!,:nnonimpute])
     # nmissing = #missing genotypes in magicgeno after imputing
@@ -145,7 +149,10 @@ function accuracy_mask_impute_founder!(truegeno::MagicGeno, magicgeno::MagicGeno
         "miss_afterimpute" => resdf[!,:nmissing] ./ resdf[!,:nmarker],
         "ntrue"=> resdf[!,:nmask],
         "nonimpute"=>freq_nonimpute,
-        "correctimpute"=>freq_correctimpute)
+        "correctimpute"=>freq_correctimpute, 
+        "switcherror"=>[i[1]/i[2] for i in resdf[!,:nswitcherr]],
+        "heteroerror"=>[i[1]/i[2] for  i in resdf[!,:nheteroerr]]
+        )
 end
 
 function accuracy_mask_impute_offspring!(truegeno::MagicGeno, magicgeno::MagicGeno)    

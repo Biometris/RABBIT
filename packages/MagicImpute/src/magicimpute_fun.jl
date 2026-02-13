@@ -47,12 +47,13 @@ function magicimpute(genofile::AbstractString,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,                
+    threshar2::Real=0,
     byfounder::Integer=0,
     startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
     threshproposal::Real=0.7,
     isallowmissing::Bool=true,
-    isrepeatimpute::Union{Nothing,Bool}=false, 
+    isrepeatimpute::Union{Nothing,Bool}=nothing, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,         
     isinferjunc::Union{Nothing, Bool} = false,     
@@ -62,6 +63,7 @@ function magicimpute(genofile::AbstractString,
     tukeyfence::Real=2,         
     iscorrectfounder::Union{Nothing, Bool} = true,       
     phasealg::AbstractString="unphase", 
+    isdelmono::Bool=true, 
     isdelmarker::Bool= true,         
     delsiglevel::Real = 0.01,    
     isordermarker::Bool = !isnothing(mapfile),        
@@ -112,7 +114,7 @@ function magicimpute(genofile::AbstractString,
 	end
     MagicReconstruct.check_common_arg(model, 0.005,0.005, 0.001,
         workdir, tempdirectory;chrsubset,snpsubset)
-    check_impute_arg(threshimpute,byfounder,
+    check_impute_arg(threshimpute,threshar2,byfounder,
         delsiglevel,trimcm, trimfraction, minaccept,inittemperature, coolrate; target,outext)        
     if isnothing(mapfile)        
         inputneighbor = nothing
@@ -153,12 +155,12 @@ function magicimpute(genofile::AbstractString,
         printconsole(io,verbose,string("binriffle=",binriffle))
     end
     magicimpute!(magicgeno;
-        target, threshimpute, model, 
+        target, threshimpute, threshar2, model, 
         likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam,
         chrsubset, snpsubset,isparallel, isparallelfounder, 
         byfounder,startbyhalf, isgreedy, threshproposal, isallowmissing,
         isrepeatimpute, nrepeatmin, nrepeatmax, 
-        isdelmarker, delsiglevel,
+        isdelmono, isdelmarker, delsiglevel,
         israndallele, isfounderinbred, 
         isinferjunc, iscorrectfounder, phasealg,isinfererror, tukeyfence,          
         inputneighbor, inputbinning, isspacemarker, trimcm, trimfraction, skeletonsize, 
@@ -244,6 +246,8 @@ genotype imputation from magicgeno.
 `threshimpute::Real=0.9`: offspring genotypes are imputed if
   the maximum posterior probability > threshimpute.
 
+`threshar2::Real=0`: delete markers with AR2 (allelic R2) < threshar2, where AR2 is calculated according to the posterior probabilities of offspring. No deletion if threshar2 == 0. 
+  
 `byfounder::Integer=0`: alternatively impute each blocks of founders. The founders are partitioned such that the size of each block <= byfounder. 
   If byfounder=-1, impute all founders simulteneously. 
   If byfounder=0, reset to the maximum subpopulation size, and the partition is based on the fouders of each sub-population.
@@ -268,7 +272,9 @@ genotype imputation from magicgeno.
   If phasealg=unphase, the output genotype probabilities (GP), corresonding to the unphased genotypes 0/0, 0/1, and 1/1, are calculated based on the forward backward algorithm, 
   and the output unphased genotypes (GT) are given by those with the largest genotype probabilities if they are greater than threshcall. 
 
-`isdelmarker::Bool=true`: if true, perform marker deletion.
+`isdelmono::Bool=true`: if true, delete monomorphic markers.
+
+`isdelmarker::Bool=true`: if true, perform marker deletion based on the statistical test.
 
 `delsiglevel::Real = 0.01`: significance level for marker deletion
 
@@ -337,12 +343,13 @@ function magicimpute!(magicgeno::MagicGeno;
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,        
+    threshar2::Real=0,
     byfounder::Integer=0,
     startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
     threshproposal::Real=0.7,
     isallowmissing::Bool=true,
-    isrepeatimpute::Union{Nothing,Bool}=false, 
+    isrepeatimpute::Union{Nothing,Bool}=nothing, 
     nrepeatmin::Integer=3,
     nrepeatmax::Integer=6,     
     isinferjunc::Union{Nothing, Bool} = false,     
@@ -350,6 +357,7 @@ function magicimpute!(magicgeno::MagicGeno;
     tukeyfence::Real=2,        
     iscorrectfounder::Union{Nothing, Bool} = true,     
     phasealg::AbstractString="unphase", 
+    isdelmono::Bool=true, 
     isdelmarker::Bool= true,
     delsiglevel::Real = 0.01,                    
     isordermarker::Bool = !isnothing(inputneighbor) ,
@@ -383,7 +391,7 @@ function magicimpute!(magicgeno::MagicGeno;
 	epso = MagicBase.get_likeproperty(likeparam, :offspringerror)	
     MagicReconstruct.check_common_arg(model, epsf, epso, baseerror,
         workdir, tempdirectory;chrsubset,snpsubset)
-    check_impute_arg(threshimpute,byfounder,
+    check_impute_arg(threshimpute,threshar2, byfounder,
         delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate; target,outext)            
     submagicgeno!(magicgeno; chrsubset,snpsubset)    
     msg = string("list of sbuset options: \n",    
@@ -397,8 +405,8 @@ function magicimpute!(magicgeno::MagicGeno;
     MagicBase.check_markerorder(magicgeno; io,verbose)    
     model = MagicBase.reset_model(magicgeno.magicped,model;io,verbose)    
     model_founderimpute = isa(model, AbstractVector) ? first(model) : model    
-    MagicBase.rawgenoprob!(magicgeno; targets=["founders"] , baseerror, isfounderinbred)
-    MagicBase.rawgenocall!(magicgeno; targets=["founders"] , callthreshold = 0.95, isfounderinbred)        
+    MagicBase.rawgenoprob!(magicgeno; targets=["founders"], baseerror, isfounderinbred)
+    MagicBase.rawgenocall!(magicgeno; targets=["founders"], callthreshold = 0.95, isfounderinbred)        
     if target in ["all","founder"]
         # && mean(size.(magicgeno.markermap,1)) > 200      
         isbinning = !isnothing(inputbinning)             
@@ -416,7 +424,7 @@ function magicimpute!(magicgeno::MagicGeno;
                 likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
                 israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, 
                 isrepeatimpute, nrepeatmin, nrepeatmax,
-                isdelmarker, delsiglevel, iscorrectfounder, threshproposal, isallowmissing,
+                isdelmono, isdelmarker, delsiglevel, iscorrectfounder, threshproposal, isallowmissing,
                 isinferjunc, isinfererror, tukeyfence,                  
                 inputneighbor=represent_neighbor, 
                 isspacemarker, trimcm, trimfraction, skeletonsize, 
@@ -465,7 +473,7 @@ function magicimpute!(magicgeno::MagicGeno;
                 israndallele, isfounderinbred,byfounder,startbyhalf, isgreedy, 
                 isrepeatimpute = isbinning ? false : isrepeatimpute, 
                 nrepeatmin, nrepeatmax, 
-                isdelmarker, delsiglevel, 
+                isdelmono, isdelmarker, delsiglevel, 
                 isinferjunc, iscorrectfounder, threshproposal, isallowmissing,
                 isinfererror, tukeyfence,              
                 inputneighbor = isbinning ? nothing : inputneighbor,  # if isbinning, neighbor-based order refinement is not performed
@@ -500,7 +508,7 @@ function magicimpute!(magicgeno::MagicGeno;
     if target in ["all","offspring"]        
         magicimpute_offspring!(magicgeno;
             model = isa(model, AbstractVector) ? last(model) : model, 
-            likeparam, threshimpute, 
+            likeparam, threshimpute, threshar2, 
             israndallele,isfounderinbred,phasealg, 
         	isparallel, workdir,tempdirectory,
             outstem, outext,logfile= io, verbose)
@@ -511,7 +519,7 @@ function magicimpute!(magicgeno::MagicGeno;
     magicgeno
 end
 
-function check_impute_arg(threshimpute::Real,
+function check_impute_arg(threshimpute::Real, threshar2::Real, 
     byfounder::Integer,
     delsiglevel::Real,
     trimcm::Real,
@@ -529,6 +537,9 @@ function check_impute_arg(threshimpute::Real,
     end
     if !(0<=threshimpute<=1)
         @error string("threshimpute=", threshimpute, " is not in [0,1]")
+    end
+    if !(0<=threshar2<=1)
+        @error string("threshar2=", threshar2, " is not in [0,1]")
     end
     if byfounder < -1
         @error string("byfounder = ",byfounder, ", is not >= -1")

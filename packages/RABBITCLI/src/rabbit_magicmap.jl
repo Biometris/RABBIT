@@ -10,6 +10,7 @@ end
 
 using Pkg
 tryusing("ArgParse")
+tryusing("Distributed")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
 
@@ -220,8 +221,7 @@ function main(args::Vector{String})
     # setup parallel
     nworker = parsed_args[:nworker]
     isparallel = nworker <= 1 ? false : true
-    if isparallel
-        tryusing("Distributed")
+    if isparallel        
         nprocs() < nworker+1 && addprocs(nworker+1-nprocs())
         @info string("nworker = ", nworkers())
         @eval @everywhere using MagicMap

@@ -9,7 +9,7 @@ dataid="sim"
 fhaplofile = "sim_fhaplo.vcf.gz"
 ncluster = 2
 nsnpchr = 200
-nparent = 2
+nparent = 4
 isfounderinbred = false
 
 @time simfhaplo(;

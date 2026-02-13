@@ -47,7 +47,7 @@ function simfhaplo(;
                 d = rand(Exponential(1),nsnp-1)
                 pos = accumulate(+,d)
                 pushfirst!(pos,0)
-                snppos = round.(pos ./ (last(pos)/chrlen[chr]), digits=4)
+                snppos = round.(pos ./ (last(pos)/chrlen[chr]), digits=8)
                 snp0 = sum(nsnpls[1:chr-1])
                 snpid = [string("snp",i+snp0) for i in 1:nsnp]
                 parentid = [string("P",i) for i in 1:nparent]

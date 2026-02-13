@@ -36,8 +36,8 @@ function getfhaploset(findex::AbstractVector,fhaplophase::AbstractMatrix,
 
 end
 
-function get_initfhaplo(fhaplosetpp::AbstractVector; isimputefounder, minfmiss)    
-    fmissls = get_fmissls(fhaplosetpp) 	    
+function get_initfhaplo(fhaplosetpp::AbstractVector; isimputefounder, isfounderinbred,minfmiss)    
+    fmissls = get_fmissls(fhaplosetpp; isfounderinbred) 	   
     if isnothing(isimputefounder)
         isimputels = fmissls .>= minfmiss    
         isimputefounder = any(isimputels)        

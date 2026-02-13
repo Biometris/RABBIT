@@ -41,7 +41,9 @@ single marker genotype call from genofile and pedinfo.
 
 `minmaf::Real = 0.05`: delete makrs with minor allele frequency (MAF) < 0.05. 
 
-`maxmiss::Real = 0.99`: delete makrs with genotype missing frequency > 0.99. 
+`maxfmiss::Real = 1.0`: delete makrs with founder genotype missing frequency > maxfmiss. 
+
+`maxomiss::Real = 0.99`: delete makrs with offspring genotype missing frequency > maxomiss. 
 
 `isinfererror::Bool = !israwcall`: if true, infer marker specific likelihood parameters that have values of nothing in likeparam. 
 
@@ -79,7 +81,8 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     isdelmultiallelic::Bool=true,
     isdelmonomorphic::Bool=true,    
     minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < minmaf
-    maxmiss::Real = 0.99,         
+    maxfmiss::Real = 1.0,         
+    maxomiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 
     samplesize::Integer = 200,
     burnin::Integer=20,
@@ -121,7 +124,8 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "isdelmultiallelic = ", isdelmultiallelic, "\n",
         "isdelmonomorphic = ", isdelmonomorphic, "\n",        
         "minmaf = ", minmaf, "\n",        
-        "maxmiss = ", maxmiss, "\n",                
+        "maxfmiss = ", maxfmiss, "\n",                
+        "maxomiss = ", maxomiss, "\n",                
         "threshcall = ", threshcall, "\n",                
         "israwcall = ", israwcall, "\n",        
         "isinfererror = ", isinfererror, "\n",                
@@ -191,7 +195,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
                 magiccall_io(inio, outio, delio, logio, pedinfo,model, 
                     likeparam, threshlikeparam, priorlikeparam, 
                     formatpriority, israndallele,isfounderinbred, byfounder, 
-                    isdelmultiallelic, isdelmonomorphic, minmaf,maxmiss, 
+                    isdelmultiallelic, isdelmonomorphic, minmaf,maxfmiss,maxomiss, 
                     threshcall, israwcall, isinfererror,
                     iscalloffspring, samplesize, burnin, 
                     paragraphls,commentstring, nheader, workdir, verbose)            
@@ -288,7 +292,8 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     isdelmultiallelic::Bool,
     isdelmonomorphic::Bool,
     minmaf::Real,
-    maxmiss::Real,
+    maxfmiss::Real,
+    maxomiss::Real,
     threshcall::Real, 
     israwcall::Bool,
     isinfererror::Bool,
@@ -321,7 +326,8 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     nmarker = 0
     nmultia = 0
     nmono = 0
-    nmaxmiss = 0
+    nmaxfmiss = 0
+    nmaxomiss = 0
     nlargeerr = zeros(Int,7)
     startt0 = time()            
     if isnothing(paragraphls)        
@@ -335,11 +341,14 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             rowstring = readline(inio,keep=false)
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
-                minmaf,maxmiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,
+                minmaf,maxfmiss, maxomiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl)        
-            if res[1] == "maxmiss"
+            if res[1] == "maxfmiss"
                 write(delio,res[2],"\n")
-                nmaxmiss += 1
+                nmaxfmiss += 1
+            elseif res[1] == "maxomiss"
+                write(delio,res[2],"\n")
+                nmaxomiss += 1
             elseif res[1] == "biallelic"
                 write(outio,res[2],"\n")
             elseif res[1] == "multiallelic"
@@ -363,12 +372,13 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                 @error string("unknown resid=",res[1])                
             end            
             if rem(nmarker, 100) == 0
-                nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxmiss
+                nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
                 msg = string("#marker=", nmarker, ", #marker_incl=",nincl)          
                 nmultia > 0 && (msg *= string(", #multiallelic=", nmultia))
                 nmono > 0 && (msg *= string(", #monomorphic=", nmono))
                 sum(nlargeerr) > 0 && (msg *= string(", #largeerror=", nlargeerr))
-                nmaxmiss > 0 && (msg *= string(", #>=maxmiss=", nmaxmiss))
+                nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
+                nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
                 msg *= string(", tused=", round(time()-startt,digits=1),"s")
                 printconsole(logio,verbose,msg)
             end
@@ -382,12 +392,15 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             multirows = [readline(inio,keep=false) for i in 1:nline]                        
             res = pmap(x-> magiccall_rowgeno(x,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
-                minmaf, maxmiss, threshcall, isinfererror,iscalloffspring, samplesize, burnin,
+                minmaf, maxfmiss, maxomiss, threshcall, isinfererror,iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl), multirows)            
             for i in res
-                if i[1] == "maxmiss"
+                if i[1] == "maxfmiss"
                     write(delio,i[2],"\n")
-                    nmaxmiss += 1
+                    nmaxfmiss += 1
+                elseif i[1] == "maxomiss"
+                    write(delio,i[2],"\n")
+                    nmaxomiss += 1
                 elseif i[1] == "biallelic"
                     write(outio,i[2],"\n")
                 elseif i[1] == "multiallelic"
@@ -413,23 +426,25 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             end    
             GC.gc()
             @everywhere GC.gc()
-            nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxmiss
+            nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
             msg = string("#marker=", nmarker, ", #marker_incl=",nincl)             
             nmultia > 0 && (msg *= string(", #multiallelic=", nmultia))            
             nmono > 0 && (msg *= string(", #monomorphic=", nmono))
             sum(nlargeerr) > 0 && (msg *= string(", #largeerror=", nlargeerr))
-            nmaxmiss > 0 && (msg *= string(", #>=maxmiss=", nmaxmiss))
+            nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
+            nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
             msg *= string(", tused=", round(time()-startt,digits=1),"s")
             printconsole(logio,verbose,msg)            
         end
     end
     msg = string("end, #founders=",length(fcols), ", #offspring=",length(offcols))
-    nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxmiss
+    nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
     msg *= string(", #marker=", nmarker, ", #marker_incl=",nincl)          
     nmultia > 0 && (msg *= string(", #multiallelic=",nmultia))    
     nmono > 0 && (msg *= string(", #monomorphic=",nmono))
     sum(nlargeerr) > 0 && (msg *= string(", #largeerror=",nlargeerr))
-    nmaxmiss > 0 && (msg *= string(", #>=maxmiss=", nmaxmiss))
+    nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
+    nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
     msg *= string(", tused=", round(time()-startt0,digits=1),"s")
     printconsole(logio,verbose,msg)
 end
@@ -463,7 +478,8 @@ function magiccall_rowgeno(rowstring::AbstractString,
     popmakeup::AbstractDict,    
     formatpriority::AbstractVector,
     minmaf::Real,
-    maxmiss::Real,
+    maxfmiss::Real,
+    maxomiss::Real,
     threshcall::Real,     
     isinfererror::Bool,
     iscalloffspring::Bool, 
@@ -543,10 +559,16 @@ function magiccall_rowgeno(rowstring::AbstractString,
     else
         @error string("unexpected outformat=",outformat, " for rowgeno=",rowgeno)        
     end
-    ismono = in(unique(reduce(vcat, split.(fhaplo_GT,"/"))),[["0"],["1"]])
+    delimphase = isfounderinbred ? "|" : "/"
+    alleles = reduce(vcat, split.(fhaplo_GT,delimphase))
+    ismono = in(unique(alleles),[["0"],["1"]])
     if isdelmonomorphic && ismono                
         return ("monomorphic",join(rowgeno,"\t"))
     end    
+    missfreq = mean(alleles .== ".")
+    if maxfmiss < 1 && missfreq > maxfmiss
+        return ("maxfmiss",join(rowgeno,"\t"))
+    end
     islargeerror, largeerrorid = get_isdelmarker(esterrors,threshlikeparam)
     if islargeerror                 
         return ("largeerror_"*largeerrorid,join(rowgeno,"\t"))
@@ -570,8 +592,8 @@ function magiccall_rowgeno(rowstring::AbstractString,
         n1 = sum(alleles .== "0")
         n2 = sum(alleles .== "1")
         missfreq = 1 - (n1+n2)/(2*noff)
-        if missfreq > maxmiss
-            resid = "maxmiss"
+        if missfreq > maxomiss
+            resid = "maxomiss"
         else            
             if minmaf > 0 && (n1+n2) > 1/minmaf            
                 if min(n1,n2)/(n1+n2) < minmaf

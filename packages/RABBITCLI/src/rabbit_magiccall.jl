@@ -9,6 +9,7 @@ end
 
 using Pkg
 tryusing("ArgParse")
+tryusing("Distributed")
 
 repodir = abspath(joinpath(dirname(@__FILE__), "..",".."))
 
@@ -93,8 +94,12 @@ function parse_commandline()
         help = "delete markers with minor allele frequency > minmaf"
         arg_type = Float64
         default = 0.05
-        "--maxmiss"
-        help = "delete markers with genotype missing frequency > maxmiss"
+        "--maxfmiss"
+        help = "delete markers with founder genotype missing frequency > maxfmiss"
+        arg_type = Float64
+        default = 1.0
+        "--maxomiss"
+        help = "delete markers with offspring genotype missing frequency > maxomiss"
         arg_type = Float64
         default = 0.99
         "--isinfererror"
@@ -170,8 +175,7 @@ function main(args::Vector{String})
     # setup parallel
     nworker = parsed_args[:nworker]
     isparallel = nworker > 1 
-    if isparallel
-        tryusing("Distributed")
+    if isparallel        
         nprocs() < nworker+1 && addprocs(nworker+1-nprocs())
         @info string("nworker = ", nworkers())
         @eval @everywhere using MagicCall
