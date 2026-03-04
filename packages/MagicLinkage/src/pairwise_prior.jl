@@ -68,6 +68,7 @@ function calpairwiseprior(magicped::MagicPed, model::AbstractString;
             hashcode=hash(recomcoefs)
             haskey(recomprior, hashcode) || push!(recomprior, hashcode=>recomcoefs)
             popid => Dict(["founder"=>subfounder_indices,"offspring"=>offspring,
+                "isfounderinbred"=>isfounderinbred, 
                 "nzstate"=>nzstate, "ishaploid"=> ishaploid,
                 "nzorigin"=>states[nzstate],
                 "inbreedingcoef"=>ibd, "model"=>model2,
@@ -118,6 +119,7 @@ function calpairwiseprior(magicped::MagicPed, model::AbstractString;
             haskey(recomprior, hashcode) || push!(recomprior, hashcode=>recomcoefs)
             offspring=findall(magicped.offspringinfo[!,:member] .== popid)            
             popid=>Dict(["founder"=>founders,"offspring"=>offspring,
+                "isfounderinbred"=>isfounderinbred, 
                 "nzstate"=>nzstate,"ishaploid"=> ishaploid,
                 "nzorigin"=>states[nzstate],
                 "inbreedingcoef"=>ibd, "model"=>model2,

@@ -45,6 +45,8 @@ function magicld(genofile::AbstractString,
     end
     msg = string("formmagicgeno, tused=", round(tused,digits=1), "s, mem=",mem1,"|",mem2,"MB")
     MagicBase.printconsole(io,verbose,msg)  
+    MagicBase.info_magicgeno(magicgeno;io,verbose)
+    MagicBase.info_missing(magicgeno;io,verbose)
     res=magicld!(magicgeno; binfile,
         isdepmodel, threshcall,
         baseerror, markerthin, minlodsave,minldsave, 

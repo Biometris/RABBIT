@@ -13,12 +13,13 @@ nsnpchr = 250
 @time simfhaplo(
     isfounderinbred =false,
     nsnp=ncluster*nsnpchr,
-    nparent=20,
+    nparent=3,
     chrlen=100*ones(ncluster),
     outfile=fhaplofile
 )
 
-designcode = "3star-self1"
+# designcode = "3star-self1"
+designcode = "3star-self0"
 designinfo = MagicBase.parsedesign(designcode)
 magicped = formmagicped(designinfo,100)
 pedfile = dataid*"_ped.csv"
@@ -27,7 +28,7 @@ savemagicped(pedfile,magicped)
 epsf = epso = 0.05
 @time magicsimulate(fhaplofile,pedfile;
     isfounderinbred = false,
-    seqfrac = 1.0,
+    seqfrac = 0.0,
     foundererror = Uniform(epsf,epsf+0.001),
     offspringerror = Uniform(epso,epso+0.001),
     foundermiss = Beta(1,4),
@@ -42,3 +43,6 @@ epsf = epso = 0.05
 #  clear up
 rm(fhaplofile)
 rm.(filter(x->occursin("fgl.",x), readdir()))
+
+
+

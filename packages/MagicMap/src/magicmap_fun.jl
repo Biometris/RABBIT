@@ -127,6 +127,7 @@ function magicmap(genofile::AbstractString,
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
     isrfbinning::Union{Nothing,Bool}=nothing, 
+    threshbinrf::Real=1e-4, 
     alwayskeep::Real=0.99,            
     minminlodcluster::Union{Nothing,Real} = nothing,
     maxminlodcluster::Union{Nothing,Real} = nothing,    
@@ -157,7 +158,7 @@ function magicmap(genofile::AbstractString,
             "workdir = ", workdir)
     MagicBase.printconsole(io,verbose,msg)
     outfiles = Vector{String}()
-    isnothing(outstem) || (outstem *= "_magicmap")
+    isnothing(outstem) || (outstem *= "_magicmap")        
     # step1 binning
     if isnothing(isdupebinning)
         nmarker = MagicBase.vcf_count_markers(genofile;commentstring)         
@@ -236,7 +237,7 @@ function magicmap(genofile::AbstractString,
     mapfile = construct(linkagefile;
         ldfile,ispermmarker,
         ncluster, minncluster, maxncluster, ncomponent, eigselect, minsilhouette, 
-        mincomponentsize, maxrf,isrfbinning, alwayskeep, 
+        mincomponentsize, maxrf,isrfbinning, threshbinrf, alwayskeep, 
         minminlodcluster, maxminlodcluster, maxminlodorder, minlodcluster, minlodorder,
         knncluster, knnorder, knnsave,
         isparallel,clusteralg,

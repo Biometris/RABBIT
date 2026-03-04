@@ -39,11 +39,13 @@ single marker genotype call from genofile and pedinfo.
 
 `isdelmonomorphic::Bool=true`: if true, delete monomorphic markers. 
 
-`minmaf::Real = 0.05`: delete makrs with minor allele frequency (MAF) < 0.05. 
+`minmaf::Real = 0.05`: delete markers with minor allele frequency (MAF) < 0.05. 
 
-`maxfmiss::Real = 1.0`: delete makrs with founder genotype missing frequency > maxfmiss. 
+`maxhetero::Real=0.75`: delete markers with heterozygous frequency > maxhetero. 
 
-`maxomiss::Real = 0.99`: delete makrs with offspring genotype missing frequency > maxomiss. 
+`maxfmiss::Real = 1.0`: delete markers with founder genotype missing frequency > maxfmiss. 
+
+`maxomiss::Real = 0.99`: delete markers with offspring genotype missing frequency > maxomiss. 
 
 `isinfererror::Bool = !israwcall`: if true, infer marker specific likelihood parameters that have values of nothing in likeparam. 
 
@@ -81,6 +83,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     isdelmultiallelic::Bool=true,
     isdelmonomorphic::Bool=true,    
     minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < minmaf
+    maxhetero::Real=0.75, 
     maxfmiss::Real = 1.0,         
     maxomiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 
@@ -124,6 +127,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         "isdelmultiallelic = ", isdelmultiallelic, "\n",
         "isdelmonomorphic = ", isdelmonomorphic, "\n",        
         "minmaf = ", minmaf, "\n",        
+        "maxhetero = ", maxhetero, "\n",        
         "maxfmiss = ", maxfmiss, "\n",                
         "maxomiss = ", maxomiss, "\n",                
         "threshcall = ", threshcall, "\n",                
@@ -195,7 +199,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
                 magiccall_io(inio, outio, delio, logio, pedinfo,model, 
                     likeparam, threshlikeparam, priorlikeparam, 
                     formatpriority, israndallele,isfounderinbred, byfounder, 
-                    isdelmultiallelic, isdelmonomorphic, minmaf,maxfmiss,maxomiss, 
+                    isdelmultiallelic, isdelmonomorphic, minmaf,maxhetero,maxfmiss,maxomiss, 
                     threshcall, israwcall, isinfererror,
                     iscalloffspring, samplesize, burnin, 
                     paragraphls,commentstring, nheader, workdir, verbose)            
@@ -278,6 +282,23 @@ function reset_priorlikeparam(priorlikeparam::PriorLikeParam)
         baseerror =priorls[4], allelicbias=priorls[5],allelicoverdispersion=priorls[6], allelicdropout=priorls[7])
 end
 
+
+function get_issinglef1(popmakeup::AbstractDict)
+    # length(popmakeup) > 1 && return false
+    prior = first(values(popmakeup))
+    isfounderinbred = prior["isfounderinbred"]
+    # isfounderinbred && return false
+    nzorigin = prior["nzorigin"]
+    isnonibd = all(allunique.(nzorigin))
+    if isnonibd
+        rate = prior["tranrate"]
+        size(rate) == (4,4) && rate[1,:] == [-2.0, 1.0,1.0,0.0]
+    else
+        false
+    end
+end
+ 
+
 function magiccall_io(inio::IO,outio::IO,delio::IO,
     logio::Union{Nothing, IO},
     pedinfo::Union{Integer,AbstractString}, 
@@ -292,6 +313,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     isdelmultiallelic::Bool,
     isdelmonomorphic::Bool,
     minmaf::Real,
+    maxhetero::Real,
     maxfmiss::Real,
     maxomiss::Real,
     threshcall::Real, 
@@ -318,6 +340,7 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     isautosome = true    
     prioraa = MagicReconstruct.calprior(magicped,model; isfounderinbred,isautosome)    
     popmakeup = MagicReconstruct.calpopmakeup(magicped, model,prioraa; isfounderinbred,isautosome)
+    issinglef1 = get_issinglef1(popmakeup)    
     nstate, nfgl = MagicReconstruct.hmm_nstate_nfgl(popmakeup)    
     # parse rest rows
     msg = string("begin, #founders=",length(fcols), ", #offspring=",length(offcols))
@@ -326,8 +349,10 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
     nmarker = 0
     nmultia = 0
     nmono = 0
+    nuninfof1 = 0
     nmaxfmiss = 0
     nmaxomiss = 0
+    nmaxhetero = 0
     nlargeerr = zeros(Int,7)
     startt0 = time()            
     if isnothing(paragraphls)        
@@ -340,8 +365,8 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             nmarker += 1                        
             rowstring = readline(inio,keep=false)
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
-                israndallele, isfounderinbred,byfounder,model,popmakeup, formatpriority,
-                minmaf,maxfmiss, maxomiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,
+                israndallele, isfounderinbred,byfounder,model,popmakeup, issinglef1, formatpriority,
+                minmaf, maxhetero, maxfmiss, maxomiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl)        
             if res[1] == "maxfmiss"
                 write(delio,res[2],"\n")
@@ -365,6 +390,16 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                 else
                     write(outio,res[2],"\n")
                 end
+            elseif res[1] == "uninfoF1"
+                nuninfof1 += 1
+                if isdelmonomorphic  
+                    write(delio,res[2],"\n")
+                else
+                    write(outio,res[2],"\n")
+                end
+            elseif res[1] == "maxhetero"
+                write(delio,res[2],"\n")
+                nmaxhetero += 1
             elseif occursin(r"^largeerror",res[1])
                 up_nlargeerror!(nlargeerr,res[1])                
                 write(delio,res[2],"\n")            
@@ -372,13 +407,15 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                 @error string("unknown resid=",res[1])                
             end            
             if rem(nmarker, 100) == 0
-                nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
+                nincl = nmarker - nmultia - nmono - nuninfof1 - nmaxhetero - sum(nlargeerr) - nmaxfmiss - nmaxomiss
                 msg = string("#marker=", nmarker, ", #marker_incl=",nincl)          
                 nmultia > 0 && (msg *= string(", #multiallelic=", nmultia))
                 nmono > 0 && (msg *= string(", #monomorphic=", nmono))
+                nuninfof1 > 0 && (msg *= string(", #uninfoF1=", nuninfof1))
+                nmaxhetero > 0 && (msg *= string(", #>maxhetero=", nmaxhetero))
                 sum(nlargeerr) > 0 && (msg *= string(", #largeerror=", nlargeerr))
-                nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
-                nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
+                nmaxfmiss > 0 && (msg *= string(", #>maxfmiss=", nmaxfmiss))
+                nmaxomiss > 0 && (msg *= string(", #>maxomiss=", nmaxomiss))
                 msg *= string(", tused=", round(time()-startt,digits=1),"s")
                 printconsole(logio,verbose,msg)
             end
@@ -391,8 +428,8 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             nmarker += nline            
             multirows = [readline(inio,keep=false) for i in 1:nline]                        
             res = pmap(x-> magiccall_rowgeno(x,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
-                israndallele,isfounderinbred,byfounder, model, popmakeup, formatpriority, 
-                minmaf, maxfmiss, maxomiss, threshcall, isinfererror,iscalloffspring, samplesize, burnin,
+                israndallele,isfounderinbred,byfounder, model, popmakeup, issinglef1, formatpriority, 
+                minmaf, maxhetero, maxfmiss, maxomiss, threshcall, isinfererror,iscalloffspring, samplesize, burnin,
                 likeparam, threshlikeparam, priorlikeparam, missingset, nstate,nfgl), multirows)            
             for i in res
                 if i[1] == "maxfmiss"
@@ -417,6 +454,16 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                     else
                         write(outio,i[2],"\n")
                     end
+                elseif i[1] == "uninfoF1"
+                    nuninfof1 += 1
+                    if isdelmonomorphic  
+                        write(delio,i[2],"\n")
+                    else
+                        write(outio,i[2],"\n")
+                    end
+                elseif i[1] == "maxhetero"
+                    write(delio,i[2],"\n")
+                    nmaxhetero += 1
                 elseif occursin(r"largeerror_",i[1])
                     up_nlargeerror!(nlargeerr,i[1])                    
                     write(delio,i[2],"\n")                     
@@ -426,25 +473,29 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
             end    
             GC.gc()
             @everywhere GC.gc()
-            nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
+            nincl = nmarker - nmultia - nmono -nuninfof1 - nmaxhetero - sum(nlargeerr) - nmaxfmiss - nmaxomiss
             msg = string("#marker=", nmarker, ", #marker_incl=",nincl)             
             nmultia > 0 && (msg *= string(", #multiallelic=", nmultia))            
             nmono > 0 && (msg *= string(", #monomorphic=", nmono))
+            nuninfof1 > 0 && (msg *= string(", #uninfoF1=", nuninfof1))
+            nmaxhetero > 0 && (msg *= string(", #>maxhetero=", nmaxhetero))
             sum(nlargeerr) > 0 && (msg *= string(", #largeerror=", nlargeerr))
-            nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
-            nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
+            nmaxfmiss > 0 && (msg *= string(", #>maxfmiss=", nmaxfmiss))
+            nmaxomiss > 0 && (msg *= string(", #>maxomiss=", nmaxomiss))
             msg *= string(", tused=", round(time()-startt,digits=1),"s")
             printconsole(logio,verbose,msg)            
         end
     end
     msg = string("end, #founders=",length(fcols), ", #offspring=",length(offcols))
-    nincl = nmarker - nmultia - nmono - sum(nlargeerr) - nmaxfmiss - nmaxomiss
+    nincl = nmarker - nmultia - nmono -nuninfof1 - nmaxhetero - sum(nlargeerr) - nmaxfmiss - nmaxomiss
     msg *= string(", #marker=", nmarker, ", #marker_incl=",nincl)          
     nmultia > 0 && (msg *= string(", #multiallelic=",nmultia))    
     nmono > 0 && (msg *= string(", #monomorphic=",nmono))
+    nuninfof1 > 0 && (msg *= string(", #uninfoF1=", nuninfof1))
+    nmaxhetero > 0 && (msg *= string(", #>maxhetero=", nmaxhetero))
     sum(nlargeerr) > 0 && (msg *= string(", #largeerror=",nlargeerr))
-    nmaxfmiss > 0 && (msg *= string(", #>=maxfmiss=", nmaxfmiss))
-    nmaxomiss > 0 && (msg *= string(", #>=maxomiss=", nmaxomiss))
+    nmaxfmiss > 0 && (msg *= string(", #>maxfmiss=", nmaxfmiss))
+    nmaxomiss > 0 && (msg *= string(", #>maxomiss=", nmaxomiss))
     msg *= string(", tused=", round(time()-startt0,digits=1),"s")
     printconsole(logio,verbose,msg)
 end
@@ -476,8 +527,10 @@ function magiccall_rowgeno(rowstring::AbstractString,
     byfounder::Integer, 
     model::AbstractString, 
     popmakeup::AbstractDict,    
+    issinglef1::Bool, 
     formatpriority::AbstractVector,
     minmaf::Real,
+    maxhetero::Real,
     maxfmiss::Real,
     maxomiss::Real,
     threshcall::Real,     
@@ -552,6 +605,9 @@ function magiccall_rowgeno(rowstring::AbstractString,
         else
             for i in eachindex(fcols)
                 gg = split(rowgeno[fcols[i]],":")            
+                if i_gp > length(gg)
+                    gg = vcat(gg, ["." for _ in 1:(i_gp - length(gg))])
+                end
                 gg[i_gp] = fhaplo_GP[i] 
                 rowgeno[fcols[i]] = join(gg,":")
             end
@@ -559,10 +615,13 @@ function magiccall_rowgeno(rowstring::AbstractString,
     else
         @error string("unexpected outformat=",outformat, " for rowgeno=",rowgeno)        
     end
+    if issinglef1 && (fhaplo_GT == ["0/0","1/1"] || fhaplo_GT == ["1/1","0/0"])
+        return ("uninfoF1",join(rowgeno,"\t"))
+    end
     delimphase = isfounderinbred ? "|" : "/"
     alleles = reduce(vcat, split.(fhaplo_GT,delimphase))
     ismono = in(unique(alleles),[["0"],["1"]])
-    if isdelmonomorphic && ismono                
+    if ismono                
         return ("monomorphic",join(rowgeno,"\t"))
     end    
     missfreq = mean(alleles .== ".")
@@ -573,7 +632,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     if islargeerror                 
         return ("largeerror_"*largeerrorid,join(rowgeno,"\t"))
     end        
-    resid = ismultiallele ? "multiallelic" : (ismono ? "monomorphic" : "biallelic")
+    resid = ismultiallele ? "multiallelic" : "biallelic"
 
     # update rowgeno for offspring geno
     if iscalloffspring
@@ -585,7 +644,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
             #     israndallele,isfounderinbred)
         end
         offgeno_GT, offgeno_GP = postprob2vcfgeno(offpostprob; callthreshold=threshcall, digits=4)        
-        # filter by missing and minmaf
+        # filter by missing, minmaf, and maxhetero
         noff = length(offgeno_GT)    
         alleles = reduce(vcat, split.(offgeno_GT,"/"))
         deleteat!(alleles, alleles .== ".")
@@ -595,9 +654,20 @@ function magiccall_rowgeno(rowstring::AbstractString,
         if missfreq > maxomiss
             resid = "maxomiss"
         else            
+            maf = min(n1,n2)/(n1+n2)
             if minmaf > 0 && (n1+n2) > 1/minmaf            
-                if min(n1,n2)/(n1+n2) < minmaf
-                    resid = "monomorphic"
+                if maf < minmaf
+                    resid = "monomorphic"                
+                end
+            end            
+            if resid != "monomorphic"                                
+                b = .!occursin.(".",offgeno_GT)  # non-missing
+                nobs = sum(b)
+                if nobs > 10
+                    hetfreq = sum(offgeno_GT[b] .== "0/1") / nobs 
+                    if hetfreq > maxhetero
+                        resid = "maxhetero"
+                    end
                 end
             end
         end    

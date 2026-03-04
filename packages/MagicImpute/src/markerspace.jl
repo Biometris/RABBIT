@@ -110,7 +110,9 @@ function calinterdis(tnow::Integer,
         d = exp(x)
         callogldis(d, popmakeup,priorprocess,dataprobls,fwprob,logbwprob,offspringexcl)-d*100.0/priorlength
     end
-    xstart= log(max(exp(lowbound),markerdeltd[tnow]))
+    d0 = markerdeltd[tnow]
+    isnothing(d0) && (d0 = 1e-7)
+    xstart= log(max(exp(lowbound),d0))
     if temperature ≈ 0
         # always use brent
         res= MagicBase.brentMax(loglfun,lowbound,upbound;

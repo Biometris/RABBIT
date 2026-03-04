@@ -10,7 +10,7 @@ using MagicCall
 cd(@__DIR__)
 pwd()
 
-# isfounderinbred = true
+isfounderinbred = false
 dataid = "sim"
 genofile=string(dataid,"_magicsimulate_geno.vcf.gz")
 pedinfo = string(dataid, "_magicsimulate_ped.csv")
@@ -21,12 +21,12 @@ pedinfo = string(dataid, "_magicsimulate_ped.csv")
     # likeparam = LikeParam(0.005, 0.005, 0.0, 0.001, nothing, nothing, 0.0),
     # model = "depmodel", 
     # isparallel = false, 
-    # israwcall = true, 
-    maxfmiss = 0.5, 
-    maxomiss = 0.5,
+    israwcall = true, 
+    # maxfmiss = 0.5, 
+    maxomiss = 0.9,
+    minmaf = 0.05,
     outext = ".vcf", 
 )
-
 
 
 calledgenofile = "outstem_magiccall_geno.vcf"
@@ -40,8 +40,6 @@ truefile = "sim_magicsimulate_truegeno.csv.gz"
 truegeno = formmagicgeno(truefile,pedinfo;isfounderinbred);
 acc = magicaccuracy!(truegeno, magicgeno; isfounderinbred)
 # println(acc)
-
-
 
 
 using Plots

@@ -595,8 +595,6 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	loglikels,fmissls,fmissls_after
 end
 
-
-
 function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	chrneighbor::Union{Nothing,AbstractDict},
     popmakeup::AbstractDict, priorprocess::AbstractDict,
@@ -966,6 +964,28 @@ end
 #     fhaplosetpp
 # end
 
+
+function get_logprio_fhaplo(chrfhaplo,fhaplosetpp; isfounderinbred,epsf = 0.05)
+    nout = get_nprior_mismatch(chrfhaplo,fhaplosetpp; isfounderinbred)
+	# @info " " nout
+    log(epsf) * nout
+end
+
+function get_nprior_mismatch(chrfhaplo,fhaplosetpp; isfounderinbred)
+    nf = size(chrfhaplo,2)
+    nout = 0
+	if isfounderinbred
+		0
+	else
+		for i in 1:2:nf
+			f = div(i+1,2)
+			nout += sum(map((x,y) -> !in(x,y), eachrow(chrfhaplo[:,i:i+1]),fhaplosetpp[f]))
+		end
+	end
+	nout 
+end
+
+
 # modify chrfhaplo, priorprocess,chrlenls, ndiffls, actionlsls
 # modified fhaplosetpp if iscorrectfounder =true
 function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatrix,
@@ -1044,12 +1064,12 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		else
 			threshproposal2 = threshproposal
 			alwaysaccept2 = alwaysaccept			
-		end
+		end		
         deltloglike, ndiff = founderimpute_chr!(chrfhaplo,chroffgeno, popmakeup,priorprocess, fhaplosetpp;
             findexlist, errortuples..., offspringexcl, snporder, 
 			reversechr = iseven(iteration), 
 			alwaysaccept = alwaysaccept2, upbyhalf, threshproposal = threshproposal2, 
-			israndallele,issnpGT,imputetempfile)							
+			israndallele,issnpGT,imputetempfile)		
         push!(ndiffls,ndiff)		
 		push!(deltloglls,deltloglike)		
 		# update imputestuck
@@ -1133,8 +1153,10 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		monosnps = findall([unique(i) in [["1"],["2"],["N"]] for i in eachrow(chrfhaplo)])		
 		intersect!(monosnps,snpincl)
 		if !isempty(monosnps)
-			msg *= string(", #mono=",length(monosnps))
-			setmissing_fhaplosetpp!(fhaplosetpp, monosnps; isfounderinbred) 
+			msg *= string(", #mono=",length(monosnps))			
+			# if isdelmono
+			# 	setmissing_fhaplosetpp!(fhaplosetpp, monosnps; isfounderinbred) 
+			# end
 		end
 		if  !isfounderinbred && isconnectf1 
 			snpincl = snporder[first(values(priorprocess)).markerincl]		
@@ -1142,7 +1164,9 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			intersect!(uninfo,snpincl)			
 			if !isempty(uninfo) && length(snpincl) - length(uninfo) >= 2 
 				msg *= string(", #uninfo=",length(uninfo))			
-				setmissing_fhaplosetpp!(fhaplosetpp, uninfo; isfounderinbred) 	
+				# if isdelmono
+				# 	setmissing_fhaplosetpp!(fhaplosetpp, uninfo; isfounderinbred) 	
+				# end
 			end	
 		end
 	end

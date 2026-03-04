@@ -136,7 +136,7 @@ function parse_commandline()
         "--threshar2"
         help = "delete markers with AR2 being NaN or < threshar2. No deletion if threshar2 ≈ 0"
         arg_type = Float64
-        default = 0
+        default = 0.3
         "--byfounder"
         help = byfounder_help
         arg_type = Int

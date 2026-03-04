@@ -1,16 +1,18 @@
 
 function getfindexlist(byfounder::Integer,fmissls::AbstractVector, 
-    popmakeup::AbstractDict; defaultby::Integer,minfmiss=1e-4)    
+    popmakeup::AbstractDict; defaultby::Integer,minfmiss=1e-4)        
+    isfounderinbred = all([v["isfounderinbred"] for (k,v) in popmakeup])
+    minfmiss2 = isfounderinbred ? minfmiss : -100  # keep all outbred founder    
     if byfounder <= -1  || (byfounder == 0 && defaultby <= -1)               
         founders = sortperm(fmissls,rev=true)        
-        deleteat!(founders,fmissls[founders] .<= minfmiss)
+        deleteat!(founders,fmissls[founders] .<= minfmiss2)
         res = [founders]
     elseif byfounder == 1 || (byfounder == 0 && defaultby==1)
         founders = sortperm(fmissls,rev=true)        
-        deleteat!(founders,fmissls[founders] .<= minfmiss)
+        deleteat!(founders,fmissls[founders] .<= minfmiss2)
         res = [[i] for i in founders]
     else
-        res = get_founder_partition(byfounder, fmissls,popmakeup; defaultby,minfmiss)
+        res = get_founder_partition(byfounder, fmissls,popmakeup; defaultby,minfmiss = minfmiss2)
     end
     res
 end
@@ -28,7 +30,9 @@ function get_founder_partition(byfounder::Integer,fmissls::AbstractVector,
     popmakeup::AbstractDict;defaultby::Integer=4,minfmiss=1e-4)    
     byfounder >= 0 || @error string("unexpected byfounder=",byfounder)
     fprogenyls = get_fprogenyls(popmakeup)
-    founders_nomiss = findall(fmissls .<= minfmiss)
+    isfounderinbred = all([v["isfounderinbred"] for (k,v) in popmakeup])
+    minfmiss2 = isfounderinbred ? minfmiss : -100  # keep all outbred founder    
+    founders_nomiss = findall(fmissls .<= minfmiss2)
     popfounderls = unique([i["founder"] for i=values(popmakeup)])
     popfounderls = [setdiff(i, founders_nomiss) for i in popfounderls]
     deleteat!(popfounderls,isempty.(popfounderls))

@@ -94,6 +94,10 @@ function parse_commandline()
         help = "delete markers with minor allele frequency > minmaf"
         arg_type = Float64
         default = 0.05
+        "--maxhetero"
+        help = "delete markers with frequence of heterozygous genotypes > maxhetero."
+        arg_type = Float64
+        default = 0.75
         "--maxfmiss"
         help = "delete markers with founder genotype missing frequency > maxfmiss"
         arg_type = Float64

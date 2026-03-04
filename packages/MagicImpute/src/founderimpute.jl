@@ -25,6 +25,7 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     end
     nsnp <=1 && return (0, 0)
     nsnp == length(snporder) || @error "dimension mismatch!"
+    isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)    
     loglikels = MagicReconstruct.hmm_loglikels(chrfhaplo,chroffgeno,
         popmakeup,priorprocess;
         epsf,epso,epso_perind, baseerror,
@@ -33,8 +34,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     )	
     loglikels[offspringexcl] .= 0.0 
     inputloglike = sum(loglikels)
+    # inputlogprior = get_logprio_fhaplo(chrfhaplo,fhaplosetpp; isfounderinbred)    
     
-    isfounderinbred = length(fhaplosetpp) == size(chrfhaplo,2)    
     newchrfhaplo = deepcopy(chrfhaplo)
     snpincl = snporder[first(values(priorprocess)).markerincl]				    
     if upbyhalf                    
@@ -87,6 +88,8 @@ function founderimpute_chr!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMatri
     loglikels[offspringexcl] .= 0.0 
     newloglike = sum(loglikels)
     deltloglike = newloglike - inputloglike    
+    # deltlogprior = get_logprio_fhaplo(newchrfhaplo,fhaplosetpp; isfounderinbred) - inputlogprior
+    # deltloglike += deltlogprior
     isaccept = alwaysaccept ? true : deltloglike > 0.0
     if isaccept
         chrfhaplo .= newchrfhaplo

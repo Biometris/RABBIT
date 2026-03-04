@@ -5,7 +5,7 @@ function magicimpute_offspring!(magicgeno::MagicGeno;
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,		
 	threshimpute::Real=0.7,			
-	threshar2::Real=0, 
+	threshar2::Real=0.3, 
 	phasealg::AbstractString="unphase", 
 	isparallel::Bool=true,
     workdir::AbstractString=pwd(),
@@ -348,7 +348,7 @@ function gtgp2tempfile!(magicgeno::MagicGeno, threshimpute::Real,threshar2::Real
 	end
 end
 
-function filterby_ar2!(magicgeno::MagicGeno, chr::Integer; threshar2::Real=0,io::Union{IO,Nothing}=nothing,verbose::Bool=true)	
+function filterby_ar2!(magicgeno::MagicGeno, chr::Integer; threshar2::Real=0.3,io::Union{IO,Nothing}=nothing,verbose::Bool=true)	
     nchr = length(magicgeno.markermap)
     if !(1<=chr<=nchr)
         @error string("chr=", chr, "; chr must be 1 <= chr <=",nchr)
@@ -365,7 +365,8 @@ function filterby_ar2!(magicgeno::MagicGeno, chr::Integer; threshar2::Real=0,io:
 	# cacculate statistics of AR2
 	threshls = [0.3,0.5,0.8]
 	resls = [sum([isnan(i) || i < thresh for i in ar2ls]) for thresh in threshls]		
-	msg = string("chr=", chr, ", #marker=", length(ar2ls), ", #marker=", resls,  " with AR2 being NaN or less than thresh=", threshls)
+	chrid = magicgeno.markermap[chr][1,:linkagegroup]
+	msg = string("chr=", chrid, ", #marker=", length(ar2ls), ", #marker=", resls,  " with AR2 being NaN or less than thresh=", threshls)
 	printconsole(io,verbose,msg)	
 	threshar2 <= 0 && return magicgeno
 
@@ -373,7 +374,7 @@ function filterby_ar2!(magicgeno::MagicGeno, chr::Integer; threshar2::Real=0,io:
     if !isempty(delsnps)
         deletiondf = deepcopy(magicgeno.markermap[chr][delsnps,:])
         MagicBase.pushmisc!(magicgeno, "deletion"=>deletiondf)
-        msg = string("chr=", chr, ", delete ",length(delsnps), " markers with AR2 being NaN or < ",threshar2)
+        msg = string("chr=", chrid, ", delete ",length(delsnps), " markers with AR2 being NaN or < ",threshar2)
         printconsole(io,verbose,msg)
         # keep un-deleted markers
         keepsnps = setdiff(1:length(ar2ls),delsnps)

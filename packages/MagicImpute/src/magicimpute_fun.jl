@@ -47,7 +47,7 @@ function magicimpute(genofile::AbstractString,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,                
-    threshar2::Real=0,
+    threshar2::Real=0.3,
     byfounder::Integer=0,
     startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
@@ -246,7 +246,7 @@ genotype imputation from magicgeno.
 `threshimpute::Real=0.9`: offspring genotypes are imputed if
   the maximum posterior probability > threshimpute.
 
-`threshar2::Real=0`: delete markers with AR2 (allelic R2) < threshar2, where AR2 is calculated according to the posterior probabilities of offspring. No deletion if threshar2 == 0. 
+`threshar2::Real=0.3`: delete markers with AR2 (allelic R2) < threshar2, where AR2 is calculated according to the posterior probabilities of offspring. No deletion if threshar2 == 0. 
   
 `byfounder::Integer=0`: alternatively impute each blocks of founders. The founders are partitioned such that the size of each block <= byfounder. 
   If byfounder=-1, impute all founders simulteneously. 
@@ -343,7 +343,7 @@ function magicimpute!(magicgeno::MagicGeno;
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
     threshimpute::Real=0.9,        
-    threshar2::Real=0,
+    threshar2::Real=0.3,
     byfounder::Integer=0,
     startbyhalf::Union{Nothing,Integer}=5,     
     isgreedy::Bool=false, 
@@ -417,22 +417,22 @@ function magicimpute!(magicgeno::MagicGeno;
                 binriffle = min(30,max(riffle_prefactor*5, binriffle))         
                 printconsole(io,verbose,string("reset binriffle=",binriffle))                         
             end            
-            represent_magicgeno, represent_neighbor = get_represent_magicgeno(magicgeno, inputbinning, inputneighbor)            
-            # maxiter = ceil(Int,-1*log(2*inittemperature)/log(coolrate))+2 # last temperature ~ 0.5            
+            represent_magicgeno, represent_neighbor = get_represent_magicgeno(magicgeno, inputbinning, inputneighbor)                        
             magicimpute_founder!(represent_magicgeno;
                 model = model_founderimpute,         
-                likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
+                likeparam, softthreshlikeparam, priorlikeparam, 
                 israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, 
                 isrepeatimpute, nrepeatmin, nrepeatmax,
-                isdelmono, isdelmarker, delsiglevel, iscorrectfounder, threshproposal, isallowmissing,
-                isinferjunc, isinfererror, tukeyfence,                  
+                isdelmono = false, isdelmarker, # no monomorphic deletion, but allow for test-based marker deletion
+                delsiglevel, iscorrectfounder, threshproposal, isallowmissing = true, 
+                isinferjunc, isinfererror, tukeyfence, 
                 inputneighbor=represent_neighbor, 
                 isspacemarker, trimcm, trimfraction, skeletonsize, 
                 isordermarker, slidewin,slidewin_neighbor, orderactions, orderactions_neighbor, 
                 inittemperature, coolrate, minaccept, spacebyviterbi,                
                 isparallel=isparallelfounder, logfile=io,workdir,tempdirectory,
                 outstem = outstem*"_represent",outext, verbose,more_verbose)
-            merge_represent_magicgeno!(magicgeno, represent_magicgeno; inputbinning,isfounderinbred)                                    
+            merge_represent_magicgeno!(magicgeno, represent_magicgeno; inputbinning,isfounderinbred)            
             if !isnothing(outstem)
                 outputfile= string(outstem,"_represent_enlarged_founder", outext)
                 tused = @elapsed savegenodata(outputfile, magicgeno; workdir)

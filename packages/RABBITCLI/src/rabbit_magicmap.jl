@@ -97,6 +97,10 @@ function parse_commandline()
         help = "if true, bin cosegrating markers"
         arg_type = AbstractString
         default = "nothing"        
+        "--threshbinrf"
+        help = "binning is based on markers if recombination fraction < threshbinrf"
+        arg_type = Float64
+        default = 0.0001        
         "--mincomponentsize"
         help = "connectecd components of size < mincomponentsize are removed. If it is nothing, it is internally set. "
         arg_type = AbstractString

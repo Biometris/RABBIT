@@ -11,6 +11,7 @@ function construct(linkagefile::AbstractString;
     mincomponentsize::Union{Nothing,Integer} = nothing,
     maxrf::Union{Nothing,Real} = nothing,
     isrfbinning::Union{Nothing,Bool}=nothing, 
+    threshbinrf::Real=1e-4, 
     alwayskeep::Real=0.99,        
     minminlodcluster::Union{Nothing,Real} = nothing,     
     maxminlodcluster::Union{Nothing,Real} = nothing,         
@@ -41,6 +42,7 @@ function construct(linkagefile::AbstractString;
         "mincomponentsize = ", mincomponentsize, "\n",
         "maxrf(scaled from 0 to 1)= ", maxrf, "\n",
         "isrfbinning = ", isrfbinning, "\n",
+        "threshbinrf = ", threshbinrf, "\n",
         "alwayskeep = ", alwayskeep, "\n",           
         "minminlodcluster = ", minminlodcluster, "\n",     
         "maxminlodcluster = ", maxminlodcluster, "\n",             
@@ -139,9 +141,10 @@ function construct(linkagefile::AbstractString;
         minlod_bin = first(findminlod(recomnonfrac,recomlod,ldlod;
             ncomponent = ncomponent_bin, maxrf=0.7, minminlod = 5.0, maxminlod = 20,
             mincomponentsize=min(20,5+round(Int, length(markers)/5000)), alwayskeep = 1.0))
+        minlod_bin = 3
         # dupebindict is updated to include cosegregation binning
         tused = @elapsed  markers, nmissingls, recomnonfrac,recomlod,ldlod = binning_cosegrate!(markers,nmissingls,recomnonfrac, recomlod, 
-            ldlod, dupebindict; binrf = 1e-5,minlod_bin);        
+            ldlod, dupebindict; binrf = threshbinrf,minlod_bin);        
         if isdupebinning        
             totmarker = sum(length(split(first(v),"||")) for (k,v) in dupebindict)
             msg = string("#cosegrate_bins = ", length(markers), " for #markers=", totmarker, ", #ld_bins=", nmarkerbef)
@@ -374,7 +377,7 @@ function construct(linkagefile::AbstractString;
 end
 
 function binning_cosegrate!(markers, nmissingls, recomnonfrac, recomlod, ldlod, dupebindict;
-    binrf::Union{Nothing,Real}= 1e-5, # scaled from 0.0 to 1.0        
+    binrf::Union{Nothing,Real}= 1e-4, # scaled from 0.0 to 1.0        
     minlod_bin::Real=5.0,        
     )
     nmarker= size(recomlod,1)

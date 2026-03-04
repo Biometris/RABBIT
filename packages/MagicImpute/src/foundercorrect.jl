@@ -19,9 +19,10 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
     step_verbose::Bool=false)
     isfounderinbred = length(founder2progeny) == size(chrfhaplo,2)	    
     rescorrect = []
+    # logprior = get_logprio_fhaplo(chrfhaplo,fhaplosetpp; isfounderinbred) 
     newchrfhaplo = deepcopy(chrfhaplo)
     minnerrdiffls = [4,3,2]
-    for it in eachindex(minnerrdiffls)
+    for it in eachindex(minnerrdiffls)        
         minnerrdiff = minnerrdiffls[it]
         calledchroffgeno = singlesite_genocall(chrfhaplo,chroffgeno; ismalexls, popmakeup,
             epsf,epso, epso_perind, baseerror, allelicbias, allelicoverdispersion,allelicdropout, 
@@ -41,6 +42,9 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
         )	
         newloglikels[offspringexcl] .= 0.0 
         deltlogl = sum(newloglikels) - sum(loglikels)
+        # newlogprior = get_logprio_fhaplo(newchrfhaplo,fhaplosetpp; isfounderinbred) 
+        # deltlogprior = newlogprior - logprior
+        # deltlogl += deltlogprior
         isaccept = deltlogl >= 0.0
         if step_verbose 
             msg = string("foundercorrect it= ", it, ", minnerrdiff=", minnerrdiff, 
@@ -50,6 +54,7 @@ function foundercorrect_chr!(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatri
         if isaccept
             chrfhaplo .= newchrfhaplo      
             push!(rescorrect,correctdf)
+            # logprior = newlogprior
         else
             # newchrfhaplo .= chrfhaplo                
             break
