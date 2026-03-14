@@ -344,7 +344,7 @@ function founderforwardbackward!(findex::AbstractVector,
     nfounder = length(fhaplosetpp)
     nfgl = size(fhaplophase,2)
     isfounderinbred = nfounder == nfgl    
-    if threshproposal > 0.5 
+    if threshproposal >= 0.5 
         findex2 = isfounderinbred ? findex : reduce(vcat,[[2*i-1,2*i] for i in findex])
         for i in snps                            
             fhaplo = avg_sitefhaplo(fhaploset[i], fphaseprob[i],findex2; thresh = threshproposal)            

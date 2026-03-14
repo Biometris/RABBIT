@@ -105,7 +105,7 @@ function accuracy_mask_impute_founder!(truegeno::MagicGeno, magicgeno::MagicGeno
                 nmissing = sum(chrest[:,f] .== "N")
                 isnonmiss = chrtrue[:,f] .!= "N"
             else
-                nmissing = sum([i == "NN" for i in join.(chrest[:,f])])
+                nmissing = sum([occursin("N",i) for i in join.(chrest[:,f])])
                 isnonmiss = [!occursin("N",i) for i in join.(chrtrue[:,f])]
             end
             trueg = join.(chrtrue[:,f][isnonmiss])
