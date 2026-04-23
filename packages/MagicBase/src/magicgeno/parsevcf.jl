@@ -93,6 +93,7 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
         rowgeno = split(readline(inio,keep=false),"\t")
         if length(rowgeno) ==1 && isempty(rowgeno[1])
             @warn string("ignore empty line with rowgeno=",rowgeno, " at marker index=", nmarker)
+            continue
         end
         if length(rowgeno) <= 9
             @error string("#columns < 9 for rowgeno=",rowgeno, " at marker index=", nmarker)
