@@ -133,8 +133,9 @@ function simpedfgl(ped::Pedigrees.Pedigree,chrlen::AbstractVector;
             if isoogamy
                 # if isoogamy, gender 1=female or 2=male; 0=notapplicable is not allowed
                 # sex chromsome is in the last
+                # @info " " i idam isire ped.gender[ind] ind fatherindex motherindex fgl_sire[isire] zygote[end]
                 gender = ped.gender[ind]
-                sexsperm = pedfgl[father[1]][end][gender]
+                sexsperm = fgl_sire[isire].fgl[end][gender]
                 zygote[end][2] = sexsperm
             end
             genetic_value = select_prop==1.0 ? 0.0 : trait_genetic_val(zygote,select_trait)

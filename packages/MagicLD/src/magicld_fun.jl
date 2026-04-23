@@ -116,7 +116,7 @@ function magicld!(magicgeno::MagicGeno;
                 printconsole(io, false, "ERROR: "*msg)    
                 error(msg)
             end
-            push!(dupebinls, only(represents)=> (col2str(df[!,:marker]), col2str(df[!,:physchrom]), col2str(df[!,:physposbp])))
+            push!(dupebinls, string(only(represents))=> (col2str(df[!,:marker]), col2str(df[!,:physchrom]), col2str(df[!,:physposbp])))
         end        
         markers = only(magicgeno.markermap)[:, :marker]
         dict = Dict(markers .=> 1:length(markers))        

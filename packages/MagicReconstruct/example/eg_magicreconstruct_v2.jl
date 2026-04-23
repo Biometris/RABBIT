@@ -12,8 +12,8 @@ dataid = "sim"
 genofile=dataid*"_magicsimulate_geno.vcf.gz"
 pedinfo = dataid*"_magicsimulate_ped.csv"
 @time magicancestry=magicreconstruct(genofile,pedinfo;
-    likeparameters = LikeParam(offspringerror=0.995),
-    model = "depmodel",
+    # likeparameters = LikeParam(offspringerror=0.995),
+    # model = "depmodel",
     # isfounderinbred,        
     # hmmalg = "viterbi",    
 );
