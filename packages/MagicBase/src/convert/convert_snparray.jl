@@ -44,7 +44,12 @@ function toarrayfile(rawfile::AbstractString;
             write(outio, join(title,","),"\n")
             while !eof(inio)
                 nmarker += 1
-                line = split(readline(inio;keep=false),delim)
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker)
+                    continue
+                end
+                line = split(linestr,delim) 
                 write(outio, join(line[cols],","),"\n")
             end
         end        
@@ -119,7 +124,12 @@ function arrayfile2vcf(arrayfile::AbstractString;
             write(outio, join(title,'\t'),"\n")     
             while !eof(inio)    
                 nmarker += 1
-                rowgeno = split(readline(inio,keep=false),delim)
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker)
+                    continue
+                end
+                rowgeno = split(linestr,delim) 
                 markerid = popfirst!(rowgeno)
                 alleles = replace(join(rowgeno),missingallele=>"")
                 aset = unique(alleles)
@@ -290,7 +300,12 @@ function array_get_subgeno(arrayfile::AbstractString;
             pushfirst!(cols,leftcols...) 
         end        
         while !eof(io)            
-            line = split(readline(io,keep=false),delim)
+            linestr = readline(io,keep=false)      
+            if isempty(linestr)
+                @warn string("ignore empty line=",linestr)
+                continue
+            end
+            line = split(linestr,delim)             
             push!(resdf, line[cols])            
         end
         resdf
@@ -341,9 +356,13 @@ function array_recode_geno(arrayfile::AbstractString;
             write(outio, title0, "\n")
             # parse data            
             while !eof(inio)                
-                nmarker += 1
-                line0 = readline(inio;keep=false)
-                line = split(line0,delim)                
+                nmarker += 1                
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)
+                    @warn string("ignore empty line index =", nmarker)
+                    continue
+                end
+                line = split(linestr,delim) 
                 marker = first(line)               
                 if !haskey(newcoding,marker)
                   write(outio, line0,"\n")
@@ -455,7 +474,12 @@ function array_extract_allelefreq(arrayfile::AbstractString;
             write(outio, "marker,allele_major,allele_alter,freq_major,freq_alter,allele_count\n")
             while !eof(inio)
                 nmarker += 1
-                line = split(readline(inio;keep=false),delim)                
+                linestr = readline(io,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker)
+                    continue
+                end
+                line = split(linestr,delim)                 
                 marker = first(line)
                 alleles = replace(join(line[2:end]),missingallele =>"")
                 write(outio, marker,",")

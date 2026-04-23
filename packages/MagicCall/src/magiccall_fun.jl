@@ -363,7 +363,12 @@ function magiccall_io(inio::IO,outio::IO,delio::IO,
                 GC.gc()                
             end
             nmarker += 1                        
-            rowstring = readline(inio,keep=false)
+            linestr = readline(inio,keep=false)      
+            if isempty(linestr)                
+                @warn string("ignore empty line index =", nmarker, "(exclude comment lines)")
+                continue
+            end
+            rowstring = linestr 
             res = magiccall_rowgeno(rowstring,fcols,offcols; israwcall, isdelmultiallelic, isdelmonomorphic,
                 israndallele, isfounderinbred,byfounder,model,popmakeup, issinglef1, formatpriority,
                 minmaf, maxhetero, maxfmiss, maxomiss,threshcall, isinfererror, iscalloffspring, samplesize, burnin,

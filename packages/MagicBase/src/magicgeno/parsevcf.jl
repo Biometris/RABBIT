@@ -90,11 +90,12 @@ function parsevcf_io(inio::IO,outio::IO,logio::Union{Nothing, IO},
     while !eof(inio)        
         # rem(nmarker, 1000) == 0 && (startt = time())
         nmarker += 1
-        rowgeno = split(readline(inio,keep=false),"\t")
-        if length(rowgeno) ==1 && isempty(rowgeno[1])
-            @warn string("ignore empty line with rowgeno=",rowgeno, " at marker index=", nmarker)
+        rowline = readline(inio,keep=false)
+        if isempty(rowline)
+            @warn string("ignore empty line index =", nmarker, "(exclude comment lines)")
             continue
         end
+        rowgeno = split(rowline,"\t")        
         if length(rowgeno) <= 9
             @error string("#columns < 9 for rowgeno=",rowgeno, " at marker index=", nmarker)
         end

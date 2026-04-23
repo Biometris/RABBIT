@@ -68,7 +68,12 @@ function hapmap2vcf(hapmapfile::AbstractString;
             nwarn = 0            
             while !eof(inio)    
                 nmarker += 1
-                rowgeno = split(readline(inio,keep=false),delim)
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker)
+                    continue
+                end
+                rowgeno = split(linestr,delim) 
                 markerid,chrom, physposbp = rowgeno[[1,3,4]]
                 # calculate alleles with decreasing frequencies                
                 genostr = replace(string(rowgeno[12:end]...),missingallele=>"")

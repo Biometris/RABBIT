@@ -30,7 +30,12 @@ function vcf_get_markers(vcffile::AbstractString;  commentstring = "##",workdir:
         markerls = Vector{String}()
         while !eof(io)
             # vcfcols = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
-            line = split(readline(io;keep=false),"\t")
+            linestr = readline(io,keep=false)      
+            if isempty(linestr)
+                @warn string("ignore empty line=",linestr)
+                continue
+            end
+            line = split(linestr,"\t")            
             push!(markerls,strip(line[3]))
         end    
         markerls
@@ -115,7 +120,7 @@ function vcf_pad_samples(vcffile::AbstractString;
             append!(titlerow,padsamples)
             write(outio, join(titlerow,"\t"),"\n")
             # parse data
-            while !eof(io)
+            while !eof(io)                
                 line = readline(io;keep=false)
                 write(outio, line*"\t.\n")
             end
@@ -180,8 +185,13 @@ function vcf_del_samples(vcffile::AbstractString;
             deleteat!(titlerow, cols)
             write(outio, join(titlerow,"\t"),"\n")
             # parse data
-            while !eof(io)                
-                line = split(readline(io,keep=false),"\t")
+            while !eof(io)          
+                linestr = readline(io,keep=false)      
+                if isempty(linestr)
+                    @warn string("ignore empty line=",linestr)
+                    continue
+                end
+                line = split(linestr,"\t")
                 deleteat!(line, cols)
                 write(outio, join(line,"\t"),"\n")
             end
@@ -306,7 +316,12 @@ function vcf_get_subgeno(vcffile::AbstractString;
             pushfirst!(cols,leftcols...) 
         end        
         while !eof(io)            
-            line = split(readline(io,keep=false),"\t")
+            linestr = readline(io,keep=false)      
+            if isempty(linestr)
+                @warn string("ignore empty line=",linestr)
+                continue
+            end
+            line = split(linestr,"\t")
             push!(resdf, line[cols])            
         end
         resdf
@@ -452,7 +467,12 @@ function vcffilter(vcffile::AbstractString;
             while !eof(inio)
                 # rem(nmarker, 1000) == 0 && (startt = time())
                 nmarker += 1
-                rowgeno = split(readline(inio,keep=false),"\t")
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker, "(exclude comment lines)")
+                    continue
+                end                
+                rowgeno = split(linestr,"\t")
                 deleteat!(rowgeno, cols)           
                 # vcf column ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
                 formatls = split(rowgeno[9],":")  # col9 = FORAMT
@@ -1061,7 +1081,12 @@ function vcf_plink_map(vcffile::AbstractString;
             readline(io)
             # parse data
             while !eof(io)                
-                line = split(readline(io,keep=false),"\t")                
+                linestr = readline(io,keep=false)      
+                if isempty(linestr)
+                    @warn string("ignore empty line=",linestr)
+                    continue
+                end
+                line = split(linestr,"\t")
                 # vcfcols = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
                 # resinfo: [newinfo, linkagegroup, poscm, foundererror, offspringerror, baseerror, allelicbias, allelicoverdispersion, allelicdropout]
                 resinfo = MagicBase.parse_vcf_info(line[8])
