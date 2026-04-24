@@ -161,7 +161,17 @@ function readmultitable(filename::AbstractString;
                 # for example, sparse probability matrix in magicancestry, 
                 val = CSV.read(IOBuffer(join(tabval)),DataFrame;missingstring)                
             else
-                strval = reduce(hcat, split.(chomp.(tabval),delim))          
+                strls = [isempty(i) ? missing : split(chomp(i),delim) for i in tabval]
+                b = ismissing.(strls)
+                if any(b)
+                    @warn string("delete empty lines: ",findall(b))
+                    deleteat!(strls,b)
+                end
+                lenls = unique(length.(strls))
+                if length(lenls) > 1 
+                    @warn string("non-unique #columns per line: ",lenls)
+                end
+                strval = reduce(hcat, strls)          
                 mtx =  permutedims(strip.(strval[:,2:end],'\"'))
                 cols = strip.(strval[:,1],'\"')
                 val = DataFrame(mtx,cols)
