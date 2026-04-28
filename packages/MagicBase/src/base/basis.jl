@@ -163,8 +163,8 @@ function readmultitable(filename::AbstractString;
             else
                 strls = [isempty(i) ? missing : split(chomp(i),delim) for i in tabval]
                 b = ismissing.(strls)
-                if any(b)
-                    @warn string("delete empty lines: ",findall(b))
+                if any(b)                    
+                    @warn string("ignore empty lines = ",tabval[b])
                     deleteat!(strls,b)
                 end
                 lenls = unique(length.(strls))

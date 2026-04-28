@@ -225,9 +225,9 @@ function magicreconstruct!(magicgeno::MagicGeno;
     outtarfile =  reconstruct!(magicgeno;
         model, likeparam, israndallele, isfounderinbred,
         hmmalg, isMMA, posteriordigits, isparallel,io, outext = ".csv.gz", 
-        outstem, workdir, tempdirectory,verbose)        
+        outstem, workdir, tempdirectory,verbose)            
     magicancestry = try 
-        readmagicancestry(outtarfile)      
+        readmagicancestry(outtarfile; tempdirectory)      
     catch err
         @warn string(err, ". Could not read ", outtarfile)
         nothing

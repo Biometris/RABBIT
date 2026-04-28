@@ -54,7 +54,6 @@ magicsimulate(fhaplofile,pedfile;
     pheno_h2= 0.5,
     nplot_subpop = 10, 
     outstem,
-    outext = ".vcf",
 )   
 
 # plot(Beta(10,10))
@@ -77,9 +76,7 @@ magicfilter(genofile,pedfile;
 genofile = outstem*"_magicfilter_geno.vcf.gz"
 pedfile = outstem*"_magicfilter_ped.csv"
 magiccall(genofile,pedfile;   
-    isfounderinbred,                   
-    # threshlikeparam = MagicCall.threshlike(allelicbias=0.8),
-    # isparallel = false,         
+    isfounderinbred,              
     outstem 
 )
 truefile = outstem*"_magicsimulate_truegeno.csv.gz"

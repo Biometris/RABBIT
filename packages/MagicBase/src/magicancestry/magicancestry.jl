@@ -456,10 +456,10 @@ function readmagicancestry(ancestryfile::AbstractString;
     workdir::AbstractString=pwd(),
     tempdirectory::AbstractString=tempdir())
     ext = last(split_allext(ancestryfile))    
-    if in(ext, [".csv",".csv.gz"])
+    if in(ext, [".csv",".csv.gz"])        
         readmagicancestry_csvgz(ancestryfile;workdir)
     elseif ext == ".csv.gz.tar"
-        readmagicancestry_csvgztar(ancestryfile;workdir)
+        readmagicancestry_csvgztar(ancestryfile;workdir,tempdirectory)
     elseif ext == ".jld2.tar.gz"
         readmagicancestry_jld2targz(ancestryfile;workdir,tempdirectory)
     else
