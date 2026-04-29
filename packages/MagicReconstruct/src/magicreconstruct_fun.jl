@@ -51,13 +51,14 @@ function magicreconstruct(genofile::AbstractString,
     outstem::Union{Nothing,AbstractString}="outstem",
     logfile::Union{Nothing,AbstractString,IO}= (isnothing(outstem) ? nothing : string(outstem,"_magicreconstruct.log")),
     verbose::Bool=true)
-    starttime = time()
+    starttime = time()    
     io = MagicBase.set_logfile_begin(logfile, workdir, "magicreconstruct"; verbose,delim="=")    
     if isa(logfile, AbstractString)
         msg=string("Julia version: ",VERSION)
         MagicBase.printconsole(io,verbose,msg)
         MagicBase.printpkgst(io,verbose,"MagicReconstruct")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false, io, commentstring,workdir,verbose)
     isnothing(outstem) || (outstem = outstem*"_magicreconstruct")
     info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,

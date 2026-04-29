@@ -63,6 +63,7 @@ function magicfilter(genofile::AbstractString,
         MagicBase.printconsole(logio,verbose,msg)
         MagicBase.printpkgst(logio,verbose,"MagicFilter")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io=logio, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false,
         io = logio, commentstring,workdir,verbose)    
     MagicReconstruct.info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,

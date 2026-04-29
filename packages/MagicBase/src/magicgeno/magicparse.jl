@@ -29,6 +29,7 @@ function magicparse(genofile::AbstractString,pedinfo::Union{Integer,AbstractStri
             isbreedped = !get_israbbitped(inpedfile)
         end
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io=logio, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped,commentstring,workdir,io=logio,verbose)
     msg = string("list of args: \n",
         "genofile = ", genofile,"\n",

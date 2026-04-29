@@ -380,3 +380,23 @@ end
 function logit(x)
     log(x/(1-x))
 end
+
+
+function check_workdir_outstem(workdir::AbstractString, 
+    outstem::Union{Nothing,AbstractString}; 
+    io::Union{IO,Nothing}=nothing,
+    verbose=true)
+    if !isnothing(outstem) 
+        outdir = dirname(outstem)
+        if !isempty(outdir) 
+            msg = string("outstem = ", outstem, " contains dirname = ", outdir, "; specifiy output directory via workdir")
+            printconsole(io, false, "Error: "*msg)
+            verbose && error(msg)
+        end
+    end    
+    if !isdir(workdir) 
+        msg = string(workdir," does not exit!")        
+        printconsole(io, false, "Error: "*msg)
+        verbose && error(msg)
+    end
+end

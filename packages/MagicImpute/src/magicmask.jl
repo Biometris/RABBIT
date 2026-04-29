@@ -16,6 +16,7 @@ function magicmask(genofile::AbstractString,pedinfo::Union{Integer,MagicBase.Jun
     verbose::Bool=true)
     starttime = time()
     logio = MagicBase.set_logfile_begin(logfile, workdir, "magicmask"; verbose,delim="=")
+    MagicBase.check_workdir_outstem(workdir,outstem;io=logio, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false, io=logio, commentstring,workdir,verbose)    
     info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,
         commentstring,workdir, logio, verbose)

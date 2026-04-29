@@ -101,6 +101,7 @@ function magicimpute(genofile::AbstractString,
         MagicBase.printconsole(io,verbose,msg)
         MagicBase.printpkgst(io,verbose,"MagicImpute")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false, io, commentstring,workdir,verbose)    
     MagicReconstruct.info_file_arg(genofile, pedinfo, formatpriority,isphysmap, recomrate,
         commentstring,workdir, io, verbose)

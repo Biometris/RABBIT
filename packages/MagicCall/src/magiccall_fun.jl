@@ -104,6 +104,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
         MagicBase.printconsole(logio,verbose,msg)
         MagicBase.printpkgst(logio,verbose,"MagicCall")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io=logio, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false,
         io = logio, commentstring,workdir,verbose)
     inext = last(MagicBase.split_allext(genofile))

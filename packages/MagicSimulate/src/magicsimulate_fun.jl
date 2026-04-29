@@ -129,6 +129,7 @@ function magicsimulate(fhaplofile::AbstractString,
         MagicBase.printconsole(io,verbose,msg)
         MagicBase.printpkgst(io,verbose,"MagicSimulate")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io, verbose)
     MagicBase.check_infiles(fhaplofile,pedinfo; isbreedped=false, ismagicsimulate=true, io, commentstring,workdir,verbose)
     check_sim_arg(error_randallele, foundererror, offspringerror, foundermiss, offspringmiss,
         seqfrac, baseerror, allelicbias, allelicoverdispersion, allelicdropout, seqdepth, seqdepth_overdispersion, 

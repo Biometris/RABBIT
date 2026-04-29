@@ -150,6 +150,7 @@ function magicmap(genofile::AbstractString,
         MagicBase.printconsole(io,verbose,msg)
         MagicBase.printpkgst(io,verbose,"MagicMap")
     end
+    MagicBase.check_workdir_outstem(workdir,outstem;io, verbose)
     MagicBase.check_infiles(genofile,pedinfo; isbreedped=false, io, commentstring,workdir,verbose)    
     msg = string("list of file options: \n",
             "genofile = ", genofile, "\n",
