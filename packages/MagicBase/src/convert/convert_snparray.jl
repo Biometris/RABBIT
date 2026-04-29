@@ -357,12 +357,12 @@ function array_recode_geno(arrayfile::AbstractString;
             # parse data            
             while !eof(inio)                
                 nmarker += 1                
-                linestr = readline(inio,keep=false)      
-                if isempty(linestr)
+                line0 = readline(inio,keep=false)      
+                if isempty(line0)
                     @warn string("ignore empty line index =", nmarker)
                     continue
                 end
-                line = split(linestr,delim) 
+                line = split(line0,delim) 
                 marker = first(line)               
                 if !haskey(newcoding,marker)
                   write(outio, line0,"\n")

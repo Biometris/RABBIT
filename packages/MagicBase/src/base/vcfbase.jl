@@ -120,9 +120,13 @@ function vcf_pad_samples(vcffile::AbstractString;
             append!(titlerow,padsamples)
             write(outio, join(titlerow,"\t"),"\n")
             # parse data
-            while !eof(io)                
-                line = readline(io;keep=false)
-                write(outio, line*"\t.\n")
+            while !eof(io)                                
+                linestr = readline(inio,keep=false)      
+                if isempty(linestr)                    
+                    @warn string("ignore empty line index =", nmarker, "(exclude comment lines)")
+                    continue
+                end                
+                write(outio, linestr*"\t.\n")
             end
         end
     end

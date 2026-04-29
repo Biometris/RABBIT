@@ -43,7 +43,12 @@ function shift_outlier_line(inio::IO,outio::IO,delio::IO; nheader, outliers::Abs
         write(outio, line)        
     end
     while !eof(inio)        
-        rowstring = readline(inio,keep=false)
+        linestr = readline(inio,keep=false)      
+        if isempty(linestr)                
+            @warn string("ignore empty line index =", nmarker, "(exclude comment lines)")
+            continue
+        end
+        rowstring = linestr 
         # vcf colnames = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
         if isempty(outliers)
             isoutlier = false
