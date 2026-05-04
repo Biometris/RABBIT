@@ -227,8 +227,6 @@ genotype imputation from magicgeno.
 
 `softthreshlikeparam::ThreshLikeParam=SoftThreshLikeParam()`: markers with inferred likeparam values > softthreshlikeparam values will be deleted only if they are also outliers. 
 
-`blockdelmarker::Bool = false`: if true, reset all revelant options to block marker deletion. 
-
 `threshlikeparam::ThreshLikeParam=ThreshLikeParam()`: markers with inferred likeparam values > threshlikeparam values will be deleted. 
 
 `priorlikeparam::PriorLikeParam=PriorLikeParam()`: priors for likelihood parameters
@@ -247,6 +245,8 @@ genotype imputation from magicgeno.
 `target::AbstractString = "all"`: target of imputation. `target=all` imputes
   founders and offspring. `target` must be "all", "founder", "offspring". 
 
+`blockdelmarker::Bool = false`: if true, reset all revelant options to block marker deletion. 
+  
 `threshimpute::Real=0.9`: offspring genotypes are imputed if
   the maximum posterior probability > threshimpute.
 

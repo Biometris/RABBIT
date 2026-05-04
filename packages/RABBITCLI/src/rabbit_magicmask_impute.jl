@@ -177,10 +177,10 @@ function parse_commandline()
         help = "if true, perform marker deletion based on Vuong's closeness test"
         arg_type = Bool
         default = true
-        # "--delsiglevel"
-        # help = "significance level for marker deletion"
-        # arg_type = Float64
-        # default = 0.01
+       "--delsiglevel"        
+        help = "significance level for marker deletion when isdelvuong = true"
+        arg_type = Float64
+        default = 0.01
         "--isinfererror"
         help = "if true, infer marker specific error rates.  If it is nothing, isinfererror=true if model ≠ depmodel or isspacemarker = true. It is necessary to set isinfererror = true for accurately imputing sequence data in heterozygous populations."
         arg_type = AbstractString
