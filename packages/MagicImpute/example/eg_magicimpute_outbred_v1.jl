@@ -41,7 +41,7 @@ outstem = dataid*"_output"
     # isspacemarker = true,
     # isordermarker = true,
     # iscorrectfounder = true, 
-    # isdelmarker = false,     
+    # isdelvuong = false,     
     # tempdirectory = "D://Temp",    
     # isgreedy = true,     
     outstem,

@@ -29,7 +29,7 @@ end
     # isspacemarker = false,     
     # isallowmissing = false, 
     # # isdelmono = false, 
-    # isdelmarker = false, 
+    # isdelvuong = false, 
     # tukeyfence = Inf, 
     # threshlikeparam = ThreshLikeParam(offspringerror=1.0, allelicbias=1.0, allelicoverdispersion=Inf),             
     # target = "founder", 

@@ -30,7 +30,7 @@ tused = @elapsed magicimpute(genofile,pedfile;
     # nrepeatmin = 3, 
     nrepeatmax = 5,     
     # iscorrectfounder = true, 
-    # isdelmarker = false,     
+    # isdelvuong = false,     
     # tempdirectory = "D://Temp",    
     outstem,
 )

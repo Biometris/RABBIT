@@ -11,7 +11,7 @@ dataid = designcode*"_outbred"
 genofile = dataid*"_magicsimulate_geno.vcf.gz"
 magicgeno = magicimpute(genofile,designcode;
     isfounderinbred,
-    isdelmarker = true, 
+    isdelvuong = true, 
     iscorrectfounder = false, 
     isinfererror = false,
     verbose=false,

@@ -46,6 +46,7 @@ function magicimpute(genofile::AbstractString,
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
+    blockdelmarker::Bool = false, 
     threshimpute::Real=0.9,                
     threshar2::Real=0.3,
     byfounder::Integer=0,
@@ -64,7 +65,7 @@ function magicimpute(genofile::AbstractString,
     iscorrectfounder::Union{Nothing, Bool} = true,       
     phasealg::AbstractString="unphase", 
     isdelmono::Bool=true, 
-    isdelmarker::Bool= true,         
+    isdelvuong::Bool= true,         
     delsiglevel::Real = 0.01,    
     isordermarker::Bool = !isnothing(mapfile),        
     isspacemarker::Bool= !isnothing(mapfile) || isordermarker || isphysmap,
@@ -156,12 +157,12 @@ function magicimpute(genofile::AbstractString,
         printconsole(io,verbose,string("binriffle=",binriffle))
     end
     magicimpute!(magicgeno;
-        target, threshimpute, threshar2, model, 
+        target, threshimpute, threshar2, model, blockdelmarker, 
         likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam,
         chrsubset, snpsubset,isparallel, isparallelfounder, 
         byfounder,startbyhalf, isgreedy, threshproposal, isallowmissing,
         isrepeatimpute, nrepeatmin, nrepeatmax, 
-        isdelmono, isdelmarker, delsiglevel,
+        isdelmono, isdelvuong, delsiglevel,
         israndallele, isfounderinbred, 
         isinferjunc, iscorrectfounder, phasealg,isinfererror, tukeyfence,          
         inputneighbor, inputbinning, isspacemarker, trimcm, trimfraction, skeletonsize, 
@@ -226,6 +227,8 @@ genotype imputation from magicgeno.
 
 `softthreshlikeparam::ThreshLikeParam=SoftThreshLikeParam()`: markers with inferred likeparam values > softthreshlikeparam values will be deleted only if they are also outliers. 
 
+`blockdelmarker::Bool = false`: if true, reset all revelant options to block marker deletion. 
+
 `threshlikeparam::ThreshLikeParam=ThreshLikeParam()`: markers with inferred likeparam values > threshlikeparam values will be deleted. 
 
 `priorlikeparam::PriorLikeParam=PriorLikeParam()`: priors for likelihood parameters
@@ -275,7 +278,7 @@ genotype imputation from magicgeno.
 
 `isdelmono::Bool=true`: if true, delete monomorphic markers.
 
-`isdelmarker::Bool=true`: if true, perform marker deletion based on the statistical test.
+`isdelvuong::Bool=true`: if true, perform marker deletion based on Vuong's closeness test
 
 `delsiglevel::Real = 0.01`: significance level for marker deletion
 
@@ -342,7 +345,8 @@ function magicimpute!(magicgeno::MagicGeno;
     isfounderinbred::Bool=true,        
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
-    target::AbstractString = "all",        
+    target::AbstractString = "all",
+    blockdelmarker::Bool = false,         
     threshimpute::Real=0.9,        
     threshar2::Real=0.3,
     byfounder::Integer=0,
@@ -359,7 +363,7 @@ function magicimpute!(magicgeno::MagicGeno;
     iscorrectfounder::Union{Nothing, Bool} = true,     
     phasealg::AbstractString="unphase", 
     isdelmono::Bool=true, 
-    isdelmarker::Bool= true,
+    isdelvuong::Bool= true,
     delsiglevel::Real = 0.01,                    
     isordermarker::Bool = !isnothing(inputneighbor) ,
     isspacemarker::Bool= !isnothing(inputneighbor) || isordermarker,
@@ -393,7 +397,13 @@ function magicimpute!(magicgeno::MagicGeno;
     MagicReconstruct.check_common_arg(model, epsf, epso, baseerror,
         workdir, tempdirectory;chrsubset,snpsubset)
     check_impute_arg(threshimpute,threshar2, byfounder,
-        delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate; target,outext)            
+        delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate; target,outext)     
+    if blockdelmarker
+        optls = reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker, trimcm, threshar2; io, verbose)
+        isdelmono,isdelvuong,tukeyfence,threshlikeparam2, trimcm, threshar2 = optls
+    else
+        threshlikeparam2 = threshlikeparam
+    end
     submagicgeno!(magicgeno; chrsubset,snpsubset)    
     msg = string("list of sbuset options: \n",    
         "chrsubset = ", isnothing(chrsubset) ? "all chromosomes" : chrsubset,"\n",
@@ -420,11 +430,11 @@ function magicimpute!(magicgeno::MagicGeno;
             end            
             represent_magicgeno, represent_neighbor = get_represent_magicgeno(magicgeno, inputbinning, inputneighbor)                        
             magicimpute_founder!(represent_magicgeno;
-                model = model_founderimpute,         
-                likeparam, softthreshlikeparam, priorlikeparam, 
+                model = model_founderimpute,                         
+                likeparam, softthreshlikeparam, threshlikeparam = threshlikeparam2,priorlikeparam,
                 israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, 
                 isrepeatimpute, nrepeatmin, nrepeatmax,
-                isdelmono = false, isdelmarker, # no monomorphic deletion, but allow for test-based marker deletion
+                isdelmono = false, isdelvuong, # no monomorphic deletion, but allow for test-based marker deletion
                 delsiglevel, iscorrectfounder, threshproposal, isallowmissing = true, 
                 isinferjunc, isinfererror, tukeyfence, 
                 inputneighbor=represent_neighbor, 
@@ -469,12 +479,12 @@ function magicimpute!(magicgeno::MagicGeno;
                 printconsole(io,verbose,msg)  
             end         
             magicimpute_founder!(magicgeno;
-                model = model_founderimpute,
-                likeparam, softthreshlikeparam, threshlikeparam,priorlikeparam,
+                model = model_founderimpute,  
+                likeparam, softthreshlikeparam, threshlikeparam = threshlikeparam2,priorlikeparam,
                 israndallele, isfounderinbred,byfounder,startbyhalf, isgreedy, 
                 isrepeatimpute = isbinning ? false : isrepeatimpute, 
                 nrepeatmin, nrepeatmax, 
-                isdelmono, isdelmarker, delsiglevel, 
+                isdelmono, isdelvuong, delsiglevel, 
                 isinferjunc, iscorrectfounder, threshproposal, isallowmissing,
                 isinfererror, tukeyfence,              
                 inputneighbor = isbinning ? nothing : inputneighbor,  # if isbinning, neighbor-based order refinement is not performed
@@ -518,6 +528,39 @@ function magicimpute!(magicgeno::MagicGeno;
     tused = round(time()-starttime,digits=1)
     MagicBase.set_logfile_end(logfile, io, tused,"magicimpute!"; verbose,delim="=")
     magicgeno
+end
+
+function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker, trimcm, threshar2; 
+    io::Union{IO,Nothing}=nothing,
+    verbose::Bool=true)       
+    msg = "reset to block marker deletion: \n"
+    if isdelmono        
+        isdelmono = false
+        msg *= string("\t reset isdelmono=false\n")        
+    end
+    if isdelvuong        
+        isdelvuong = false
+        msg *= string("\t reset isdelvuong=false\n")        
+    end
+    if !isinf(tukeyfence)
+        tukeyfence = Inf
+        msg *= string("\t reset tukeyfence=Inf\n")        
+    end
+    if threshar2 > 0.0
+        threshar2 = 0
+        msg *= string("\t reset threshar2=0\n")        
+    end            
+    if isspacemarker
+        if !isinf(trimcm)
+            trimcm = Inf
+            msg *= string("\t reset trimcm=Inf\n")        
+        end
+    end
+    threshlikeparam = ThreshLikeParam(Inf,Inf, Inf, Inf, Inf,Inf,Inf) 
+    msg *= string("\t reset threshlikeparam=",threshlikeparam)
+    verbose && @warn msg
+    printconsole(io,false, "Warn "*msg)
+    isdelmono,isdelvuong,tukeyfence,threshlikeparam, trimcm, threshar2    
 end
 
 function check_impute_arg(threshimpute::Real, threshar2::Real, 
@@ -775,3 +818,4 @@ function merge_represent_magicgeno!(magicgeno::MagicGeno,
     end
     magicgeno
 end
+

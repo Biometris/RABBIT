@@ -13,28 +13,19 @@ pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
-ingeno = deepcopy(magicgeno);
+# ingeno = deepcopy(magicgeno);
 
-missingcode = isfounderinbred ? "N" : "NN"
-for chr in eachindex(magicgeno.markermap)   
-    magicgeno.foundergeno[chr][:,1:1] .= missingcode
-end
+# missingcode = isfounderinbred ? "N" : "NN"
+# for chr in eachindex(magicgeno.markermap)   
+#     magicgeno.foundergeno[chr][:,1:1] .= missingcode
+# end
 @time MagicImpute.magicimpute!(magicgeno; 
-    isfounderinbred,           
-    isspacemarker = false,     
-    isallowmissing = false, 
-    isrepeatimpute = false, 
-    isdelmono = false, 
-    isdelmarker = false, 
-    tukeyfence = Inf, 
-    threshlikeparam = ThreshLikeParam(offspringerror=1.0, allelicbias=1.0, allelicoverdispersion=Inf),    
-    threshar2 = 0.0,        
-    iscorrectfounder = true,   
-    # threshproposal = 0.4,
-    # byfounder = 2, 
+    isfounderinbred,             
+    blockdelmarker = true,   
     outstem,
 );
 0
+
 
 # accuracy
 # magicgeno = formmagicgeno(outstem*"_magicimpute_geno.vcf.gz",pedfile; isfounderinbred);

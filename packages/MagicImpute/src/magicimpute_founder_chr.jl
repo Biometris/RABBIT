@@ -11,7 +11,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	isallowmissing::Bool, 
 	threshproposal::Real,
 	isdelmono::Bool=true, 
-    isdelmarker::Bool = true,
+    isdelvuong::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
 	isinfererror::Bool = false,	    
@@ -75,7 +75,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 						model,israndallele, isfounderinbred,
 						byfounder,startbyhalf, isgreedy, 
 						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, threshproposal,
-						isdelmono, isdelmarker, delsiglevel,
+						isdelmono, isdelvuong, delsiglevel,
 						isspacemarker, trimcm, trimfraction,skeletonsize,
 						isinfererror, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence,  															
 						isordermarker, inputneighbor,slidewin,slidewin_neighbor,orderactions,orderactions_neighbor,
@@ -415,7 +415,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	isallowmissing::Bool,
 	threshproposal::Real, 
 	isdelmono::Bool=true, 
-    isdelmarker::Bool = true,
+    isdelvuong::Bool = true,
     delsiglevel::Real = 0.01,
 	isinferjunc::Bool = false, 
 	isinfererror::Bool = false,	    
@@ -465,7 +465,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			israndallele, inputneighbor, byfounder,	startbyhalf, isgreedy,		
 			likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal,
-			isinfererror, isdelmono, isdelmarker, isspacemarker, isordermarker, 
+			isinfererror, isdelmono, isdelvuong, isspacemarker, isordermarker, 
 			tukeyfence,  
 			inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 			skeletonsize, slidewin, slidewin_neighbor,
@@ -508,7 +508,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	threshproposal::Real,
 	isinfererror::Bool, 
 	isdelmono::Bool, 
-	isdelmarker::Bool, 
+	isdelvuong::Bool, 
 	isspacemarker::Bool,
 	isordermarker::Bool,
 	tukeyfence::Real,			
@@ -571,7 +571,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 		popmakeup, priorprocess, fhaplosetpp;
 		isfounderinbred, isfounderphased, byfounder, startbyhalf, isgreedy, 
 		israndallele, issnpGT,issnpAD,  chrid,  			
-		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmono, isdelmarker, isspacemarker,isordermarker,
+		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmono, isdelvuong, isspacemarker,isordermarker,
 		liketargetls, likeerrortuple, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence, 
 		inittemperature, coolrate, delsiglevel, trimcm, trimfraction,
 		skeletonsize, slidewin, slidewin_neighbor,
@@ -619,7 +619,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	iscorrectfounder::Bool, 
 	isinfererror::Bool, 
 	isdelmono::Bool, 
-	isdelmarker::Bool, 
+	isdelvuong::Bool, 
 	isspacemarker::Bool=false,
 	isordermarker::Bool=false, 
 	tukeyfence::Real=2,			
@@ -729,7 +729,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	temperature = inittemperature	
 	step_verbose = false					
 	isinferseq = isinfererror && any(issnpAD)			    
-	actionlsls = [[isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker,isordermarker]]
+	actionlsls = [[isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelvuong, isspacemarker,isordermarker]]
 	oldmapexpansion = mapexpansion			
 	correctdf = DataFrame()		
 	upbyhalf = false
@@ -1040,7 +1040,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	step_verbose::Bool=false)
 	# deletion after infereps step since small inital eps results in too many deletions
 	# correction after 2 iterations of deletion since  correction may change mis-groupped markers.	
-    isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker, isordermarker = last(actionlsls)	
+    isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelvuong, isspacemarker, isordermarker = last(actionlsls)	
 	(;epsfls, epsols, epsols_perind, baseerrorls,allelicbiasls,allelicoverdispersionls, allelicdropoutls) = likeerrortuple
     tused =[]
     msg = ""		
@@ -1280,8 +1280,8 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			in("allelicdropout",liketargetls) && (msg *= string(", dropout=",round(merrorls[7],digits=3)))
 		end		
         if bool && ((iteration > miditeration && temperature <= 0.5) || !isimputefounder)			
-			if bool && !any([isimputefounder,iscorrectfounder,isdelmarker, temperature > 0])	
-				# bool && !any([isimputefounder,iscorrectfounder,isdelmarker, isordermarker])	
+			if bool && !any([isimputefounder,iscorrectfounder,isdelvuong, temperature > 0])	
+				# bool && !any([isimputefounder,iscorrectfounder,isdelvuong, isordermarker])	
 				if all(@. merrorls[1:3] - merrorlsls[end][1:3] <= 1e-3)
 					isinfererror = false	
 				end
@@ -1387,7 +1387,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 	end	
 	errortuples = (epsf=epsfls,epso=epsols,  epso_perind = epsols_perind, baseerror = baseerrorls, allelicbias=allelicbiasls, 
 		allelicoverdispersion=allelicoverdispersionls, allelicdropout = allelicdropoutls)		
-	if isdelmarker && (iteration > miditeration || !isimputefounder) && size(chrfhaplo,1)>2
+	if isdelvuong && (iteration > miditeration || !isimputefounder) && size(chrfhaplo,1)>2
 		# replacing with iteration > initimpute will delete 10% more markers and might also reduce accuracy
 		startt = time()		
 		deltt = markerdelete_chr!(chrfhaplo,chroffgeno, popmakeup, priorprocess;
@@ -1395,7 +1395,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			decodetempfile = imputetempfile,
 			delsiglevel, israndallele, issnpGT, caldistance=isspacemarker,priorlength)
 		ndel = length(deltt)
-		ndel == 0 && (isdelmarker = false)
+		ndel == 0 && (isdelvuong = false)
 		msg *= string(", #del=",ndel)
 		step_verbose && println(msg)
 		push!(tused,string(round(Int,time()-startt)))
@@ -1439,7 +1439,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		msg *= string(", apt=",join(aptmsg,"_"), "%")			
 		push!(tused,join(round.(Int,tusedls),"_"))	
 		step_verbose && println(msg)		
-		bool = !any([isimputefounder,iscorrectfounder,isdelmarker])
+		bool = !any([isimputefounder,iscorrectfounder,isdelvuong])
 		# && pdf(slidewinsize,2) >= 0.45   # pdf(truncated(Poisson(2),2,100), 2) ≈ 0.4556 		
 		# chromosome is not revrse if isodd
 		if bool && temperature == 0.0 && iteration >= miniteration_order && isodd(iteration)
@@ -1455,7 +1455,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			errortuples...,  offspringexcl, snporder,reversechr,israndallele,issnpGT,
 			decodetempfile = imputetempfile,temperature, 
 			itmax = (iteration <= 4) ? 20 : 10)
-        bool = !any([isimputefounder,iscorrectfounder,isdelmarker])		
+        bool = !any([isimputefounder,iscorrectfounder,isdelvuong])		
 		if (iteration > miditeration)  && temperature <= 0.25
 			ndel3, msg_trim = repeat_trimchrend!(priorprocess; trimcm, trimfraction)
 			msg *= msg_trim
@@ -1464,7 +1464,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
         end
         pri1=first(values(priorprocess))
         chrlen = 100*sum(pri1.markerdeltd[pri1.markerincl][1:end-1])
-        bool = !any([isimputefounder,isdelmarker,iscorrectfounder,isinfererror,isordermarker])		
+        bool = !any([isimputefounder,isdelvuong,iscorrectfounder,isinfererror,isordermarker])		
 		if bool && temperature==0.0 && ndel3 == 0 && length(chrlenls) >=2
 			diff_chrlen = min(abs.(chrlen .- chrlenls[end-1:end])...)
 			nactionls = reverse(sum.(actionlsls))
@@ -1483,7 +1483,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		push!(chrlenls,chrlen)
         msg *= string(", l=",round(Int,chrlen),"cM")
     end	
-	push!(actionlsls, [isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelmarker, isspacemarker,isordermarker])
+	push!(actionlsls, [isimputefounder, iscorrectfounder, isinfererror, isinferseq, isdelvuong, isspacemarker,isordermarker])
 	likeerrortuple = (epsfls=epsfls,epsols=epsols, epsols_perind=epsols_perind, baseerrorls=baseerrorls, 
 		allelicbiasls = allelicbiasls, allelicoverdispersionls = allelicoverdispersionls, allelicdropoutls = allelicdropoutls)	
 	likeerrortuple, offspringexcl, correctdf, tused, msg, logbook_order, upbyhalf

@@ -634,7 +634,7 @@ function magiccall_rowgeno(rowstring::AbstractString,
     if maxfmiss < 1 && missfreq > maxfmiss
         return ("maxfmiss",join(rowgeno,"\t"))
     end
-    islargeerror, largeerrorid = get_isdelmarker(esterrors,threshlikeparam)
+    islargeerror, largeerrorid = get_islargeerror(esterrors,threshlikeparam)
     if islargeerror                 
         return ("largeerror_"*largeerrorid,join(rowgeno,"\t"))
     end        
@@ -818,7 +818,7 @@ function extract_rowgeno!(rowgeno::AbstractVector,fcols::AbstractVector,offcols:
     inputformat, fgeno, founderformat, offgeno,offspringformat
 end
 
-function get_isdelmarker(esterrors,threshlikeparam)    
+function get_islargeerror(esterrors,threshlikeparam)    
     epsf,epso, _,baseerror, allelicbias,allelicoverdispersion,allelicdropout = esterrors
     epsf > threshlikeparam.foundererror && return (true, "foundererror")
     epso > threshlikeparam.offspringerror && return (true, "offspringerror")

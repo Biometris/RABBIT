@@ -23,7 +23,7 @@ genofile = dataid*"_magicsimulate_geno.vcf.gz"
 magicimpute(genofile,designcode;
     isfounderinbred = false, 
     outstem = dataid,
-    # isdelmarker = true, 
+    # isdelvuong = true, 
     # iscorrectfounder = true, 
     # isinfererror = false,
     # verbose=false

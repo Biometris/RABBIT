@@ -119,6 +119,10 @@ function parse_commandline()
         help = "imputing target: \"all\", \"founder\", or \"offspring\""
         arg_type = AbstractString
         default = "all"
+        "--blockdelmarker"
+        help = "if true, reset revelant options to block marker deletion"
+        arg_type = Bool
+        default = false 
         "--threshimpute"
         help = "impute offspring if maximum posterior probability > threshimpute"
         arg_type = Float64
@@ -159,8 +163,8 @@ function parse_commandline()
         help = phasealg_help
         arg_type = AbstractString
         default = "unphase"                
-        "--isdelmarker"
-        help = "if true, perform marker deletion"
+        "--isdelvuong"
+        help = "if true, perform marker deletion based on Vuong's closeness test"
         arg_type = Bool
         default = true
         # "--delsiglevel"
