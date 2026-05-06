@@ -7,6 +7,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
+	blockdelmarker::Bool = false, 
 	byfounder::Integer=0,	
 	startbyhalf::Union{Nothing,Integer}=5, 
 	isgreedy::Bool=false,
@@ -64,10 +65,11 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 		"threshlikeparam = ", threshlikeparam, "\n",		
 		"priorlikeparam = ", priorlikeparam, "\n",	
 		"israndallele = ", israndallele,"\n",				
-		"isfounderinbred = ", isfounderinbred,"\n",								
+		"isfounderinbred = ", isfounderinbred,"\n",						
 		"byfounder = ", byfounder, "\n",
 		"startbyhalf = ", startbyhalf, "\n",		
 		"isgreedy = ", isgreedy, "\n",		
+		"blockdelmarker = ", blockdelmarker, "\n",
 		"threshproposal = ", threshproposal, "\n",
 		"isallowmissing = ", isallowmissing, "\n",
 		"isrepeatimpute = ", isrepeatimpute, "\n",	
@@ -109,6 +111,10 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	# 	msg = string("reset skeletonsize=",skeletonsize)
 	# 	printconsole(io,verbose,msg)
 	# end
+	if blockdelmarker        
+        optls = reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker, trimcm, -1; io, verbose)
+        isdelmono,isdelvuong,tukeyfence, trimcm = optls[1:4]            
+    end
 	if !isnothing(inputneighbor)
 		msg = string("average #neighbors per marker =  ", round(mean(length.(values(inputneighbor))),digits=1))
 		printconsole(io,verbose,msg)
@@ -242,7 +248,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
-				isdelmono, isdelvuong, isinfererror, quickinfererror = true, 
+				isdelmono, isdelvuong, isinfererror, quickinfererror = true, blockdelmarker, 				
 				isspacemarker = false, 
 				isordermarker = false, 
 				delsiglevel, tukeyfence,  trimcm, trimfraction, skeletonsize, 
@@ -266,7 +272,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
 					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
-					isdelmono, isdelvuong, isinfererror, quickinfererror = true, 
+					isdelmono, isdelvuong, isinfererror, quickinfererror = true, blockdelmarker, 
 					isspacemarker = false, 
 					isordermarker = false, 
 					delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
@@ -310,7 +316,7 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 	nrepeatimpute = isrepeatimpute2 ? 1 : -1           	
 	magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 		model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, quickinfererror=false, 
-		israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy,
+		israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy,blockdelmarker, 
 		inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing,	threshproposal, 
 		isdelmono, isdelvuong, isinfererror, isordermarker, isspacemarker, 
 		delsiglevel, tukeyfence, trimcm, trimfraction, skeletonsize, 
@@ -560,6 +566,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 	threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
 	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	quickinfererror::Bool=false,
+	blockdelmarker::Bool=false, 
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,		
@@ -649,7 +656,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 		        pmap((x,y,z)->impute_refine_repeat_chr!(x,nrepeatimpute;
 	                magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf, isgreedy, 
+					byfounder,startbyhalf, isgreedy, blockdelmarker, 
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmono, isdelvuong, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -685,7 +692,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Tuple;
 				impute_refine_repeat_chr!(magicgenofilels[i],nrepeatimpute;
 					magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf, isgreedy, 
+					byfounder,startbyhalf, isgreedy, blockdelmarker,
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmono, isdelvuong, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -724,6 +731,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 	threshlikeparam::ThreshLikeParam=ThreshLikeParam(),    
 	priorlikeparam::PriorLikeParam=PriorLikeParam(),    
 	quickinfererror::Bool=false,
+	blockdelmarker::Bool=false, 
 	israndallele::Bool=true,
 	isfounderinbred::Bool=true,				
 	byfounder::Integer=0,	
@@ -830,7 +838,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 		        res = pmap((x,y,z,w)->impute_refine_chr!(x;
 	                magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder, startbyhalf, isgreedy, 
+					byfounder, startbyhalf, isgreedy, blockdelmarker,
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmono, isdelvuong, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -866,7 +874,7 @@ function magicimpute_founder_repeat!(magicgeno::MagicGeno,nrepeatimpute::Integer
 				chrres = impute_refine_chr!(magicgenofilemtx[i];
 					magicprior,
 					model,israndallele, isfounderinbred,
-					byfounder,startbyhalf, isgreedy, 
+					byfounder,startbyhalf, isgreedy, blockdelmarker,
 	                isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
 					isdelmono, isdelvuong, delsiglevel,
 					isspacemarker, trimcm, trimfraction,skeletonsize,

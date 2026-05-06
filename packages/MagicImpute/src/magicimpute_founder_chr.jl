@@ -6,6 +6,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 	byfounder::Integer=0, 
 	startbyhalf::Integer,
 	isgreedy::Bool, 
+	blockdelmarker::Bool,
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool, 
@@ -73,7 +74,7 @@ function impute_refine_repeat_chr!(magicgenofile::AbstractString,nrepeatimpute::
 					loglikels, fmissls, fhaplodf = impute_refine_chr!(magicgenofilels[runit]; 
 						magicprior,
 						model,israndallele, isfounderinbred,
-						byfounder,startbyhalf, isgreedy, 
+						byfounder,startbyhalf, isgreedy, blockdelmarker,
 						isinferjunc, iscorrectfounder,isimputefounder,isallowmissing, threshproposal,
 						isdelmono, isdelvuong, delsiglevel,
 						isspacemarker, trimcm, trimfraction,skeletonsize,
@@ -410,6 +411,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 	byfounder::Integer, 
 	startbyhalf::Integer,
 	isgreedy::Bool, 
+	blockdelmarker::Bool,
 	iscorrectfounder::Bool = true,	
 	isimputefounder::Union{Nothing,Bool}=nothing, 
 	isallowmissing::Bool,
@@ -462,7 +464,7 @@ function impute_refine_chr!(magicgenofile::AbstractString;
 			", mem=",join([mem1,mem2],"|")))						
 		loglikels,fmissls,fmissls_after = impute_refine_chr!(magicgeno,chr;		
 			magicprior, model, isfounderinbred, 
-			israndallele, inputneighbor, byfounder,	startbyhalf, isgreedy,		
+			israndallele, inputneighbor, byfounder,	startbyhalf, isgreedy,blockdelmarker,		
 			likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 			isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal,
 			isinfererror, isdelmono, isdelvuong, isspacemarker, isordermarker, 
@@ -497,6 +499,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
     byfounder::Integer,     
 	startbyhalf::Integer,
 	isgreedy::Bool,
+	blockdelmarker::Bool,
 	likeparam::LikeParam,
 	softthreshlikeparam::SoftThreshLikeParam,
 	threshlikeparam::ThreshLikeParam,
@@ -569,7 +572,7 @@ function impute_refine_chr!(magicgeno::MagicGeno,chr::Integer;
 	# modfied: priorprocess
 	loglikels, chrfhaplo, snporder, offexcl, likeerrortuple,correctdf,fmissls,fmissls_after = impute_refine_chr!(magicgeno.magicped, chroffgeno, chrneighbor,
 		popmakeup, priorprocess, fhaplosetpp;
-		isfounderinbred, isfounderphased, byfounder, startbyhalf, isgreedy, 
+		isfounderinbred, isfounderphased, byfounder, startbyhalf, isgreedy, blockdelmarker,
 		israndallele, issnpGT,issnpAD,  chrid,  			
 		iscorrectfounder, isimputefounder, isallowmissing, threshproposal, isinfererror, isdelmono, isdelvuong, isspacemarker,isordermarker,
 		liketargetls, likeerrortuple, softthreshlikeparam, threshlikeparam, priorlikeparam, tukeyfence, 
@@ -604,6 +607,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 	byfounder::Integer, 
 	startbyhalf::Integer,
 	isgreedy::Bool,
+	blockdelmarker::Bool,
 	chrid::AbstractString,         	    
     israndallele::Bool=true,     
 	issnpGT::AbstractVector, 
@@ -747,7 +751,7 @@ function impute_refine_chr!(magicped::MagicPed, chroffgeno::AbstractMatrix,
 		likeerrortuple, offspringexcl, correctdf0, tused, msg, logbook_order, upbyhalf = impute_refine_chr_it!(chrfhaplo,chroffgeno,
 			popmakeup,priorprocess, priorspace, fhaplosetpp;
 			isfounderinbred, isconnectf1, israndallele, ismalexls, founder2progeny,findexlist, 
-			likeerrortuple, snporder, issnpGT, 
+			likeerrortuple, snporder, issnpGT, blockdelmarker,
 			softthreshlikeparam, threshlikeparam, priorlikeparam, liketargetls, tukeyfence, offspringexcl, 											
 			temperature, reversechr,isallowmissing, threshproposal, startbyhalf, 
 			isdelmono, delsiglevel, priorlength, trimcm, trimfraction, 
@@ -963,6 +967,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
     popmakeup::AbstractDict,
     priorprocess::AbstractDict, priorspace::AbstractDict,
     fhaplosetpp::AbstractVector;    	
+	blockdelmarker::Bool,
 	isfounderinbred::Bool, 
 	isconnectf1::Bool,
     ismalexls::AbstractVector,
@@ -1317,27 +1322,32 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 				delsnps_dropout = snpADls[delsnps_dropout]
 			end	
 			delsnps = union(delsnps_epsf,delsnps_epso,delsnps_seqerr,delsnps_abm,delsnps_abd,delsnps_dropout)
-			if !isempty(delsnps) && length(snpincl) - length(delsnps) >= 2		
-				isinfererror = true		
-				MagicReconstruct.setpriorprocess!(priorprocess,snporder, delsnps)
-				msg *= string(", #del_err=",length(delsnps))	
+			if !isempty(delsnps) && length(snpincl) - length(delsnps) >= 2						
+				if blockdelmarker					
+					delid = "large"
+				else
+					isinfererror = true		
+					MagicReconstruct.setpriorprocess!(priorprocess,snporder, delsnps)				
+					delid = "del"
+				end				
+				msg *= string(", #"*delid*"_err=",length(delsnps))	
 				if !isempty(delsnps_epsf)
-					msg *= string(", del_εf=",join(round.(epsfls[delsnps_epsf],digits=2),"|"), " at snps=",join(delsnps_epsf, "|"))				
+					msg *= string(", "*delid*"_εf=",join(round.(epsfls[delsnps_epsf],digits=2),"|"), " at snps=",join(delsnps_epsf, "|"))				
 				end
 				if !isempty(delsnps_epso)
-					msg *= string(", del_εo=",join(round.(epsols[delsnps_epso],digits=2),"|"), " at snps=",join(delsnps_epso, "|"))				
+					msg *= string(", "*delid*"_εo=",join(round.(epsols[delsnps_epso],digits=2),"|"), " at snps=",join(delsnps_epso, "|"))				
 				end
 				if !isempty(delsnps_seqerr)
-					msg *= string(", del_εbase=",join(round.(baseerrorls[delsnps_seqerr],digits=3),"|"), " at snps=",join(delsnps_seqerr, "|"))				
+					msg *= string(", "*delid*"_εbase=",join(round.(baseerrorls[delsnps_seqerr],digits=3),"|"), " at snps=",join(delsnps_seqerr, "|"))				
 				end
 				if !isempty(delsnps_abm)
-					msg *= string(", del_bias=",join(round.(allelicbiasls[delsnps_abm],digits=3),"|"), " at snps=",join(delsnps_abm, "|"))				
+					msg *= string(", "*delid*"_bias=",join(round.(allelicbiasls[delsnps_abm],digits=3),"|"), " at snps=",join(delsnps_abm, "|"))				
 				end
 				if !isempty(delsnps_abd)
-					msg *= string(", del_overdisperse=",join(round.(allelicoverdispersionls[delsnps_abd],digits=3),"|"), " at snps=",join(delsnps_abd, "|"))				
+					msg *= string(", "*delid*"_overdisperse=",join(round.(allelicoverdispersionls[delsnps_abd],digits=3),"|"), " at snps=",join(delsnps_abd, "|"))				
 				end	
 				if !isempty(delsnps_dropout)
-					msg *= string(", del_dropout=",join(round.(allelicdropoutls[delsnps_dropout],digits=3),"|"), " at snps=",join(delsnps_dropout, "|"))				
+					msg *= string(", "*delid*"_dropout=",join(round.(allelicdropoutls[delsnps_dropout],digits=3),"|"), " at snps=",join(delsnps_dropout, "|"))				
 				end
 			end
         end

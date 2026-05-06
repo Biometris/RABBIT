@@ -17,26 +17,26 @@ pedfile = string(dataid,"_magicsimulate_ped.csv")
 outstem = dataid*"_output"
 
 magicgeno =formmagicgeno(genofile,pedfile; isfounderinbred); 
-magicgeno.foundergeno[1][1:10,:]
-magicgeno.offspringgeno[1][1:10,:]
-for chr in eachindex(magicgeno.markermap)
-    # magicgeno.foundergeno[chr] .= missingcode
-    # magicgeno.foundergeno[chr][:,1:1] .= missingcode
-    ls = magicgeno.foundergeno[chr]
-    formatvec = magicgeno.markermap[chr][!,:founderformat]
-    for i in 1:size(ls,1)
-        if formatvec[i] == "GT_unphased"
-            ls[i,1] = "NN"
-        else
-            ls[i,1] = Int16[0,0]
-        end
-        # ls[i,2] = [0,0]
-    end
-end
+# magicgeno.foundergeno[1][1:10,:]
+# magicgeno.offspringgeno[1][1:10,:]
+# for chr in eachindex(magicgeno.markermap)
+#     # magicgeno.foundergeno[chr] .= missingcode
+#     # magicgeno.foundergeno[chr][:,1:1] .= missingcode
+#     ls = magicgeno.foundergeno[chr]
+#     formatvec = magicgeno.markermap[chr][!,:founderformat]
+#     for i in 1:size(ls,1)
+#         if formatvec[i] == "GT_unphased"
+#             ls[i,1] = "NN"
+#         else
+#             ls[i,1] = Int16[0,0]
+#         end
+#         # ls[i,2] = [0,0]
+#     end
+# end
 
 @time magicimpute!(magicgeno;
     isfounderinbred,         
-    isrepeatimpute = false, 
+    isrepeatimpute = false,     
     isallowmissing = false,
     blockdelmarker = true,     
     # target = "founder",          
@@ -58,7 +58,7 @@ show(offacc)
 
 # clear up
 
-# cd(@__DIR__)
-# dataid = "sim"
-# rm.(filter(x->occursin(dataid, x), readdir()))
+cd(@__DIR__)
+dataid = "sim"
+rm.(filter(x->occursin(dataid, x), readdir()))
 

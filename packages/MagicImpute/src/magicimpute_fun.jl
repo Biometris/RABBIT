@@ -46,7 +46,7 @@ function magicimpute(genofile::AbstractString,
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",        
-    blockdelmarker::Bool = false, 
+    blockdelmarker::Bool = false,     
     threshimpute::Real=0.9,                
     threshar2::Real=0.3,
     byfounder::Integer=0,
@@ -157,7 +157,7 @@ function magicimpute(genofile::AbstractString,
         printconsole(io,verbose,string("binriffle=",binriffle))
     end
     magicimpute!(magicgeno;
-        target, threshimpute, threshar2, model, blockdelmarker, 
+        target, threshimpute, threshar2, model, blockdelmarker,          
         likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam,
         chrsubset, snpsubset,isparallel, isparallelfounder, 
         byfounder,startbyhalf, isgreedy, threshproposal, isallowmissing,
@@ -346,7 +346,7 @@ function magicimpute!(magicgeno::MagicGeno;
     chrsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     snpsubset::Union{Nothing,AbstractRange,AbstractVector}=nothing,
     target::AbstractString = "all",
-    blockdelmarker::Bool = false,         
+    blockdelmarker::Bool = false,             
     threshimpute::Real=0.9,        
     threshar2::Real=0.3,
     byfounder::Integer=0,
@@ -398,11 +398,9 @@ function magicimpute!(magicgeno::MagicGeno;
         workdir, tempdirectory;chrsubset,snpsubset)
     check_impute_arg(threshimpute,threshar2, byfounder,
         delsiglevel,trimcm, trimfraction,minaccept,inittemperature, coolrate; target,outext)     
-    if blockdelmarker
+    if blockdelmarker        
         optls = reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker, trimcm, threshar2; io, verbose)
-        isdelmono,isdelvuong,tukeyfence,threshlikeparam2, trimcm, threshar2 = optls
-    else
-        threshlikeparam2 = threshlikeparam
+        isdelmono,isdelvuong,tukeyfence, trimcm, threshar2 = optls            
     end
     submagicgeno!(magicgeno; chrsubset,snpsubset)    
     msg = string("list of sbuset options: \n",    
@@ -431,8 +429,8 @@ function magicimpute!(magicgeno::MagicGeno;
             represent_magicgeno, represent_neighbor = get_represent_magicgeno(magicgeno, inputbinning, inputneighbor)                        
             magicimpute_founder!(represent_magicgeno;
                 model = model_founderimpute,                         
-                likeparam, softthreshlikeparam, threshlikeparam = threshlikeparam2,priorlikeparam,
-                israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, 
+                likeparam, softthreshlikeparam, threshlikeparam,priorlikeparam,
+                israndallele, isfounderinbred,byfounder, startbyhalf, isgreedy, blockdelmarker,
                 isrepeatimpute, nrepeatmin, nrepeatmax,
                 isdelmono = false, isdelvuong, # no monomorphic deletion, but allow for test-based marker deletion
                 delsiglevel, iscorrectfounder, threshproposal, isallowmissing = true, 
@@ -480,8 +478,8 @@ function magicimpute!(magicgeno::MagicGeno;
             end         
             magicimpute_founder!(magicgeno;
                 model = model_founderimpute,  
-                likeparam, softthreshlikeparam, threshlikeparam = threshlikeparam2,priorlikeparam,
-                israndallele, isfounderinbred,byfounder,startbyhalf, isgreedy, 
+                likeparam, softthreshlikeparam, threshlikeparam,priorlikeparam,
+                israndallele, isfounderinbred,byfounder,startbyhalf, isgreedy, blockdelmarker,
                 isrepeatimpute = isbinning ? false : isrepeatimpute, 
                 nrepeatmin, nrepeatmax, 
                 isdelmono, isdelvuong, delsiglevel, 
@@ -530,9 +528,8 @@ function magicimpute!(magicgeno::MagicGeno;
     magicgeno
 end
 
-function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker, trimcm, threshar2; 
-    io::Union{IO,Nothing}=nothing,
-    verbose::Bool=true)       
+function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence, isspacemarker, trimcm, threshar2;
+    io::Union{IO,Nothing}=nothing,verbose::Bool=true)
     msg = "reset to block marker deletion: \n"
     if isdelmono        
         isdelmono = false
@@ -555,12 +552,10 @@ function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker,
             trimcm = Inf
             msg *= string("\t reset trimcm=Inf\n")        
         end
-    end
-    threshlikeparam = ThreshLikeParam(Inf,Inf, Inf, Inf, Inf,Inf,Inf) 
-    msg *= string("\t reset threshlikeparam=",threshlikeparam)
+    end    
     verbose && @warn msg
-    printconsole(io,false, "Warn "*msg)
-    isdelmono,isdelvuong,tukeyfence,threshlikeparam, trimcm, threshar2    
+    printconsole(io,false, "Warn: "*msg)
+    isdelmono,isdelvuong,tukeyfence, trimcm, threshar2    
 end
 
 function check_impute_arg(threshimpute::Real, threshar2::Real, 

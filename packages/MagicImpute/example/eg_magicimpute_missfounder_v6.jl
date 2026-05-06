@@ -27,7 +27,7 @@ magiccall(genofile,pedfile;
     israwcall=true,
     isdelmonomorphic = true, 
     minmaf = 0.05, 
-    maxomiss = 0.8, 
+    maxomiss = 0.9, 
     maxhetero = 0.75, 
     # threshcall = 0.75,
     outstem, 
