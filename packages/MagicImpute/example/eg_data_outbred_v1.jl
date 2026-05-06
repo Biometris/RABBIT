@@ -22,26 +22,26 @@ nparent = 2
     outfile=fhaplofile
 )
 
+missf = 0.05
+misso = 0.2
 epsf = 0.01
 epso = 0.01
-missf = 0.05
-misso = 0.05
 seqerr = 0.002
 # pedcode = string(nparent, "star-self0")
 pedcode = string(nparent, "ril-self0")
 @time magicsimulate(fhaplofile,pedcode;
-    popsize=50,
+    popsize=100,
     isfounderinbred,    
     foundererror = Beta(1, 1/epsf-1),
     offspringerror = Beta(1, 1/epso-1),
     foundermiss = Beta(1,1/missf-1),
     offspringmiss = Beta(1,1/misso-1),
     error_randallele = 1,
-    seqfrac = 0.0,
+    seqfrac = 1.0,
     baseerror = Beta(1,1/seqerr-1),
     allelicbias = Beta(3,3),
     allelicoverdispersion = Exponential(0.3),    
-    seqdepth = Gamma(1, 40),
+    seqdepth = Gamma(1, 20),
     outstem= dataid,    
 )
 

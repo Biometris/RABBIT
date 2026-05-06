@@ -536,7 +536,7 @@ function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence,isspacemarker,
     msg = "reset to block marker deletion: \n"
     if isdelmono        
         isdelmono = false
-        msg *= string("\t reset isdelmono=false\n")        
+        msg *= string("\t reset isdelmono=false\n")                
     end
     if isdelvuong        
         isdelvuong = false

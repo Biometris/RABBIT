@@ -935,35 +935,6 @@ function cal_hmm_loglikels(chrfhaplo::AbstractMatrix,chroffgeno::AbstractMatrix,
     loglikels
 end
 
-# function set_fhaplosetpp_missing!(fhaplosetpp::AbstractVector, chrfhaplo::AbstractMatrix, bdiff::AbstractMatrix, snpincl::AbstractVector)
-# 	isfounderinbred = length(fhaplosetpp) == size(bdiff,2)	
-# 	size(chrfhaplo, 1) == size(bdiff,1) == length(snpincl) || @error "inconsistent #markers"
-# 	if isfounderinbred
-# 		for i in findall(bdiff)
-# 			(snp0, p) = Tuple(i)		
-# 			snp = snpincl[snp0]	
-# 			fhaplosetpp[p][snp] = ["1","2"]
-# 		end
-# 	else
-# 		bdidff_outbred = permutedims(reduce(hcat,[Vector.(collect(Iterators.partition(i,2))) for i in eachrow(bdiff)]))
-# 		for i in eachindex(IndexCartesian(),bdidff_outbred)
-# 			bdidff_outbred[i] == [false,false] && continue
-# 			(snp0, p) = Tuple(i)			
-# 			snp = snpincl[snp0]
-# 			if bdidff_outbred[i] == [true,true] 							
-# 				fhaplosetpp[p][snp] = [["1","1"],["1","2"],["2","1"],["2","2"]]
-# 			elseif bdidff_outbred[i] == [true,false] 							
-# 				a = chrfhaplo[snp0,2*p] # use snp0 inst4ead of snp, because chrfhaplo and bdiff correspoind to the same markers (snpincl)
-# 				fhaplosetpp[p][snp] = union(fhaplosetpp[p][snp], [["1",a],["2",a]])
-# 			elseif bdidff_outbred[i] == [false,true] 
-# 				a = chrfhaplo[snp0,2*p-1]
-# 				fhaplosetpp[p][snp] = union(fhaplosetpp[p][snp], [[a,"1"],[a,"2"]])
-# 			end
-# 		end
-# 	end
-#     fhaplosetpp
-# end
-
 
 function get_logprio_fhaplo(chrfhaplo,fhaplosetpp; isfounderinbred,epsf = 0.05)
     nout = get_nprior_mismatch(chrfhaplo,fhaplosetpp; isfounderinbred)
@@ -1153,20 +1124,18 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 		monosnps = findall([unique(i) in [["1"],["2"],["N"]] for i in eachrow(chrfhaplo)])		
 		intersect!(monosnps,snpincl)
 		if !isempty(monosnps)
-			msg *= string(", #mono=",length(monosnps))			
-			# if isdelmono
-			# 	setmissing_fhaplosetpp!(fhaplosetpp, monosnps; isfounderinbred) 
-			# end
+			msg *= string(", #mono=",length(monosnps))						
 		end
 		if  !isfounderinbred && isconnectf1 
 			snpincl = snporder[first(values(priorprocess)).markerincl]		
-			uninfo = findall([all(allequal.(Iterators.partition(i,2))) for i in eachrow(chrfhaplo)])
+			# uninfo = findall([all(allequal.(Iterators.partition(i,2))) for i in eachrow(chrfhaplo)])
+			uninfo = findall([all([allequal(setdiff(j,["N"])) for j in Iterators.partition(i,2)]) for i in eachrow(chrfhaplo)])
 			intersect!(uninfo,snpincl)			
 			if !isempty(uninfo) && length(snpincl) - length(uninfo) >= 2 
 				msg *= string(", #uninfo=",length(uninfo))			
-				# if isdelmono
-				# 	setmissing_fhaplosetpp!(fhaplosetpp, uninfo; isfounderinbred) 	
-				# end
+				if !isdelmono
+					setmissing_fhaplosetpp!(fhaplosetpp, uninfo; isfounderinbred) 	
+				end
 			end	
 		end
 	end
@@ -1187,11 +1156,11 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			uninfo = findall([all(allequal.(Iterators.partition(i,2))) for i in eachrow(chrfhaplo)])				
 			intersect!(uninfo,snpincl)
 			if !isempty(uninfo) && length(snpincl) - length(uninfo) >= 2 
-				if isdelmono
-					msg *= string(", #del_uninfo=",length(uninfo))
-					MagicReconstruct.setpriorprocess!(priorprocess, snporder,uninfo)			
+				if isdelmono 
+					msg *= string(", #del_uninfo=",length(uninfo))					
+					MagicReconstruct.setpriorprocess!(priorprocess, snporder,uninfo)								
 				else
-					msg *= string(", #uninfo=",length(uninfo))
+					msg *= string(", #uninfo=",length(uninfo))										
 				end
 			end	
 		end
