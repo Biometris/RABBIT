@@ -1324,7 +1324,7 @@ function impute_refine_chr_it!(chrfhaplo::AbstractMatrix, chroffgeno::AbstractMa
 			delsnps = union(delsnps_epsf,delsnps_epso,delsnps_seqerr,delsnps_abm,delsnps_abd,delsnps_dropout)
 			if !isempty(delsnps) && length(snpincl) - length(delsnps) >= 2						
 				if blockdelmarker					
-					delid = "large"
+					delid = "large"					
 				else
 					isinfererror = true		
 					MagicReconstruct.setpriorprocess!(priorprocess,snporder, delsnps)				
@@ -1548,8 +1548,17 @@ function get_likeerrortuple(magicgeno::MagicGeno,chr::Integer;
     liketargetls, epsf, epso, epso_perind, baseerror, allelicbias,allelicoverdispersion,allelicdropout = MagicBase.extract_likeparam(likeparam)		
 	chrmarkermap = magicgeno.markermap[chr]
     if isinfererror			
-        epsfls = [ismissing(i) ? epsf : i for i in chrmarkermap[!,:foundererror]]
-        epsols = [ismissing(i) ? epso : i for i in chrmarkermap[!,:offspringerror]]			
+		if in("foundererror", liketargetls)						
+			epsfls = [ismissing(i) ? rand(Uniform(1e-5,max(2e-5,epsf))) : i for i in chrmarkermap[!,:foundererror]]
+		else
+        	epsfls = [ismissing(i) ? epsf : i for i in chrmarkermap[!,:foundererror]]
+		end
+		if in("offspringerror", liketargetls)		
+			
+			epsols = [ismissing(i) ? rand(Uniform(1e-5,max(2e-5,epso))) : i for i in chrmarkermap[!,:offspringerror]]			
+		else
+        	epsols = [ismissing(i) ? epso : i for i in chrmarkermap[!,:offspringerror]]			
+		end
         baseerrorls = [ismissing(i) ? baseerror : i for i in chrmarkermap[!,:baseerror]]
         allelicbiasls = [ismissing(i) ? allelicbias : i for i in chrmarkermap[!,:allelicbias]]						
         allelicoverdispersionls = [ismissing(i) ? allelicoverdispersion : i for i in chrmarkermap[!,:allelicoverdispersion]]			

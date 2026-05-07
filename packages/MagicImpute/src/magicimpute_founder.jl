@@ -247,7 +247,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 			magicimpute_founder_repeat!(magicgeno,nrepeatimpute;
 				model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 				israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
-				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, isallowmissing, threshproposal, 
+				inputneighbor, isinferjunc, iscorrectfounder,isimputefounder, 
+				isallowmissing=true, threshproposal, 
 				isdelmono, isdelvuong, isinfererror, quickinfererror = true, blockdelmarker, 				
 				isspacemarker = false, 
 				isordermarker = false, 
@@ -271,7 +272,8 @@ function magicimpute_founder!(magicgeno::MagicGeno;
 				magicimpute_founder_repeat!(partmagicgeno,nrepeatimpute;
 					model, likeparam, softthreshlikeparam, threshlikeparam, priorlikeparam, 
 					israndallele, isfounderinbred, byfounder, startbyhalf, isgreedy, 
-					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, isallowmissing, threshproposal, 
+					inputneighbor, isinferjunc, iscorrectfounder, isimputefounder, 
+					isallowmissing=true, threshproposal, 
 					isdelmono, isdelvuong, isinfererror, quickinfererror = true, blockdelmarker, 
 					isspacemarker = false, 
 					isordermarker = false, 

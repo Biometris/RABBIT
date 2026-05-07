@@ -530,7 +530,7 @@ end
 
 function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence, isspacemarker, trimcm, threshar2;
     io::Union{IO,Nothing}=nothing,verbose::Bool=true)
-    msg = "reset to block marker deletion: \n"
+    msg = ""
     if isdelmono        
         isdelmono = false
         msg *= string("\t reset isdelmono=false\n")                
@@ -553,8 +553,11 @@ function reset_to_block_delmarker(isdelmono,isdelvuong,tukeyfence, isspacemarker
             msg *= string("\t reset trimcm=Inf\n")        
         end
     end    
-    verbose && @warn msg
-    printconsole(io,false, "Warn: "*msg)
+    if !isempty(msg)
+        msg = "reset to block marker deletion: \n"*msg
+        verbose && @warn msg
+        printconsole(io,false, "Warn: "*msg)
+    end
     isdelmono,isdelvuong,tukeyfence, trimcm, threshar2    
 end
 
