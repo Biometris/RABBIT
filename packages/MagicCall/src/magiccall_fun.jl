@@ -681,7 +681,10 @@ function magiccall_rowgeno(rowstring::AbstractString,
         if in(:GT, outformat)
             i_gt = findfirst(isequal(:GT),outformat)
             for i in eachindex(offcols)
-                gg = split(rowgeno[offcols[i]],":")            
+                gg = split(rowgeno[offcols[i]],":")                            
+                if length(gg) < length(outformat)
+                    append!(gg, ["." for _ in 1:length(outformat)-length(gg)])
+                end
                 gg[i_gt] = offgeno_GT[i]
                 rowgeno[offcols[i]] = join(gg,":")
             end
@@ -691,8 +694,11 @@ function magiccall_rowgeno(rowstring::AbstractString,
         if in(:GP, outformat)
             i_gp = findfirst(isequal(:GP),outformat)            
             for i in eachindex(offcols)
-                gg = split(rowgeno[offcols[i]],":")
-                gg[i_gp] = offgeno_GP[i]
+                gg = split(rowgeno[offcols[i]],":")                
+                if length(gg) < length(outformat)
+                    append!(gg, ["." for _ in 1:length(outformat)-length(gg)])
+                end
+                gg[i_gp] = offgeno_GP[i]                
                 rowgeno[offcols[i]] = join(gg,":")
             end        
         else
