@@ -1,4 +1,5 @@
 :: set WORKDIR and RABBITDIR 
+
 set "WORKDIR=%~dp0"
 cd "%WORKDIR%"
 set "RABBITDIR=%WORKDIR%..\src\"
@@ -32,7 +33,7 @@ julia "%RABBITDIR%rabbit_magicmap.jl" -g %OUTSTEM%_magiccall_geno.vcf.gz -p %OUT
   --ncluster 2 ^
   --nworker 2 -o %OUTSTEM%
 
-julia "%RABBITDIR%rabbit_magicmask_impute.jl" -g %OUTSTEM%_magicfilter_geno.vcf.gz -p %OUTSTEM%_magicfilter_ped.csv ^
+julia "%RABBITDIR%rabbit_magicimpute.jl" -g %OUTSTEM%_magicfilter_geno.vcf.gz -p %OUTSTEM%_magicfilter_ped.csv ^
   --mapfile %OUTSTEM%_magicmap_construct_map.csv.gz --isordermarker false ^
   --nworker 2 -o %OUTSTEM%
 
@@ -41,4 +42,5 @@ julia "%RABBITDIR%rabbit_magicreconstruct.jl" -g %OUTSTEM%_magicimpute_geno.vcf.
 
 julia "%RABBITDIR%rabbit_magicscan.jl" -g %OUTSTEM%_magicreconstruct_ancestry.csv.gz -p %OUTSTEM%_magicsimulate_pheno.csv ^
   -o %OUTSTEM%
+
 

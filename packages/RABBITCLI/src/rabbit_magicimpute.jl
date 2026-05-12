@@ -140,17 +140,25 @@ function parse_commandline()
         arg_type = Bool
         default = true
         "--isrepeatimpute"
-        help = byfounder_help
+        help = "if true, repeat founder imputation. If it is nothing, isrepeatimpute=true if there is a founder with missing fraction > 0.6"
         arg_type = AbstractString
-        default = "false"
+        default = "nothing"
         "--nrepeatmin"
-        help = byfounder_help
+        help = "Minimum number of repeating imputation"
         arg_type = Int
         default = 3
         "--nrepeatmax"
-        help = byfounder_help
+        help = "Maximum number of repeating imputation"
         arg_type = Int
         default = 6
+        "--isbinning"
+        help = "if true, perform marker binning. If it is nothing, isbinning=true if average bin size > 1.5"
+        arg_type = AbstractString
+        default = "nothing"
+        "--bincm"
+        help = "Bin markers with genetic distances < bincm (cM)."
+        arg_type = Float64
+        default = 0.001
         "--mapfile"
         help = mapfilehelp
         arg_type = AbstractString
@@ -163,6 +171,10 @@ function parse_commandline()
         help = phasealg_help
         arg_type = AbstractString
         default = "unphase"                
+        "--isdelmono"
+        help = "if true, delete monomorphic or uninformative markers"
+        arg_type = Bool
+        default = true
         "--isdelvuong"
         help = "if true, perform marker deletion based on Vuong's closeness test"
         arg_type = Bool
@@ -258,12 +270,11 @@ function reset_kwarg_nothing!(parsed_args,kwarg::Symbol,type::DataType)
     if type == Bool
         in(a, ["nothing","true","false"]) || @error string(kwarg, "=",a, " is not in [nothing,true,false]")
     end
-    a2 = a == "nothing" ? nothing : parse(type,a)
+    a2 = a == "nothing" ? nothing : ((type <: AbstractString) ? a : parse(type,a))
     delete!(parsed_args, kwarg)
-    push!(parsed_args, kwarg => a2)
+    isnothing(a2) || push!(parsed_args, kwarg => a2)
     parsed_args
 end
-
 
 function reset_priority_subset!(parsed_args)
     # formatpriority
@@ -312,46 +323,17 @@ function main(args::Vector{String})
     pedinfo = strip(parsed_args[:pedinfo])
     delete!(parsed_args, :genofile)
     delete!(parsed_args, :pedinfo)
-    push!(parsed_args, :logfile => logfile)
-    mapfile = strip(parsed_args[:mapfile])
-    mapfile == "nothing" && (mapfile = nothing)
-    delete!(parsed_args, :mapfile)
+    push!(parsed_args, :logfile => logfile)        
     reset_priority_subset!(parsed_args)             
-    for keyarg in [:iscorrectfounder,:isinfererror]
-        reset_kwarg_nothing!(parsed_args,keyarg,Bool) 
-        if isnothing(parsed_args[keyarg])
-            delete!(parsed_args, keyarg)
-        end
+    
+    # setup nothinng vaules
+    for keyarg in [:iscorrectfounder,:isinfererror,:isbinning,:isrepeatimpute,:isordermarker,:isspacemarker]
+        reset_kwarg_nothing!(parsed_args,keyarg,Bool)         
     end
-    if strip(parsed_args[:skeletonsize]) == "nothing"
-        delete!(parsed_args, :skeletonsize)
-    else
-        reset_kwarg_nothing!(parsed_args,:skeletonsize,Int)    
-    end    
-    reset_kwarg_nothing!(parsed_args,:isrepeatimpute,Bool)    
-    reset_kwarg_nothing!(parsed_args,:isordermarker,Bool)    
-    reset_kwarg_nothing!(parsed_args,:isspacemarker,Bool)           
-    if isnothing(mapfile)  
-        if parsed_args[:isphysmap] == true 
-            isnothing(parsed_args[:isspacemarker]) && (parsed_args[:isspacemarker] = true)        
-        end 
-        for s in [:isordermarker,:isspacemarker]
-            isnothing(parsed_args[s]) && (parsed_args[s] = false)
-        end
-    else        
-        for s in [:isordermarker,:isspacemarker]
-            isnothing(parsed_args[s]) && (parsed_args[s] = true)
-        end
-    end
-    if parsed_args[:isordermarker] && !parsed_args[:isspacemarker]
-        msg = string("isordermarker=",parsed_args[:isordermarker], ", isspacemarker=",parsed_args[:isspacemarker], 
-            ". isspacemarker is expected to be true if isordermarker=true!")
-        @warn msg
-    end
-    reset_kwarg_nothing!(parsed_args,:inittemperature,Float64)    
-    if isnothing(parsed_args[:inittemperature])
-        parsed_args[:inittemperature] = parsed_args[:isordermarker] ? 2.0 : 0.0
-    end
+    reset_kwarg_nothing!(parsed_args,:mapfile,String)     
+    reset_kwarg_nothing!(parsed_args,:skeletonsize,Int)       
+    reset_kwarg_nothing!(parsed_args,:inittemperature,Float64)   
+
     # setup parallel
     nworker = parsed_args[:nworker]
     isparallel = nworker <= 1 ? false : true
@@ -362,7 +344,8 @@ function main(args::Vector{String})
     end
     delete!(parsed_args, :nworker)
     push!(parsed_args, :isparallel => isparallel)    
-     likedict = Dict()
+
+    likedict = Dict()
     for id in ["LikeParam","SoftThreshLikeParam","ThreshLikeParam","PriorLikeParam"]
         id2 = Symbol(lowercase(id))
         like = parsed_args[id2]
@@ -370,7 +353,7 @@ function main(args::Vector{String})
         push!(likedict, id2 => likeparam)
         delete!(parsed_args, id2)
     end
-    @time magicimpute(genofile, pedinfo; mapfile, likedict..., parsed_args...)    
+    @time magicimpute(genofile, pedinfo; likedict..., parsed_args...)    
     if isparallel
         rmprocs(workers()...;waitfor=0)
     end
