@@ -343,3 +343,37 @@ function get_subpop_weight(magicped::MagicPed)
     sum((noffls ./ nfls) .* (noffls ./ sum(noffls)))
 end
 
+
+function reset_maplg(mapfile::AbstractString;
+    commentstring::AbstractString="##",    
+    outfile::AbstractString= string(first(MagicBase.split_allext(mapfile)),"_resetlg.csv.gz"), 
+    workdir::AbstractString=pwd())
+    mapfile2=getabsfile(workdir,mapfile)
+    nlast = MagicBase.findlastcomment(mapfile2; commentstring)
+    comments = MagicBase.read_headlines(mapfile2, nlast)
+    mapdf = CSV.read(mapfile2,DataFrame; header = nlast+1,missingstring=["NA","missing"]) 
+    gdf = groupby(mapdf,:linkagegroup)
+    chrls = [StatsBase.mode(df[!,:physchrom]) for df in gdf]
+    if allunique(chrls)
+        for df in gdf
+            chr = StatsBase.mode(df[!,:physchrom])
+            if isa(chr, AbstractString) && occursin(r"^\d+$",chr)
+                chr = parse(Int,chr)
+            end
+            df[!,:linkagegroup] .= chr
+        end
+    else
+        @warn string("chrls is not unique: ", chrls)
+        return nothing
+    end
+    mapdf2 = sort(reduce(vcat, gdf),:linkagegroup)
+    myopen =  occursin(r"\.gz$", outfile) ? GZip.open : open
+    outfile2 = getabsfile(workdir,outfile)
+    myopen(outfile2, "w") do io          
+        write(io, comments,"\n")
+        CSV.write(io, mapdf2; delim=',', missingstring="NA",header=true,append=true)                
+    end
+    outfile2
+end
+
+
