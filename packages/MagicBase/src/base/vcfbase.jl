@@ -32,7 +32,7 @@ function vcf_get_markers(vcffile::AbstractString;  commentstring = "##",workdir:
             # vcfcols = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL","FILTER", "INFO", "FORMAT"]
             linestr = readline(io,keep=false)      
             if isempty(linestr)
-                @warn string("ignore empty line=",linestr)
+                @warn string("ignore an empty line")
                 continue
             end
             line = split(linestr,"\t")            
@@ -192,7 +192,7 @@ function vcf_del_samples(vcffile::AbstractString;
             while !eof(io)          
                 linestr = readline(io,keep=false)      
                 if isempty(linestr)
-                    @warn string("ignore empty line=",linestr)
+                    @warn string("ignore an empty line")
                     continue
                 end
                 line = split(linestr,"\t")
@@ -322,7 +322,7 @@ function vcf_get_subgeno(vcffile::AbstractString;
         while !eof(io)            
             linestr = readline(io,keep=false)      
             if isempty(linestr)
-                @warn string("ignore empty line=",linestr)
+                @warn string("ignore an empty line")
                 continue
             end
             line = split(linestr,"\t")
@@ -1087,7 +1087,7 @@ function vcf_plink_map(vcffile::AbstractString;
             while !eof(io)                
                 linestr = readline(io,keep=false)      
                 if isempty(linestr)
-                    @warn string("ignore empty line=",linestr)
+                    @warn string("ignore an empty line")
                     continue
                 end
                 line = split(linestr,"\t")

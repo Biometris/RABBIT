@@ -41,7 +41,7 @@ single marker genotype call from genofile and pedinfo.
 
 `minmaf::Real = 0.05`: delete markers with minor allele frequency (MAF) < 0.05. 
 
-`maxhetero::Real=0.75`: delete markers with heterozygous frequency > maxhetero. 
+`maxhetero::Real=0.9`: delete markers with heterozygous frequency > maxhetero. 
 
 `maxfmiss::Real = 1.0`: delete markers with founder genotype missing frequency > maxfmiss. 
 
@@ -83,7 +83,7 @@ function magiccall(genofile::AbstractString,pedinfo::Union{Integer,AbstractStrin
     isdelmultiallelic::Bool=true,
     isdelmonomorphic::Bool=true,    
     minmaf::Real = 0.05, # set monomorphic subpopulation to missing if maf < minmaf
-    maxhetero::Real=0.75, 
+    maxhetero::Real=0.9, 
     maxfmiss::Real = 1.0,         
     maxomiss::Real = 0.99,         
     isinfererror::Bool = !israwcall, 

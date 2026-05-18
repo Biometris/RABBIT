@@ -97,7 +97,7 @@ function parse_commandline()
         "--maxhetero"
         help = "delete markers with frequence of heterozygous genotypes > maxhetero."
         arg_type = Float64
-        default = 0.75
+        default = 0.9
         "--maxfmiss"
         help = "delete markers with founder genotype missing frequency > maxfmiss"
         arg_type = Float64

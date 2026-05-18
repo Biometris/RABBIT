@@ -9,19 +9,32 @@ function mapaccuracy(mapxfile::AbstractString,mapyfile::AbstractString;
     mapx, mapy = [begin
         col = isphysmap[i] ? :physchrom : :linkagegroup
         mapdf = readmarkermap(mapfilels[i]; del_ungrouped=true, commentstring,missingstring, workdir)
+        if isphysmap[i]
+            physchrls = unique(mapdf[!,col])
+            if !all(isa.(physchrls,Integer)) 
+                physchrls2 = string.(physchrls)
+                ischrint = all(occursin.(r"^[1-9][0-9]{0,6}$",physchrls2))
+                if ischrint
+                    chrdict = Dict(physchrls2 .=> parse.(Int, physchrls2))
+                    mapdf[!,col] .= [chrdict[i] for i in mapdf[!,col]]          
+                    gmap = groupby(mapdf,col; sort=true)
+                    mapdf = reduce(vcat, gmap)  
+                end
+            end
+        end
         DataFrame.(collect(groupby(mapdf,col)))
     end for i in eachindex(mapfilels)]    
     mapaccuracy(mapx,mapy; isgroupacc,isphysmap)
 end
 
-function mapaccuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame}; 
+function mapaccuracy(mapx, mapy; 
     isgroupacc=true,isphysmap::AbstractVector=[false,false])    
     groupres = grouping_accuracy(mapx,mapy; isgroupacc)
     orderacc = mapcorkendall(mapx,mapy; isphysmap)
     map1len = maplength(mapx; isphysmap=isphysmap[1])
     map2len = maplength(mapy; isphysmap=isphysmap[2])
-    map1nsnp = sum(size.(mapx,1))
-    map2nsnp = sum(size.(mapy,1))
+    map1nsnp = sum([size(i,1) for i in mapx])
+    map2nsnp = sum([size(i,1) for i in mapy])
     snpx = reduce(vcat, [i[!,:marker] for i in mapx])
     snpy = reduce(vcat, [i[!,:marker] for i in mapy])
     snpdiff12 = setdiff(snpx,snpy)
@@ -32,12 +45,12 @@ function mapaccuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame};
         map1nsnp = map1nsnp, map2nsnp=map2nsnp)
 end
 
-function maplength(markermap::Vector{DataFrame}; isphysmap::Bool)
+function maplength(markermap; isphysmap::Bool)
     col = isphysmap ? :physposbp : :poscm
     [i[end,col]-i[1,col] for i in markermap]
 end
 
-function grouping_accuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame}; isgroupacc)
+function grouping_accuracy(mapx, mapy; isgroupacc)
     mapylg = MagicBase.findtruelg(mapy,mapx;verbose=false)    
     mapy = [reduce(vcat,mapy[i]) for i in mapylg]    #
     snpx = [i[!,:marker] for i in mapx]
@@ -56,7 +69,7 @@ function grouping_accuracy(mapx::Vector{DataFrame}, mapy::Vector{DataFrame}; isg
     (nsnpinconsist=nsnpinconsist,nsnpcommon=nsnpcommon, groupacc=groupacc)
 end
 
-function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVector)
+function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVector)    
     (partition1 == partition2) && return 1.0
     comb1 = [combinations(sort(i),2) for i in partition1]
     comb2 = [combinations(sort(i),2) for i in partition2]
@@ -66,8 +79,21 @@ function paircounting_F1score(partition1::AbstractVector, partition2::AbstractVe
     2a/(2a + b + c)
 end
 
-function mapcorkendall(mapx, mapy; isphysmap = [false,false], minfreq = 0.3)
-    mapylg = MagicBase.findtruelg(mapy,mapx; minfreq, isphysmap = reverse(isphysmap))    
+function keepcommonsnps(mapxls, mapyls)    
+    commsnps = reduce(intersect,[reduce(vcat,[i[!,:marker] for i in ls]) for ls in [mapxls, mapyls]])
+    if isempty(commsnps) 
+        msg = string("no common markers")
+        @error msg        
+        return nothing
+    end
+    mapxls2 = [filter(row -> in(row[:marker], commsnps), df) for df in mapxls]
+    mapyls2 = [filter(row -> in(row[:marker], commsnps), df) for df in mapyls]
+    mapxls2,mapyls2
+end
+
+function mapcorkendall(inmapx, inmapy; isphysmap = [false,false], minfreq = 0.3)
+    mapx,mapy = keepcommonsnps(inmapx, inmapy)
+    mapylg = MagicBase.findtruelg(mapy,mapx; minfreq, isphysmap = reverse(isphysmap))        
     mapy2 = [reduce(vcat,mapy[i]) for i in mapylg]
     map(MagicBase.calcorkendall, mapx, mapy2)
 end

@@ -302,7 +302,7 @@ function array_get_subgeno(arrayfile::AbstractString;
         while !eof(io)            
             linestr = readline(io,keep=false)      
             if isempty(linestr)
-                @warn string("ignore empty line=",linestr)
+                @warn string("ignore an empty line")
                 continue
             end
             line = split(linestr,delim)             
